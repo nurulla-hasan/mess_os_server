@@ -1,13 +1,13 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 import { LEDGER_TRANSACTION_TYPES, REFERENCE_TYPES } from '../../constants/ledgerEntryTypes';
 
 export interface IMemberLedger extends Document {
-  messId: Schema.Types.ObjectId;
-  messMemberId: Schema.Types.ObjectId;
+  messId: Types.ObjectId;
+  messMemberId: Types.ObjectId;
   type: string;
   amount: number;
   referenceType: string;
-  referenceId: Schema.Types.ObjectId;
+  referenceId: Types.ObjectId;
   description: string;
   date: Date;
   isVoided: boolean;
@@ -23,7 +23,7 @@ const memberLedgerSchema = new Schema<IMemberLedger>({
   description: { type: String, required: true },
   date: { type: Date, required: true },
   isVoided: { type: Boolean, default: false }
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; return ret; } } });
+}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
 
 memberLedgerSchema.index({ messId: 1, messMemberId: 1, date: -1 });
 

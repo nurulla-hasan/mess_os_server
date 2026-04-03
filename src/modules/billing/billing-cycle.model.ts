@@ -1,7 +1,7 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IBillingCycle extends Document {
-  messId: Schema.Types.ObjectId;
+  messId: Types.ObjectId;
   month: number;
   year: number;
   startDate: Date;
@@ -14,7 +14,7 @@ export interface IBillingCycle extends Document {
     mealRate: number;
   };
   finalizedAt?: Date;
-  finalizedBy?: Schema.Types.ObjectId;
+  finalizedBy?: Types.ObjectId;
 }
 
 const billingCycleSchema = new Schema<IBillingCycle>({
@@ -32,7 +32,7 @@ const billingCycleSchema = new Schema<IBillingCycle>({
   },
   finalizedAt: { type: Date },
   finalizedBy: { type: Schema.Types.ObjectId, ref: 'User' }
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; return ret; } } });
+}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
 
 billingCycleSchema.index({ messId: 1, month: 1, year: 1 }, { unique: true });
 

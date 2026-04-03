@@ -1,12 +1,12 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface INotice extends Document {
-  messId: Schema.Types.ObjectId;
+  messId: Types.ObjectId;
   title: string;
   content: string;
   isPinned: boolean;
   status: 'active' | 'archived';
-  createdBy: Schema.Types.ObjectId;
+  createdBy: Types.ObjectId;
 }
 
 const noticeSchema = new Schema<INotice>({
@@ -19,7 +19,7 @@ const noticeSchema = new Schema<INotice>({
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; return ret; } }
+  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } }
 });
 
 noticeSchema.index({ messId: 1, status: 1 });

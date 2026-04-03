@@ -9,7 +9,7 @@ export const getBillingCycles = catchAsync(async (req: Request, res: Response) =
 });
 
 export const getMemberBills = catchAsync(async (req: Request, res: Response) => {
-  const result = await billingService.getMemberBills(req.messId!, req.params.billingCycleId);
+  const result = await billingService.getMemberBills(req.messId!, String(req.params.billingCycleId));
   sendResponse(res, { statusCode: 200, success: true, message: 'Member bills retrieved', data: result });
 });
 
@@ -26,6 +26,6 @@ export const finalizeBilling = catchAsync(async (req: Request, res: Response) =>
 });
 
 export const reopenBilling = catchAsync(async (req: Request, res: Response) => {
-  const result = await billingService.reopenBillingCycle(req.messId!, req.params.billingCycleId);
+  const result = await billingService.reopenBillingCycle(req.messId!, String(req.params.billingCycleId));
   sendResponse(res, { statusCode: 200, success: true, message: result.message });
 });

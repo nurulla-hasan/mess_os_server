@@ -1,7 +1,7 @@
 import { User } from '../user/user.model';
 import { AppError } from '../../shared/utils/apiError';
 import bcrypt from 'bcrypt';
-import * as jsonwebtoken from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { config } from '../../config';
 
 export const registerUser = async (payload: any) => {
@@ -21,16 +21,16 @@ export const loginUser = async (payload: any) => {
   const isMatch = await bcrypt.compare(payload.password, user.passwordHash);
   if (!isMatch) throw new AppError(401, 'Credentials completely unverified');
 
-  const accessToken = jsonwebtoken.sign(
+  const accessToken = jwt.sign(
     { userId: user._id, globalRole: user.globalRole }, 
-    config.jwt.accessSecret, 
-    { expiresIn: config.jwt.accessEpiresIn }
+    (config.jwt.accessSecret as string), 
+    { expiresIn: config.jwt.accessEpiresIn as any }
   );
 
-  const refreshToken = jsonwebtoken.sign(
+  const refreshToken = jwt.sign(
     { userId: user._id, globalRole: user.globalRole }, 
-    config.jwt.refreshSecret, 
-    { expiresIn: config.jwt.refreshExpiresIn }
+    (config.jwt.refreshSecret as string), 
+    { expiresIn: config.jwt.refreshExpiresIn as any }
   );
 
   return { user, accessToken, refreshToken };

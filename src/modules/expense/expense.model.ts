@@ -1,18 +1,18 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 import { FUND_SOURCES } from '../../constants/ledgerEntryTypes';
 
 export interface IExpense extends Document {
-  messId: Schema.Types.ObjectId;
+  messId: Types.ObjectId;
   category: string;
   amount: number;
   date: Date;
-  paidBy: Schema.Types.ObjectId;
+  paidBy: Types.ObjectId;
   fundSource: string;
   status: 'pending' | 'approved' | 'rejected';
   reimbursementStatus: 'not_applicable' | 'pending' | 'reimbursed';
   receiptUrl?: string;
   receiptPublicId?: string;
-  approvedBy?: Schema.Types.ObjectId;
+  approvedBy?: Types.ObjectId;
   approvedAt?: Date;
 }
 
@@ -29,6 +29,6 @@ const expenseSchema = new Schema<IExpense>({
   receiptPublicId: { type: String },
   approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   approvedAt: { type: Date }
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; return ret; } } });
+}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
 
 export const Expense = model<IExpense>('Expense', expenseSchema);

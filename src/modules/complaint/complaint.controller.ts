@@ -21,17 +21,17 @@ export const getMyComplaints = catchAsync(async (req: Request, res: Response) =>
 export const getComplaintById = catchAsync(async (req: Request, res: Response) => {
   if (!req.messMember) throw new AppError(403, 'Context missing mapping bounds');
   const isManager = req.messMember.messRole === 'manager' || req.messRole === 'manager';
-  sendResponse(res, { statusCode: 200, success: true, message: 'Complaint pulled', data: await compService.getComplaintById(req.messId!, req.params.complaintId, req.messMember._id.toString(), isManager) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Complaint pulled', data: await compService.getComplaintById(req.messId!, String(req.params.complaintId), req.messMember._id.toString(), isManager) });
 });
 
 export const updateStatus = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Status mapped', data: await compService.updateComplaintStatus(req.messId!, req.params.complaintId, req.body.status) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Status mapped', data: await compService.updateComplaintStatus(req.messId!, String(req.params.complaintId), req.body.status) });
 });
 
 export const resolveComplaint = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Complete', data: await compService.resolveComplaint(req.messId!, req.params.complaintId, req.body.resolvedNote || '', req.user!.userId) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Complete', data: await compService.resolveComplaint(req.messId!, String(req.params.complaintId), req.body.resolvedNote || '', req.user!.userId) });
 });
 
 export const rejectComplaint = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Rejected mapping', data: await compService.rejectComplaint(req.messId!, req.params.complaintId, req.body.resolvedNote || '', req.user!.userId) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Rejected mapping', data: await compService.rejectComplaint(req.messId!, String(req.params.complaintId), req.body.resolvedNote || '', req.user!.userId) });
 });

@@ -14,11 +14,11 @@ export const listRequests = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const approveRequest = catchAsync(async (req: Request, res: Response) => {
-  const result = await morService.approveRequest(req.messId!, req.params.requestId, req.user!.userId);
+  const result = await morService.approveRequest(req.messId!, String(req.params.requestId), req.user!.userId);
   sendResponse(res, { statusCode: 200, success: true, message: 'Request approved', data: result });
 });
 
 export const rejectRequest = catchAsync(async (req: Request, res: Response) => {
-  const result = await morService.rejectRequest(req.messId!, req.params.requestId, req.user!.userId);
+  const result = await morService.rejectRequest(req.messId!, String(req.params.requestId), req.user!.userId);
   sendResponse(res, { statusCode: 200, success: true, message: 'Request rejected', data: result });
 });

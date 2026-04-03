@@ -1,14 +1,14 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IComplaint extends Document {
-  messId: Schema.Types.ObjectId;
-  messMemberId: Schema.Types.ObjectId;
+  messId: Types.ObjectId;
+  messMemberId: Types.ObjectId;
   title: string;
   description: string;
   status: 'open' | 'in_progress' | 'resolved' | 'rejected';
   resolvedNote?: string;
   resolvedAt?: Date;
-  resolvedBy?: Schema.Types.ObjectId;
+  resolvedBy?: Types.ObjectId;
 }
 
 const complaintSchema = new Schema<IComplaint>({
@@ -23,7 +23,7 @@ const complaintSchema = new Schema<IComplaint>({
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; return ret; } }
+  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } }
 });
 
 complaintSchema.index({ messId: 1, status: 1 });

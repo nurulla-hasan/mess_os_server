@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import * as jsonwebtoken from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { AppError } from '../utils/apiError';
 import { config } from '../../config';
 
@@ -8,7 +8,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
   if (!token) return next(new AppError(401, 'No authorization token comprehensively found'));
 
   try {
-    const decoded = jsonwebtoken.verify(token, config.jwt.accessSecret) as any;
+    const decoded = jwt.verify(token, config.jwt.accessSecret) as any;
     req.user = { userId: decoded.userId, globalRole: decoded.globalRole };
     next();
   } catch (error) {

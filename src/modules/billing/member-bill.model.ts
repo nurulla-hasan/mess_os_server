@@ -1,9 +1,9 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IMemberBill extends Document {
-  messId: Schema.Types.ObjectId;
-  billingCycleId: Schema.Types.ObjectId;
-  messMemberId: Schema.Types.ObjectId;
+  messId: Types.ObjectId;
+  billingCycleId: Types.ObjectId;
+  messMemberId: Types.ObjectId;
   summary: {
     meals: number;
     mealRate: number;
@@ -36,7 +36,7 @@ const memberBillSchema = new Schema<IMemberBill>({
   },
   status: { type: String, enum: ['unpaid', 'paid', 'settled'], default: 'unpaid' },
   isArchived: { type: Boolean, default: false }
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; return ret; } } });
+}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
 
 memberBillSchema.index({ billingCycleId: 1, messMemberId: 1 });
 

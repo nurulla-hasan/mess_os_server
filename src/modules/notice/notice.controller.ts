@@ -12,17 +12,17 @@ export const getNotices = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getNotice = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Notice found', data: await noteService.getNotice(req.messId!, req.params.noticeId) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Notice found', data: await noteService.getNotice(req.messId!, String(req.params.noticeId)) });
 });
 
 export const updateNotice = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Notice updated', data: await noteService.updateNotice(req.messId!, req.params.noticeId, req.body) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Notice updated', data: await noteService.updateNotice(req.messId!, String(req.params.noticeId), req.body) });
 });
 
 export const pinNotice = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Notice pinned', data: await noteService.pinNotice(req.messId!, req.params.noticeId) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Notice pinned', data: await noteService.pinNotice(req.messId!, String(req.params.noticeId)) });
 });
 
 export const archiveNotice = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Notice archived', data: await noteService.archiveNotice(req.messId!, req.params.noticeId) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Notice archived', data: await noteService.archiveNotice(req.messId!, String(req.params.noticeId)) });
 });

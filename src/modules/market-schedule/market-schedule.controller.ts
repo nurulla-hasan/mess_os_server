@@ -18,25 +18,25 @@ export const getMyDuties = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const updateSchedule = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Schedule mutated', data: await msService.updateSchedule(req.messId!, req.params.scheduleId, req.body) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Schedule mutated', data: await msService.updateSchedule(req.messId!, String(req.params.scheduleId), req.body) });
 });
 
 export const reassignSchedule = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Schedule reassigned', data: await msService.reassignSchedule(req.messId!, req.params.scheduleId, req.body.assignedTo) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Schedule reassigned', data: await msService.reassignSchedule(req.messId!, String(req.params.scheduleId), req.body.assignedTo) });
 });
 
 export const updateActualSpent = catchAsync(async (req: Request, res: Response) => {
   if (!req.messMember) throw new AppError(403, 'Context missing mapping bounds');
   const isManager = req.messMember.messRole === 'manager' || req.messRole === 'manager';
-  sendResponse(res, { statusCode: 200, success: true, message: 'Spent budget updated', data: await msService.updateActualSpent(req.messId!, req.params.scheduleId, req.body.actualSpent, req.messMember._id.toString(), isManager) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Spent budget updated', data: await msService.updateActualSpent(req.messId!, String(req.params.scheduleId), req.body.actualSpent, req.messMember._id.toString(), isManager) });
 });
 
 export const voidSchedule = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Schedule permanently voided', data: await msService.voidSchedule(req.messId!, req.params.scheduleId) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Schedule permanently voided', data: await msService.voidSchedule(req.messId!, String(req.params.scheduleId)) });
 });
 
 export const completeSchedule = catchAsync(async (req: Request, res: Response) => {
   if (!req.messMember) throw new AppError(403, 'Context missing mapping bounds');
   const isManager = req.messMember.messRole === 'manager' || req.messRole === 'manager';
-  sendResponse(res, { statusCode: 200, success: true, message: 'Schedule fulfilled and expense fully mapped', data: await msService.completeSchedule(req.messId!, req.params.scheduleId, req.body, req.messMember._id.toString(), req.user!.userId, isManager) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Schedule fulfilled and expense fully mapped', data: await msService.completeSchedule(req.messId!, String(req.params.scheduleId), req.body, req.messMember._id.toString(), req.user!.userId, isManager) });
 });

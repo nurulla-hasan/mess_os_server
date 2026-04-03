@@ -1,17 +1,17 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IMarketSchedule extends Document {
-  messId: Schema.Types.ObjectId;
-  assignedTo: Schema.Types.ObjectId[];
+  messId: Types.ObjectId;
+  assignedTo: Types.ObjectId[];
   targetDate: Date;
   shoppingItems: { name: string; quantity: string; }[];
   estimatedBudget: number;
   actualSpent?: number;
   status: 'pending' | 'completed' | 'reassigned' | 'void';
-  expenseId?: Schema.Types.ObjectId;
+  expenseId?: Types.ObjectId;
   completedAt?: Date;
-  completedBy?: Schema.Types.ObjectId;
-  createdBy: Schema.Types.ObjectId;
+  completedBy?: Types.ObjectId;
+  createdBy: Types.ObjectId;
 }
 
 const scheduleSchema = new Schema<IMarketSchedule>({
@@ -29,7 +29,7 @@ const scheduleSchema = new Schema<IMarketSchedule>({
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; return ret; } }
+  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } }
 });
 
 scheduleSchema.index({ messId: 1, targetDate: 1 });

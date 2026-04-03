@@ -28,8 +28,8 @@ const generateBillingPayload = async (messId: string, billingMonth: number, bill
     const mess = await messQuery;
     if (!mess) throw new AppError(404, 'Mess not found');
 
-    const mealCategories = mess.settings.mealCategories || [];
-    const equalShareCategories = mess.settings.equalShareCategories || [];
+    const mealCategories = (mess as any).settings.mealCategories || [];
+    const equalShareCategories = (mess as any).settings.equalShareCategories || [];
 
     const expensesQuery = Expense.find({ messId, status: 'approved', date: { $gte: start, $lte: end } });
     const utilityBillsQuery = UtilityBill.find({ messId, status: 'paid', billingMonth: billingMonth, year: billingYear });
@@ -61,14 +61,14 @@ const generateBillingPayload = async (messId: string, billingMonth: number, bill
     const membersQuery = MessMember.find({ messId, joinedAt: { $lte: end } });
     const members = session ? await membersQuery.session(session) : await membersQuery;
 
-    const validMembersForShare = members.filter(m => m.status === 'active' || (m.leftAt && m.leftAt >= start));
+    const validMembersForShare = members.filter(m => m.status === 'active' || (m.leftAt! && m.leftAt! >= start));
 
     const totalDaysInMonth = new Date(end.getTime() + DHAKA_OFFSET_MS).getUTCDate();
     let totalShareUnits = 0;
     
     const memberShares = validMembersForShare.map(m => {
-       const joined = m.joinedAt > start ? m.joinedAt : start;
-       const left = m.leftAt && m.leftAt < end ? m.leftAt : end;
+       const joined = m.joinedAt! > start ? m.joinedAt! : start;
+       const left = m.leftAt! && m.leftAt! < end ? m.leftAt! : end;
        const activeDays = Math.max(0, (left.getTime() - joined.getTime()) / (1000 * 3600 * 24));
        const unit = Number(totalDaysInMonth > 0 ? (activeDays / totalDaysInMonth).toFixed(2) : 0);
        totalShareUnits += unit;

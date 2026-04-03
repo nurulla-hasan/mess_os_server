@@ -1,11 +1,11 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IMeal extends Document {
-  messId: Schema.Types.ObjectId;
-  messMemberId: Schema.Types.ObjectId;
+  messId: Types.ObjectId;
+  messMemberId: Types.ObjectId;
   date: Date;
   mealCount: number;
-  createdBy: Schema.Types.ObjectId;
+  createdBy: Types.ObjectId;
 }
 
 const mealSchema = new Schema<IMeal>({
@@ -14,7 +14,7 @@ const mealSchema = new Schema<IMeal>({
   date: { type: Date, required: true },
   mealCount: { type: Number, required: true },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true } // Audit constraint
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; return ret; } } });
+}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
 
 mealSchema.index({ messId: 1, messMemberId: 1, date: 1 }, { unique: true });
 

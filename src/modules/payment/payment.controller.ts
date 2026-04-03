@@ -14,6 +14,6 @@ export const getPayments = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const approvePayment = catchAsync(async (req: Request, res: Response) => {
-  const result = await paymentService.approvePayment(req.messId!, req.params.paymentId, req.user!.userId);
+  const result = await paymentService.approvePayment(req.messId!, String(req.params.paymentId), req.user!.userId);
   sendResponse(res, { statusCode: 200, success: true, message: 'Payment approved', data: result });
 });

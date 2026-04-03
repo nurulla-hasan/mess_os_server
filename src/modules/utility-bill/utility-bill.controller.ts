@@ -14,6 +14,6 @@ export const getUtilityBills = catchAsync(async (req: Request, res: Response) =>
 });
 
 export const markPaid = catchAsync(async (req: Request, res: Response) => {
-  const result = await ubService.markUtilityBillPaid(req.messId!, req.params.billId);
+  const result = await ubService.markUtilityBillPaid(req.messId!, String(req.params.billId));
   sendResponse(res, { statusCode: 200, success: true, message: 'Utility bill explicitly tracked via cash ledger flow', data: result });
 });

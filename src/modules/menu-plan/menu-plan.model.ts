@@ -1,7 +1,7 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IMenuPlan extends Document {
-  messId: Schema.Types.ObjectId;
+  messId: Types.ObjectId;
   date: Date;
   meals: {
     breakfast?: string;
@@ -10,7 +10,7 @@ export interface IMenuPlan extends Document {
   };
   status: 'draft' | 'published' | 'archived';
   isAiGenerated: boolean;
-  createdBy: Schema.Types.ObjectId;
+  createdBy: Types.ObjectId;
 }
 
 const menuPlanSchema = new Schema<IMenuPlan>({
@@ -27,7 +27,7 @@ const menuPlanSchema = new Schema<IMenuPlan>({
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; return ret; } }
+  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } }
 });
 
 menuPlanSchema.index({ messId: 1, date: 1 });

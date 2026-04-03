@@ -9,8 +9,8 @@ export const getMessSummary = catchAsync(async (req: Request, res: Response) => 
 });
 
 export const getMonthlyFinancials = catchAsync(async (req: Request, res: Response) => {
-  const month = parseInt(req.query.month as string);
-  const year = parseInt(req.query.year as string);
+  const month = parseInt(String(req.query.month));
+  const year = parseInt(String(req.query.year));
   if (!month || !year) throw new AppError(400, 'Month and year queries strictly required');
   sendResponse(res, { statusCode: 200, success: true, message: 'Financials extracted via finalized tables', data: await rptService.getMonthlyFinancials(req.messId!, month, year) });
 });
@@ -18,7 +18,7 @@ export const getMonthlyFinancials = catchAsync(async (req: Request, res: Respons
 export const getMemberStatement = catchAsync(async (req: Request, res: Response) => {
   const isManager = req.messMember?.messRole === 'manager' || req.messRole === 'manager';
   const callerMemberId = req.messMember!._id.toString();
-  const targetMemberId = req.params.memberId;
+  const targetMemberId = String(req.params.memberId);
   
   if (!isManager && targetMemberId !== callerMemberId) {
      throw new AppError(403, 'Permission denied, safe boundaries violated for accessing member statement');
@@ -28,11 +28,11 @@ export const getMemberStatement = catchAsync(async (req: Request, res: Response)
 });
 
 export const getExpenseReport = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Expenses aggregated securely', data: await rptService.getExpenseReport(req.messId!, req.query.start as string, req.query.end as string) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Expenses aggregated securely', data: await rptService.getExpenseReport(req.messId!, String(req.query.start), String(req.query.end)) });
 });
 
 export const getPaymentReport = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Payments aggregated securely', data: await rptService.getPaymentReport(req.messId!, req.query.start as string, req.query.end as string) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Payments aggregated securely', data: await rptService.getPaymentReport(req.messId!, String(req.query.start), String(req.query.end)) });
 });
 
 export const exportCsvReport = catchAsync(async (req: Request, res: Response) => {

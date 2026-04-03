@@ -1,7 +1,7 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface ISubscription extends Document {
-  messId: Schema.Types.ObjectId;
+  messId: Types.ObjectId;
   planId: string;
   status: 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid';
   currentPeriodStart: Date;
@@ -23,7 +23,7 @@ const subSchema = new Schema<ISubscription>({
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; return ret; } }
+  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } }
 });
 
 export const Subscription = model<ISubscription>('Subscription', subSchema);

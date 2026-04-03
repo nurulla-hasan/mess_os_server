@@ -1,13 +1,13 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IAiShoppingList extends Document {
-  messId: Schema.Types.ObjectId;
-  menuPlanId: Schema.Types.ObjectId;
+  messId: Types.ObjectId;
+  menuPlanId: Types.ObjectId;
   targetDate: Date;
   items: { name: string; quantity: string; category: string }[];
   status: 'draft' | 'approved' | 'rejected' | 'converted';
-  marketScheduleId?: Schema.Types.ObjectId;
-  createdBy: Schema.Types.ObjectId;
+  marketScheduleId?: Types.ObjectId;
+  createdBy: Types.ObjectId;
 }
 
 const aiShoppingSchema = new Schema<IAiShoppingList>({
@@ -25,7 +25,7 @@ const aiShoppingSchema = new Schema<IAiShoppingList>({
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; return ret; } }
+  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } }
 });
 
 aiShoppingSchema.index({ messId: 1, menuPlanId: 1 });

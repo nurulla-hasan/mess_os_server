@@ -1,13 +1,13 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IMealOffRequest extends Document {
-  messId: Schema.Types.ObjectId;
-  messMemberId: Schema.Types.ObjectId;
+  messId: Types.ObjectId;
+  messMemberId: Types.ObjectId;
   startDate: Date;
   endDate: Date;
   status: 'pending' | 'approved' | 'rejected';
   reason?: string;
-  approvedBy?: Schema.Types.ObjectId;
+  approvedBy?: Types.ObjectId;
 }
 
 const mealOffRequestSchema = new Schema<IMealOffRequest>({
@@ -18,6 +18,6 @@ const mealOffRequestSchema = new Schema<IMealOffRequest>({
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   reason: { type: String },
   approvedBy: { type: Schema.Types.ObjectId, ref: 'User' } // Audit constraint
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; return ret; } } });
+}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
 
 export const MealOffRequest = model<IMealOffRequest>('MealOffRequest', mealOffRequestSchema);

@@ -1,13 +1,13 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IPayment extends Document {
-  messId: Schema.Types.ObjectId;
-  messMemberId: Schema.Types.ObjectId;
+  messId: Types.ObjectId;
+  messMemberId: Types.ObjectId;
   amount: number;
   method: string;
   reference?: string;
   status: 'pending' | 'approved' | 'rejected';
-  approvedBy?: Schema.Types.ObjectId;
+  approvedBy?: Types.ObjectId;
   receivedDate?: Date;
 }
 
@@ -20,6 +20,6 @@ const paymentSchema = new Schema<IPayment>({
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   receivedDate: { type: Date }
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; return ret; } } });
+}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
 
 export const Payment = model<IPayment>('Payment', paymentSchema);

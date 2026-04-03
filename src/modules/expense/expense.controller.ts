@@ -14,11 +14,11 @@ export const getExpenses = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const approveExpense = catchAsync(async (req: Request, res: Response) => {
-  const result = await expenseService.approveExpense(req.messId!, req.params.expenseId, req.user!.userId);
+  const result = await expenseService.approveExpense(req.messId!, String(req.params.expenseId), req.user!.userId);
   sendResponse(res, { statusCode: 200, success: true, message: 'Expense approved', data: result });
 });
 
 export const reimburseExpense = catchAsync(async (req: Request, res: Response) => {
-  const result = await expenseService.reimburseExpense(req.messId!, req.params.expenseId, req.user!.userId);
+  const result = await expenseService.reimburseExpense(req.messId!, String(req.params.expenseId), req.user!.userId);
   sendResponse(res, { statusCode: 200, success: true, message: 'Expense reimbursed', data: result });
 });

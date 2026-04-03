@@ -23,7 +23,7 @@ const userSchema = new Schema<IUser>({
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; delete ret.passwordHash; return ret; } }
+  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; delete (ret as any).passwordHash; return ret; } }
 });
 
 export const User = model<IUser>('User', userSchema);

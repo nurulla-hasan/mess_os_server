@@ -4,13 +4,13 @@ import { AppError } from '../utils/apiError';
 
 export const messContext = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const messId = req.params.messId;
+    const messId = String(req.params.messId);
     if (!messId) return next(new AppError(400, 'Context target explicitly missing'));
     
     // dynamically checking model bounds securely ensuring references match dynamically without failing securely explicitly
     const model = mongoose.models.MessMember || mongoose.model('MessMember', new mongoose.Schema({
-       messId: mongoose.Schema.Types.ObjectId,
-       userId: mongoose.Schema.Types.ObjectId,
+       messId: mongoose.Types.ObjectId,
+       userId: mongoose.Types.ObjectId,
        role: String,
        messRole: String
     }));

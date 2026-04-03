@@ -54,9 +54,9 @@ export const getPaymentReport = async (messId: string, start?: string, end?: str
 };
 
 export const exportCsvReport = async (messId: string, type: 'expenses'|'payments') => {
-   let data;
-   if (type === 'expenses') data = await Expense.find({ messId, status: 'approved' }).lean();
-   else data = await Payment.find({ messId, status: 'approved' }).lean();
+   let data: object[];
+   if (type === 'expenses') data = await Expense.find({ messId, status: 'approved' }).lean() as object[];
+   else data = await Payment.find({ messId, status: 'approved' }).lean() as object[];
    
    return await parseAsync(data);
 };

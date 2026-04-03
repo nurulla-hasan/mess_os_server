@@ -12,17 +12,17 @@ export const getLists = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getListById = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'List fetched', data: await aiService.getShoppingListById(req.messId!, req.params.listId) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'List fetched', data: await aiService.getShoppingListById(req.messId!, String(req.params.listId)) });
 });
 
 export const approveList = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Shopping list approved', data: await aiService.approveShoppingList(req.messId!, req.params.listId) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Shopping list approved', data: await aiService.approveShoppingList(req.messId!, String(req.params.listId)) });
 });
 
 export const rejectList = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Shopping list rejected', data: await aiService.rejectShoppingList(req.messId!, req.params.listId) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Shopping list rejected', data: await aiService.rejectShoppingList(req.messId!, String(req.params.listId)) });
 });
 
 export const convertList = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 201, success: true, message: 'List converted strictly to Market Schedule', data: await aiService.convertToMarketSchedule(req.messId!, req.params.listId, req.user!.userId, req.body) });
+  sendResponse(res, { statusCode: 201, success: true, message: 'List converted strictly to Market Schedule', data: await aiService.convertToMarketSchedule(req.messId!, String(req.params.listId), req.user!.userId, req.body) });
 });
