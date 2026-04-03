@@ -15,3 +15,44 @@ export const loginSchema = z.object({
     password: z.string()
   }).strict()
 });
+
+export const verifyEmailSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+    otp: z.string().length(6)
+  }).strict()
+});
+
+export const forgotPasswordSchema = z.object({
+  body: z.object({
+    email: z.string().email()
+  }).strict()
+});
+
+export const verifyResetOtpSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+    otp: z.string().length(6)
+  }).strict()
+});
+
+export const resetPasswordSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+    otp: z.string().length(6),
+    newPassword: z.string().min(6)
+  }).strict()
+});
+
+export const changePasswordSchema = z.object({
+  body: z.object({
+    oldPassword: z.string(),
+    newPassword: z.string().min(6)
+  }).strict()
+});
+
+export const resendOtpSchema = z.object({
+  body: z.object({
+    email: z.string().email()
+  }).strict()
+});

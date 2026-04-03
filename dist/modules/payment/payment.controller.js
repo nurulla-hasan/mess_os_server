@@ -33,19 +33,53 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.approvePayment = exports.getPayments = exports.createPayment = void 0;
+exports.cancelPayment = exports.rejectPayment = exports.approvePayment = exports.getMyPayments = exports.getPaymentById = exports.getPayments = exports.createPayment = void 0;
 const asyncHandler_1 = require("../../shared/utils/asyncHandler");
 const apiResponse_1 = require("../../shared/utils/apiResponse");
+const apiError_1 = require("../../shared/utils/apiError");
 const paymentService = __importStar(require("./payment.service"));
 exports.createPayment = (0, asyncHandler_1.catchAsync)(async (req, res) => {
-    const result = await paymentService.createPayment(req.messId, req.body);
-    (0, apiResponse_1.sendResponse)(res, { statusCode: 201, success: true, message: 'Payment submitted', data: result });
+    const messId = req.messId;
+    const body = req.body;
+    const actor = req.messMember;
+    if (body.messMemberId && body.messMemberId !== actor.id.toString()) {
+        if (actor.messRole !== 'manager') {
+            throw new apiError_1.AppError(403, 'Unauthorized to create payments for other members directly');
+        }
+    }
+    else {
+        body.messMemberId = actor.id.toString();
+    }
+    const result = await paymentService.createPayment(messId, body);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 201, success: true, message: 'Payment record created natively reflecting accurately', data: result });
 });
 exports.getPayments = (0, asyncHandler_1.catchAsync)(async (req, res) => {
-    const result = await paymentService.getPayments(req.messId);
+    const result = await paymentService.getPayments(req.messId, req.query);
     (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Payments retrieved', data: result });
+});
+exports.getPaymentById = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    const result = await paymentService.getPaymentById(req.messId, String(req.params.paymentId));
+    // Safety check: Manager or Owner only
+    const actor = req.messMember;
+    if (actor.messRole !== 'manager' && result.messMemberId.toString() !== actor.id.toString()) {
+        throw new apiError_1.AppError(403, 'Unauthorized to view this specific payment record');
+    }
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Payment record accurately isolated', data: result });
+});
+exports.getMyPayments = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    const result = await paymentService.getPayments(req.messId, { messMemberId: req.messMember.id.toString() });
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Your payment history extracted', data: result });
 });
 exports.approvePayment = (0, asyncHandler_1.catchAsync)(async (req, res) => {
     const result = await paymentService.approvePayment(req.messId, String(req.params.paymentId), req.user.userId);
-    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Payment approved', data: result });
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Payment approved and ledgered correctly', data: result });
+});
+exports.rejectPayment = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    const result = await paymentService.rejectPayment(req.messId, String(req.params.paymentId), req.user.userId);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Payment record rejected by manager', data: result });
+});
+exports.cancelPayment = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    const actor = req.messMember;
+    const result = await paymentService.cancelPayment(req.messId, String(req.params.paymentId), actor.id.toString(), actor.messRole);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Pending payment record canceled successfully', data: result });
 });

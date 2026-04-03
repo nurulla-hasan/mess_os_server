@@ -10,7 +10,7 @@ const expenseSchema = new mongoose_1.Schema({
     date: { type: Date, required: true },
     paidBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'MessMember', required: true },
     fundSource: { type: String, enum: Object.values(ledgerEntryTypes_1.FUND_SOURCES), required: true },
-    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    status: { type: String, enum: ['pending', 'approved', 'rejected', 'canceled'], default: 'pending' },
     reimbursementStatus: { type: String, enum: ['not_applicable', 'pending', 'reimbursed'], default: 'not_applicable' },
     receiptUrl: { type: String },
     receiptPublicId: { type: String },

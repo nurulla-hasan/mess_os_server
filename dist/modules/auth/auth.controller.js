@@ -33,17 +33,59 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.login = exports.register = void 0;
+exports.changePassword = exports.resetPassword = exports.verifyResetOtp = exports.forgotPassword = exports.logout = exports.refreshToken = exports.resendOtp = exports.verifyEmail = exports.login = exports.register = void 0;
 const asyncHandler_1 = require("../../shared/utils/asyncHandler");
 const apiResponse_1 = require("../../shared/utils/apiResponse");
 const authService = __importStar(require("./auth.service"));
+const config_1 = require("../../config");
+const REFRESH_COOKIE_NAME = 'refreshToken';
 exports.register = (0, asyncHandler_1.catchAsync)(async (req, res) => {
-    const result = await authService.registerUser(req.body);
-    (0, apiResponse_1.sendResponse)(res, { statusCode: 201, success: true, message: 'Account stably launched natively securely mapped', data: result });
+    const user = await authService.registerUser(req.body);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 201, success: true, message: 'User registered. Please check email for OTP.', data: user });
 });
 exports.login = (0, asyncHandler_1.catchAsync)(async (req, res) => {
-    const result = await authService.loginUser(req.body);
-    const { refreshToken, ...rest } = result;
-    res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
-    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Sessions reliably extracted gracefully tracked securely', data: rest });
+    const { user, accessToken, refreshToken } = await authService.loginUser(req.body);
+    res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
+        httpOnly: true,
+        secure: config_1.config.env === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Login successful', data: { user, accessToken } });
+});
+exports.verifyEmail = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    const user = await authService.verifyEmail(req.body.email, req.body.otp);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Email verified successfully', data: user });
+});
+exports.resendOtp = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    await authService.resendOtp(req.body.email);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'New OTP sent correctly' });
+});
+exports.refreshToken = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    const token = req.cookies[REFRESH_COOKIE_NAME];
+    if (!token) {
+        return (0, apiResponse_1.sendResponse)(res, { statusCode: 401, success: false, message: 'No refresh token provided specifically' });
+    }
+    const result = await authService.refreshToken(token);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Token rotated successfully', data: result });
+});
+exports.logout = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    res.clearCookie(REFRESH_COOKIE_NAME);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Logout successful' });
+});
+exports.forgotPassword = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    await authService.forgotPassword(req.body.email);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Password reset OTP sent natively' });
+});
+exports.verifyResetOtp = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    await authService.verifyResetOtp(req.body.email, req.body.otp);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Reset OTP verified. You may proceed to reset password.' });
+});
+exports.resetPassword = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    await authService.resetPassword(req.body);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Password reset successfully' });
+});
+exports.changePassword = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    await authService.changePassword(req.user.userId, req.body.oldPassword, req.body.newPassword);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Password updated successfully' });
 });

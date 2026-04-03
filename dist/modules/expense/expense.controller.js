@@ -33,23 +33,53 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.reimburseExpense = exports.approveExpense = exports.getExpenses = exports.createExpense = void 0;
+exports.cancelExpense = exports.reimburseExpense = exports.rejectExpense = exports.approveExpense = exports.getExpenseById = exports.getExpenses = exports.createExpense = void 0;
 const asyncHandler_1 = require("../../shared/utils/asyncHandler");
 const apiResponse_1 = require("../../shared/utils/apiResponse");
+const apiError_1 = require("../../shared/utils/apiError");
 const expenseService = __importStar(require("./expense.service"));
 exports.createExpense = (0, asyncHandler_1.catchAsync)(async (req, res) => {
-    const result = await expenseService.createExpense(req.messId, req.body);
-    (0, apiResponse_1.sendResponse)(res, { statusCode: 201, success: true, message: 'Expense submitted', data: result });
+    const messId = req.messId;
+    const body = req.body;
+    const actor = req.messMember;
+    if (body.paidBy && body.paidBy !== actor.id.toString()) {
+        if (actor.messRole !== 'manager') {
+            throw new apiError_1.AppError(403, 'Unauthorized to submit expenses for other members directly');
+        }
+    }
+    else {
+        body.paidBy = actor.id.toString();
+    }
+    const result = await expenseService.createExpense(messId, body);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 201, success: true, message: 'Expense record created reliably', data: result });
 });
 exports.getExpenses = (0, asyncHandler_1.catchAsync)(async (req, res) => {
-    const result = await expenseService.getExpenses(req.messId);
-    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Expenses retrieved', data: result });
+    const result = await expenseService.getExpenses(req.messId, req.query);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Expenses extracted', data: result });
+});
+exports.getExpenseById = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    const result = await expenseService.getExpenseById(req.messId, String(req.params.expenseId));
+    // Safety check: Manager or Owner only
+    const actor = req.messMember;
+    if (actor.messRole !== 'manager' && result.paidBy.toString() !== actor.id.toString()) {
+        throw new apiError_1.AppError(403, 'Unauthorized to view this specific expense record');
+    }
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Expense record uniquely isolated', data: result });
 });
 exports.approveExpense = (0, asyncHandler_1.catchAsync)(async (req, res) => {
     const result = await expenseService.approveExpense(req.messId, String(req.params.expenseId), req.user.userId);
-    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Expense approved', data: result });
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Expense approved and ledgered correctly', data: result });
+});
+exports.rejectExpense = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    const result = await expenseService.rejectExpense(req.messId, String(req.params.expenseId), req.user.userId);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Expense record rejected by manager', data: result });
 });
 exports.reimburseExpense = (0, asyncHandler_1.catchAsync)(async (req, res) => {
     const result = await expenseService.reimburseExpense(req.messId, String(req.params.expenseId), req.user.userId);
-    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Expense reimbursed', data: result });
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Personal expense reimbursed from mess cash correctly', data: result });
+});
+exports.cancelExpense = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    const actor = req.messMember;
+    const result = await expenseService.cancelExpense(req.messId, String(req.params.expenseId), actor.id.toString(), actor.messRole);
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Pending expense record canceled successfully', data: result });
 });

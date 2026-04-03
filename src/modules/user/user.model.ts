@@ -9,6 +9,10 @@ export interface IUser extends Document {
   isPhoneVerified: boolean;
   status: 'active' | 'blocked';
   globalRole: 'user' | 'super_admin';
+  verificationOtp?: string;
+  verificationOtpExpiresAt?: Date;
+  resetPasswordOtp?: string;
+  resetPasswordOtpExpiresAt?: Date;
 }
 
 const userSchema = new Schema<IUser>({
@@ -19,7 +23,11 @@ const userSchema = new Schema<IUser>({
   isEmailVerified: { type: Boolean, default: false },
   isPhoneVerified: { type: Boolean, default: false },
   status: { type: String, enum: ['active', 'blocked'], default: 'active' },
-  globalRole: { type: String, enum: ['user', 'super_admin'], default: 'user' }
+  globalRole: { type: String, enum: ['user', 'super_admin'], default: 'user' },
+  verificationOtp: String,
+  verificationOtpExpiresAt: Date,
+  resetPasswordOtp: String,
+  resetPasswordOtpExpiresAt: Date
 }, {
   timestamps: true,
   versionKey: false,

@@ -14,7 +14,7 @@ const apiError_1 = require("../../shared/utils/apiError");
 const json2csv_1 = require("json2csv");
 const mongoose_1 = __importDefault(require("mongoose"));
 const getMessSummary = async (messId) => {
-    const cashLedgers = await cash_ledger_model_1.CashLedger.find({ messId, isVoided: false });
+    const cashLedgers = await cash_ledger_model_1.CashLedger.find({ messId: new mongoose_1.default.Types.ObjectId(messId), isVoided: false });
     const totalMessCash = cashLedgers.reduce((sum, l) => sum + (l.type === 'IN' ? l.amount : -l.amount), 0);
     const pendingExpenses = await expense_model_1.Expense.countDocuments({ messId, status: 'pending' });
     const pendingPayments = await payment_model_1.Payment.countDocuments({ messId, status: 'pending' });
@@ -40,7 +40,7 @@ const getMemberStatement = async (messId, memberId) => {
 };
 exports.getMemberStatement = getMemberStatement;
 const getExpenseReport = async (messId, start, end) => {
-    const query = { messId };
+    const query = { messId, status: 'approved' };
     if (start && end) {
         query.date = { $gte: new Date(start), $lte: new Date(end) };
     }
@@ -48,19 +48,24 @@ const getExpenseReport = async (messId, start, end) => {
 };
 exports.getExpenseReport = getExpenseReport;
 const getPaymentReport = async (messId, start, end) => {
-    const query = { messId };
+    const query = { messId, status: 'approved' };
     if (start && end) {
-        query.date = { $gte: new Date(start), $lte: new Date(end) };
+        // Approved financial reporting uses receivedDate as the canonical accounting boundary natively
+        query.receivedDate = { $gte: new Date(start), $lte: new Date(end) };
     }
-    return await payment_model_1.Payment.find(query).sort({ date: -1 });
+    return await payment_model_1.Payment.find(query).sort({ receivedDate: -1 });
 };
 exports.getPaymentReport = getPaymentReport;
 const exportCsvReport = async (messId, type) => {
     let data;
-    if (type === 'expenses')
-        data = await expense_model_1.Expense.find({ messId, status: 'approved' }).lean();
-    else
-        data = await payment_model_1.Payment.find({ messId, status: 'approved' }).lean();
+    if (type === 'expenses') {
+        data = await expense_model_1.Expense.find({ messId, status: 'approved' }).sort({ date: -1 }).lean();
+    }
+    else {
+        data = await payment_model_1.Payment.find({ messId, status: 'approved' }).sort({ receivedDate: -1 }).lean();
+    }
+    if (!data || data.length === 0)
+        throw new apiError_1.AppError(404, 'No approved records found to export natively');
     return await (0, json2csv_1.parseAsync)(data);
 };
 exports.exportCsvReport = exportCsvReport;

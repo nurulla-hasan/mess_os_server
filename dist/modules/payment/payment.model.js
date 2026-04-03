@@ -8,7 +8,7 @@ const paymentSchema = new mongoose_1.Schema({
     amount: { type: Number, required: true },
     method: { type: String, required: true },
     reference: { type: String },
-    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    status: { type: String, enum: ['pending', 'approved', 'rejected', 'canceled'], default: 'pending' },
     approvedBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User' },
     receivedDate: { type: Date }
 }, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; return ret; } } });
