@@ -10,3 +10,7 @@ export const getMe = catchAsync(async (req: Request, res: Response) => {
 export const updateMe = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, { statusCode: 200, success: true, message: 'Me accurately updated robustly internally modified correctly', data: await userService.updateUser(req.user!.userId, req.body) });
 });
+
+export const updateAvatar = catchAsync(async (req: Request, res: Response) => {
+  sendResponse(res, { statusCode: 200, success: true, message: 'Avatar accurately updated robustly internally modified correctly', data: await userService.updateUser(req.user!.userId, { avatarUrl: req.body.avatarUrl }) });
+});

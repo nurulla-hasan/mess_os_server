@@ -29,7 +29,7 @@ router.use(authenticate);
 
 router.post('/join', validateRequest(memberVal.requestJoinSchema), requestJoin);
 
-router.post('/', validateRequest(messVal.createMessSchema), messCtl.createMess);
+router.post('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.SUPER_ADMIN), validateRequest(messVal.createMessSchema), messCtl.createMess);
 
 router.use('/:messId', messContext);
 router.get('/:messId', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), messCtl.getMess);

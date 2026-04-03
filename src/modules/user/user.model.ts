@@ -5,10 +5,13 @@ export interface IUser extends Document {
   email: string;
   passwordHash: string;
   phone?: string;
+  address?: string;
+  bio?: string;
+  avatarUrl?: string;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   status: 'active' | 'blocked';
-  globalRole: 'user' | 'super_admin';
+  globalRole: 'user' | 'manager' | 'super_admin';
   verificationOtp?: string;
   verificationOtpExpiresAt?: Date;
   resetPasswordOtp?: string;
@@ -22,10 +25,13 @@ const userSchema = new Schema<IUser>({
   email: { type: String, required: true, unique: true },
   passwordHash: { type: String, required: true, select: false },
   phone: { type: String },
+  address: { type: String },
+  bio: { type: String },
+  avatarUrl: { type: String },
   isEmailVerified: { type: Boolean, default: false },
   isPhoneVerified: { type: Boolean, default: false },
   status: { type: String, enum: ['active', 'blocked'], default: 'active' },
-  globalRole: { type: String, enum: ['user', 'super_admin'], default: 'user' },
+  globalRole: { type: String, enum: ['user', 'manager', 'super_admin'], default: 'user' },
   verificationOtp: { type: String, select: false },
   verificationOtpExpiresAt: { type: Date, select: false },
   resetPasswordOtp: { type: String, select: false },

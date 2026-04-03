@@ -208,10 +208,23 @@
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Updated Name\",\n  \"phone\": \"01800000000\"\n}"
+              "raw": "{\n  \"fullName\": \"Updated Name\",\n  \"phone\": \"01800000000\",\n  \"address\": \"Dhaka, Bangladesh\",\n  \"bio\": \"Software developer and mess enthusiast\"\n}"
             },
             "url": "{{baseUrl}}/api/v1/users/me",
-            "description": "Role: Auth. Body: { fullName (string, optional), phone (string, optional) }"
+            "description": "Role: Auth. Body: { fullName (string, optional), phone (string, optional), address (string, optional), bio (string, max 500 chars, optional) }"
+          }
+        },
+        {
+          "name": "Update Avatar (Auth)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"avatarUrl\": \"https://example.com/avatar.jpg\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/users/me/avatar",
+            "description": "Role: Auth. Updates user avatar/profile picture. Body: { avatarUrl (string, URL, required) }"
           }
         }
       ]
@@ -221,7 +234,7 @@
       "description": "Mess management. Create, join, update mess. All routes require authentication. Routes under /:messId require mess membership (Manager or Member).",
       "item": [
         {
-          "name": "Create Mess (Auth)",
+          "name": "Create Mess (Manager/Super Admin)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -230,7 +243,7 @@
               "raw": "{\n  \"name\": \"My Mess\",\n  \"address\": \"Dhaka\",\n  \"settings\": {}\n}"
             },
             "url": "{{baseUrl}}/api/v1/messes",
-            "description": "Role: Auth. Creates new mess and sets creator as manager. Body schema: any (placeholder validation)"
+            "description": "Role: Manager/Super Admin only. Creates new mess and sets creator as manager. Requires platform-level manager or super_admin role. Body schema: any (placeholder validation)"
           }
         },
         {

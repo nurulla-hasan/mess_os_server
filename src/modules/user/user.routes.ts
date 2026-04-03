@@ -8,5 +8,6 @@ const router = Router();
 router.use(authenticate);
 router.get('/me', ctl.getMe);
 router.patch('/me', validateRequest(val.updateMeSchema), ctl.updateMe);
+router.patch('/me/avatar', validateRequest(val.updateAvatarSchema), ctl.updateAvatar);
 
 export const userRoutes = router;
