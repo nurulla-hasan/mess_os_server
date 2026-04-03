@@ -1,0 +1,156 @@
+{
+  "info": {
+    "name": "Mess Manager OS API V1 (Complete)",
+    "description": "Exhaustive collection covering all 18 modules.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        { "name": "Register", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/auth/register", "body": { "mode": "raw", "raw": "{\"fullName\":\"John Doe\",\"email\":\"john@example.com\",\"password\":\"strongpass\",\"phone\":\"+8801700000000\"}" } } },
+        { "name": "Login", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/auth/login", "body": { "mode": "raw", "raw": "{\"email\":\"john@example.com\",\"password\":\"strongpass\"}" } } }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        { "name": "Get Me", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/users/me" } },
+        { "name": "Update Profile", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/v1/users/update", "body": { "mode": "raw", "raw": "{\"fullName\":\"John Updated\"}" } } }
+      ]
+    },
+    {
+      "name": "Mess",
+      "item": [
+        { "name": "Create Mess", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes", "body": { "mode": "raw", "raw": "{\"name\":\"My Mess\", \"address\":\"Dhaka\"}" } } },
+        { "name": "Join Mess", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/join", "body": { "mode": "raw", "raw": "{\"inviteCode\":\"XYZ123\"}" } } },
+        { "name": "Get Specific", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/messes/:messId" } },
+        { "name": "Update Mess", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/v1/messes/:messId", "body": { "mode": "raw", "raw": "{\"name\":\"My New Mess\"}" } } },
+        { "name": "Transfer Ownership", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/transfer-ownership", "body": { "mode": "raw", "raw": "{\"newManagerId\":\"...\"}" } } },
+        { "name": "Regenerate Code", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/regenerate-invite-code" } }
+      ]
+    },
+    {
+      "name": "Members",
+      "item": [
+        { "name": "Get All", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/messes/:messId/members" } },
+        { "name": "Approve Member", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/members/:memberId/approve" } },
+        { "name": "Reject Member", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/members/:memberId/reject" } },
+        { "name": "Remove Member", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/members/:memberId/remove" } }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        { "name": "Add Payment", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/payments", "body": { "mode": "raw", "raw": "{\"messMemberId\":\"...\", \"amount\":1000, \"paymentMethod\":\"cash\"}" } } },
+        { "name": "Get All", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/messes/:messId/payments" } },
+        { "name": "Approve", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/payments/:paymentId/approve" } },
+        { "name": "Reject", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/payments/:paymentId/reject" } }
+      ]
+    },
+    {
+      "name": "Expenses",
+      "item": [
+        { "name": "Add Expense", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/expenses", "body": { "mode": "raw", "raw": "{\"category\":\"bazar\", \"amount\":500, \"date\":\"2024-01-01\", \"fundSource\":\"mess_cash\"}" } } },
+        { "name": "Get All", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/messes/:messId/expenses" } },
+        { "name": "Approve", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/expenses/:expenseId/approve" } },
+        { "name": "Reject", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/expenses/:expenseId/reject" } }
+      ]
+    },
+    {
+      "name": "Billing",
+      "item": [
+        { "name": "Preview", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/messes/:messId/billing/preview" } },
+        { "name": "Finalize", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/billing/finalize", "body": { "mode": "raw", "raw": "{\"month\":1, \"year\":2024}" } } },
+        { "name": "Get Cycles", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/messes/:messId/billing" } },
+        { "name": "Get Member Bill", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/messes/:messId/billing/:cycleId/members/:memberId" } }
+      ]
+    },
+    {
+      "name": "Meals",
+      "item": [
+        { "name": "Add Entry", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/meals", "body": { "mode": "raw", "raw": "{\"messMemberId\":\"...\", \"date\":\"2024-01-01\", \"count\":1}" } } },
+        { "name": "Get Meals", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/messes/:messId/meals" } }
+      ]
+    },
+    {
+      "name": "Meal Off Requests",
+      "item": [
+        { "name": "Create Request", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/meal-off-requests", "body": { "mode": "raw", "raw": "{\"startDate\":\"2024-01-01\", \"endDate\":\"2024-01-05\"}" } } },
+        { "name": "Approve", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/meal-off-requests/:requestId/approve" } }
+      ]
+    },
+    {
+      "name": "Utility Bills",
+      "item": [
+        { "name": "Create Bill", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/utility-bills", "body": { "mode": "raw", "raw": "{\"title\":\"Gas Bill\", \"amount\":1500, \"dueDate\":\"2024-01-15\"}" } } },
+        { "name": "Mark Paid", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/utility-bills/:billId/mark-paid" } }
+      ]
+    },
+    {
+      "name": "Market Schedules",
+      "item": [
+        { "name": "Create Schedule", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/market-schedules", "body": { "mode": "raw", "raw": "{\"assignedTo\":[\"...\"], \"targetDate\":\"2024-01-01\", \"estimatedBudget\":2000}" } } },
+        { "name": "Complete", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/market-schedules/:scheduleId/complete", "body": { "mode": "raw", "raw": "{\"actualSpent\":1800, \"fundSource\":\"mess_cash\"}" } } }
+      ]
+    },
+    {
+      "name": "Menu Plans",
+      "item": [
+        { "name": "Create Plan", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/menu-plans", "body": { "mode": "raw", "raw": "{\"date\":\"2024-01-01\", \"meals\":{\"breakfast\":\"Eggs\"}}" } } },
+        { "name": "Publish", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/menu-plans/:planId/publish" } }
+      ]
+    },
+    {
+      "name": "AI Shopping",
+      "item": [
+        { "name": "Generate", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/ai-shopping/generate", "body": { "mode": "raw", "raw": "{\"menuPlanId\":\"...\", \"targetDate\":\"2024-01-01\"}" } } },
+        { "name": "Convert", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/ai-shopping/:listId/convert", "body": { "mode": "raw", "raw": "{\"assignedTo\":[\"...\"], \"estimatedBudget\":5000}" } } }
+      ]
+    },
+    {
+      "name": "Notices",
+      "item": [
+        { "name": "Create Notice", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/notices", "body": { "mode": "raw", "raw": "{\"title\":\"Urgent\", \"content\":\"Pay bills.\"}" } } },
+        { "name": "Pin", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/notices/:noticeId/pin" } }
+      ]
+    },
+    {
+      "name": "Complaints",
+      "item": [
+        { "name": "Create Complaint", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/complaints", "body": { "mode": "raw", "raw": "{\"title\":\"Water\", \"description\":\"No water.\"}" } } },
+        { "name": "Resolve", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/complaints/:complaintId/resolve", "body": { "mode": "raw", "raw": "{\"resolvedNote\":\"Fixed.\"}" } } }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        { "name": "Summary", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/messes/:messId/reports/summary" } },
+        { "name": "Financials", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/messes/:messId/reports/financial?month=1&year=2024" } },
+        { "name": "Member Statement", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/messes/:messId/reports/members/:memberId" } },
+        { "name": "Expenses CSV", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/messes/:messId/reports/export/csv?type=expenses" } }
+      ]
+    },
+    {
+      "name": "Subscriptions",
+      "item": [
+        { "name": "Global Plans", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/subscriptions/plans" } },
+        { "name": "Start Trial", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/subscriptions/trial" } },
+        { "name": "Subscribe", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/subscriptions/subscribe", "body": { "mode": "raw", "raw": "{\"planId\":\"pro_monthly\", \"paymentToken\":\"success_tok\"}" } } },
+        { "name": "Cancel", "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/messes/:messId/subscriptions/cancel" } },
+        { "name": "Get History", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/messes/:messId/subscriptions/history" } }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        { "name": "Users", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/admin/users?page=1&limit=20" } },
+        { "name": "Messes", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/admin/messes" } },
+        { "name": "Stats", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/admin/stats" } },
+        { "name": "Update Role", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/v1/admin/users/:userId/role", "body": { "mode": "raw", "raw": "{\"globalRole\":\"super_admin\"}" } } },
+        { "name": "Block User", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/v1/admin/users/:userId/block" } },
+        { "name": "Suspend Mess", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/v1/admin/messes/:messId/suspend" } }
+      ]
+    }
+  ]
+}
