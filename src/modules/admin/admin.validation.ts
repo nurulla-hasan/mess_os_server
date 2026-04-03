@@ -12,6 +12,18 @@ export const updateRoleSchema = z.object({
   }).strict()
 });
 
+export const blockUserSchema = z.object({
+  params: z.object({
+    userId: oId
+  })
+});
+
+export const suspendMessSchema = z.object({
+  params: z.object({
+    messId: oId
+  })
+});
+
 export const paginationSchema = z.object({
   query: z.object({
     page: z.string().regex(/^\d+$/).optional(),

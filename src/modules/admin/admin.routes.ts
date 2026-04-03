@@ -21,7 +21,7 @@ router.get('/messes', validateRequest(val.paginationSchema), ctl.getAllMesses);
 router.get('/stats', ctl.getStats);
 
 router.patch('/users/:userId/role', validateRequest(val.updateRoleSchema), ctl.updateUserRole);
-router.patch('/users/:userId/block', ctl.blockUser);
-router.patch('/messes/:messId/suspend', ctl.suspendMess);
+router.patch('/users/:userId/block', validateRequest(val.blockUserSchema), ctl.blockUser);
+router.patch('/messes/:messId/suspend', validateRequest(val.suspendMessSchema), ctl.suspendMess);
 
 export const adminRoutes = router;

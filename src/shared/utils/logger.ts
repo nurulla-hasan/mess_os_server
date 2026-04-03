@@ -9,3 +9,15 @@ export const authLogger = {
     console.error(`[AUTH][ERROR][${new Date().toISOString()}] ${event}`, error?.message || error, JSON.stringify(meta));
   }
 };
+
+export const logger = {
+  info: (event: string, meta: object = {}) => {
+    console.log(`[INFO][${new Date().toISOString()}] ${event}`, JSON.stringify(meta));
+  },
+  warn: (event: string, meta: object = {}) => {
+    console.warn(`[WARN][${new Date().toISOString()}] ${event}`, JSON.stringify(meta));
+  },
+  error: (event: string, error: any, meta: object = {}) => {
+    console.error(`[ERROR][${new Date().toISOString()}] ${event}`, error?.message || error, JSON.stringify(meta));
+  }
+};

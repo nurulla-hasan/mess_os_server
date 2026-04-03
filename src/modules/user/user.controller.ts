@@ -3,6 +3,7 @@ import { catchAsync } from '../../shared/utils/asyncHandler';
 import { sendResponse } from '../../shared/utils/apiResponse';
 import * as userService from './user.service';
 import { uploadToCloudinary, deleteFromCloudinary } from '../../shared/services/cloudinaryUpload';
+import { logger } from '../../shared/utils/logger';
 
 export const getMe = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, { statusCode: 200, success: true, message: 'Me extracted securely correctly validated consistently', data: await userService.getUser(req.user!.userId) });
@@ -25,8 +26,8 @@ export const updateAvatar = catchAsync(async (req: Request, res: Response) => {
   if (user.avatarPublicId) {
     try {
       await deleteFromCloudinary(user.avatarPublicId);
-    } catch {
-      // Silent fail - old avatar deletion is not critical
+    } catch (err) {
+      logger.warn('Failed to delete old avatar from Cloudinary', { publicId: user.avatarPublicId, error: err });
     }
   }
   
