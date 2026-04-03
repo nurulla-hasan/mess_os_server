@@ -3,6 +3,7 @@ import { catchAsync } from '../../shared/utils/asyncHandler';
 import { sendResponse } from '../../shared/utils/apiResponse';
 import * as authService from './auth.service';
 import { config } from '../../config';
+import { authLogger } from '../../shared/utils/logger';
 
 const REFRESH_COOKIE_NAME = 'refreshToken';
 
@@ -17,8 +18,8 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
     httpOnly: true,
     secure: config.env === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    sameSite: config.env === 'production' ? 'strict' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000 
   });
 
   sendResponse(res, { statusCode: 200, success: true, message: 'Login successful', data: { user, accessToken } });
@@ -37,13 +38,25 @@ export const resendOtp = catchAsync(async (req: Request, res: Response) => {
 export const refreshToken = catchAsync(async (req: Request, res: Response) => {
     const token = req.cookies[REFRESH_COOKIE_NAME];
     if (!token) {
-        return sendResponse(res, { statusCode: 401, success: false, message: 'No refresh token provided specifically' });
+        return sendResponse(res, { statusCode: 401, success: false, message: 'No refresh token provided' });
     }
-    const result = await authService.refreshToken(token);
-    sendResponse(res, { statusCode: 200, success: true, message: 'Token rotated successfully', data: result });
+    const { accessToken, refreshToken: newRefreshToken } = await authService.refreshToken(token);
+    
+    // Rotation: Update cookie
+    res.cookie(REFRESH_COOKIE_NAME, newRefreshToken, {
+      httpOnly: true,
+      secure: config.env === 'production',
+      sameSite: config.env === 'production' ? 'strict' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 
+    });
+
+    sendResponse(res, { statusCode: 200, success: true, message: 'Token rotated', data: { accessToken } });
 });
 
 export const logout = catchAsync(async (req: Request, res: Response) => {
+    if (req.user) {
+        await authService.logout(req.user.userId);
+    }
     res.clearCookie(REFRESH_COOKIE_NAME);
     sendResponse(res, { statusCode: 200, success: true, message: 'Logout successful' });
 });

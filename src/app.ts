@@ -6,12 +6,17 @@ import cookieParser from 'cookie-parser';
 import { globalErrorHandler } from './shared/middlewares/errorHandler';
 import { v1Routes } from './routes/v1';
 import { AppError } from './shared/utils/apiError';
+import { config } from './config';
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: config.clientUrl,
+  credentials: true
+}));
+
 app.use(helmet());
-app.use(morgan('dev'));
+app.use(morgan(config.env === 'production' ? 'combined' : 'dev'));
 app.use(express.json());
 app.use(cookieParser());
 

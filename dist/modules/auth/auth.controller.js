@@ -48,8 +48,8 @@ exports.login = (0, asyncHandler_1.catchAsync)(async (req, res) => {
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
         httpOnly: true,
         secure: config_1.config.env === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        sameSite: config_1.config.env === 'production' ? 'strict' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000
     });
     (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Login successful', data: { user, accessToken } });
 });
@@ -64,12 +64,22 @@ exports.resendOtp = (0, asyncHandler_1.catchAsync)(async (req, res) => {
 exports.refreshToken = (0, asyncHandler_1.catchAsync)(async (req, res) => {
     const token = req.cookies[REFRESH_COOKIE_NAME];
     if (!token) {
-        return (0, apiResponse_1.sendResponse)(res, { statusCode: 401, success: false, message: 'No refresh token provided specifically' });
+        return (0, apiResponse_1.sendResponse)(res, { statusCode: 401, success: false, message: 'No refresh token provided' });
     }
-    const result = await authService.refreshToken(token);
-    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Token rotated successfully', data: result });
+    const { accessToken, refreshToken: newRefreshToken } = await authService.refreshToken(token);
+    // Rotation: Update cookie
+    res.cookie(REFRESH_COOKIE_NAME, newRefreshToken, {
+        httpOnly: true,
+        secure: config_1.config.env === 'production',
+        sameSite: config_1.config.env === 'production' ? 'strict' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+    (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Token rotated', data: { accessToken } });
 });
 exports.logout = (0, asyncHandler_1.catchAsync)(async (req, res) => {
+    if (req.user) {
+        await authService.logout(req.user.userId);
+    }
     res.clearCookie(REFRESH_COOKIE_NAME);
     (0, apiResponse_1.sendResponse)(res, { statusCode: 200, success: true, message: 'Logout successful' });
 });

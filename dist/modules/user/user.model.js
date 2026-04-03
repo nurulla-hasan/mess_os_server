@@ -11,13 +11,24 @@ const userSchema = new mongoose_1.Schema({
     isPhoneVerified: { type: Boolean, default: false },
     status: { type: String, enum: ['active', 'blocked'], default: 'active' },
     globalRole: { type: String, enum: ['user', 'super_admin'], default: 'user' },
-    verificationOtp: String,
-    verificationOtpExpiresAt: Date,
-    resetPasswordOtp: String,
-    resetPasswordOtpExpiresAt: Date
+    verificationOtp: { type: String, select: false },
+    verificationOtpExpiresAt: { type: Date, select: false },
+    resetPasswordOtp: { type: String, select: false },
+    resetPasswordOtpExpiresAt: { type: Date, select: false },
+    lastOtpSentAt: Date,
+    refreshTokenHash: { type: String, select: false }
 }, {
     timestamps: true,
     versionKey: false,
-    toJSON: { transform: (_, ret) => { ret.id = ret._id; delete ret._id; delete ret.passwordHash; return ret; } }
+    toJSON: {
+        transform: (_, ret) => {
+            ret.id = ret._id;
+            delete ret._id;
+            delete ret.passwordHash;
+            delete ret.verificationOtp;
+            delete ret.resetPasswordOtp;
+            return ret;
+        }
+    }
 });
 exports.User = (0, mongoose_1.model)('User', userSchema);

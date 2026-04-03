@@ -13,6 +13,8 @@ export interface IUser extends Document {
   verificationOtpExpiresAt?: Date;
   resetPasswordOtp?: string;
   resetPasswordOtpExpiresAt?: Date;
+  lastOtpSentAt?: Date;
+  refreshTokenHash?: string;
 }
 
 const userSchema = new Schema<IUser>({
@@ -24,14 +26,25 @@ const userSchema = new Schema<IUser>({
   isPhoneVerified: { type: Boolean, default: false },
   status: { type: String, enum: ['active', 'blocked'], default: 'active' },
   globalRole: { type: String, enum: ['user', 'super_admin'], default: 'user' },
-  verificationOtp: String,
-  verificationOtpExpiresAt: Date,
-  resetPasswordOtp: String,
-  resetPasswordOtpExpiresAt: Date
+  verificationOtp: { type: String, select: false },
+  verificationOtpExpiresAt: { type: Date, select: false },
+  resetPasswordOtp: { type: String, select: false },
+  resetPasswordOtpExpiresAt: { type: Date, select: false },
+  lastOtpSentAt: Date,
+  refreshTokenHash: { type: String, select: false }
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; delete (ret as any).passwordHash; return ret; } }
+  toJSON: { 
+    transform: (_, ret) => { 
+      ret.id = ret._id; 
+      delete (ret as any)._id; 
+      delete (ret as any).passwordHash; 
+      delete (ret as any).verificationOtp;
+      delete (ret as any).resetPasswordOtp;
+      return ret; 
+    } 
+  }
 });
 
 export const User = model<IUser>('User', userSchema);
