@@ -1,91 +1,136 @@
-# Mess Manager OS – API V1 Documentation (Exhaustive)
+# Mess Manager OS – API V1 Platform Specification (Exhaustive)
 
-All requests should be prefixed with `{{baseUrl}}/api/v1`.
+All requests should be prefixed with `{{baseUrl}}/api/v1`. 
+The system uses **JWT Authentication** via `Authorization: Bearer <accessToken>`.
+Refresh tokens are handled via **secure httpOnly cookies**.
 
-## Authentication
+---
 
-| Method | Endpoint | Auth Rule | Sample Body | Sample Query | Description |
-|--------|----------|-----------|-------------|--------------|-------------|
-| POST | `/auth/register` | Public | `{"fullName":"John Doe","email":"...","password":"...","phone":"..."}` | - | Initialize user account. |
-| POST | `/auth/login` | Public | `{"email":"...","password":"..."}` | - | Returns JWT `accessToken` & `refreshToken`. |
+## 1. Authentication Lifecycle
+| Method | Endpoint | Auth Rule | Description |
+|:---:|:---|:---:|:---|
+| POST | `/auth/register` | Public | Create account. |
+| POST | `/auth/login` | Public | Auth (sets Cookie). |
+| POST | `/auth/verify-email` | Public | Verify account via 6-digit OTP. |
+| POST | `/auth/resend-otp` | Public | Resend OTP (60s cooldown). |
+| POST | `/auth/refresh-token` | Public | Rotate session. |
+| POST | `/auth/logout` | Public | Invalidate session. |
+| POST | `/auth/forgot-password` | Public | Request reset. |
+| POST | `/auth/verify-reset-otp` | Public | Validate reset OTP. |
+| POST | `/auth/reset-password` | Public | Reset password. |
+| POST | `/auth/change-password` | Auth | Update password. |
 
-## User Profile
+---
 
-| Method | Endpoint | Auth Rule | Sample Body | Sample Query | Description |
-|--------|----------|-----------|-------------|--------------|-------------|
-| GET | `/users/me` | Authenticated | - | - | Retrieve own profile data. |
-| PATCH | `/users/update` | Authenticated | `{"fullName":"John Updated"}` | - | Update profile metadata. |
+## 2. User & Profile
+| Method | Endpoint | Auth | Description |
+|:---:|:---|:---:|:---|
+| GET | `/users/me` | Auth | Get profile. |
+| PATCH | `/users/me` | Auth | Update profile. |
 
-## Mess Core & Membership
+---
 
-| Method | Endpoint | Auth Rule | Sample Body | Sample Query | Description |
-|--------|----------|-----------|-------------|--------------|-------------|
-| POST | `/messes` | Authenticated | `{"name":"The Mess","address":"Dhaka"}` | - | Create new mess (becomes Manager). |
-| POST | `/messes/join` | Authenticated | `{"inviteCode":"..."}` | - | Submit join request to a mess. |
-| GET | `/messes/:messId` | Member/Manager | - | - | Mess metadata overview. |
-| PATCH | `/messes/:messId` | Manager | `{"name":"New Mess Name"}` | - | Update mess config. |
-| POST | `/messes/:messId/regenerate-invite-code` | Manager | - | - | Cycle invite code. |
-| POST | `/messes/:messId/transfer-ownership` | Manager | `{"newManagerId":"..."}` | - | Transfer mess ownership. |
-| GET | `/messes/:messId/members` | Member/Manager | - | - | List members/join requests. |
-| POST | `/messes/:messId/members/:memberId/approve` | Manager | - | - | Approve joining request. |
-| POST | `/messes/:messId/members/:memberId/reject` | Manager | - | - | Reject joining request. |
-| DELETE | `/messes/:messId/members/:memberId/remove` | Manager | - | - | Remove active member. |
+## 3. Mess Core
+| Method | Endpoint | Auth | Description |
+|:---:|:---|:---:|:---|
+| POST | `/messes` | Auth | Create mess. |
+| POST | `/messes/join` | Auth | Join request. |
+| GET | `/messes/:messId` | Member+ | Metadata. |
+| PATCH | `/messes/:messId` | Manager | Update mess. |
+| POST | `/messes/:messId/regenerate-invite-code` | Manager | Cycle code. |
+| POST | `/messes/:messId/transfer-ownership` | Manager | Transfer owner. |
 
-## Payments & Expenses
+---
 
-| Method | Endpoint | Auth Rule | Sample Body | Sample Query | Description |
-|--------|----------|-----------|-------------|--------------|-------------|
-| POST | `/messes/:messId/payments` | Member/Manager | `{"amount":1000,"method":"cash"}` | - | Submit payment (Actor bound). |
-| GET | `/messes/:messId/payments` | Member/Manager | - | `status=pending` | List mess payments. |
-| GET | `/messes/:messId/payments/me` | Member/Manager | - | - | Your own payment history. |
-| GET | `/messes/:messId/payments/:paymentId` | Owner/Manager | - | - | Individual payment detail. |
-| POST | `/messes/:messId/payments/:paymentId/approve` | Manager | - | - | Finalize and ledger payment. |
-| POST | `/messes/:messId/payments/:paymentId/reject` | Manager | - | - | Manager disapproval. |
-| POST | `/messes/:messId/payments/:paymentId/cancel` | Owner/Manager | - | - | Soft-delete (cancel) pending record. |
-| POST | `/messes/:messId/expenses` | Member/Manager | `{"amount":500,"category":"bazar","fundSource":"mess_cash"}` | - | Submit expense (Actor bound). |
-| GET | `/messes/:messId/expenses` | Member/Manager | - | - | Mess expense history. |
-| GET | `/messes/:messId/expenses/:expenseId` | Owner/Manager | - | - | Individual expense detail. |
-| POST | `/messes/:messId/expenses/:expenseId/approve` | Manager | - | - | Ledger expense and credit member. |
-| POST | `/messes/:messId/expenses/:expenseId/reject` | Manager | - | - | Manager disapproval. |
-| POST | `/messes/:messId/expenses/:expenseId/reimburse` | Manager | - | - | Liquidate personal cash expense. |
-| DELETE | `/messes/:messId/expenses/:expenseId` | Owner/Manager | - | - | Soft-delete (cancel) pending expense. |
+## 4. Membership Management
+| Method | Endpoint | Auth | Description |
+|:---:|:---|:---:|:---|
+| GET | `/messes/:messId/members` | Member+ | List members/requests. |
+| POST | `/messes/:messId/members/:memberId/approve` | Manager | Admit applicant. |
+| POST | `/messes/:messId/members/:memberId/reject` | Manager | Deny applicant. |
+| DELETE | `/messes/:messId/members/:memberId/remove` | Manager | Kick member. |
 
-## Billing & Finance
+---
 
-| Method | Endpoint | Auth Rule | Sample Body | Sample Query | Description |
-|--------|----------|-----------|-------------|--------------|-------------|
-| GET | `/messes/:messId/billing/preview` | Manager | - | - | Real-time calc preview. |
-| POST | `/messes/:messId/billing/finalize` | Manager | `{"month":3,"year":2024}` | - | Seal period & generate bills. |
-| GET | `/messes/:messId/billing` | Member/Manager | - | - | List finalized billing cycles. |
-| GET | `/messes/:messId/billing/:cycleId/members/:memberId` | Owner/Manager | - | - | Specific member bill detail. |
+## 5. Payments
+| Method | Endpoint | Auth | Description |
+|:---:|:---|:---:|:---|
+| POST | `/messes/:messId/payments` | Member+ | Submit payment. |
+| GET | `/messes/:messId/payments` | Member+ | List messy payments. |
+| GET | `/messes/:messId/payments/me` | Member+ | Own history. |
+| GET | `/messes/:messId/payments/:paymentId` | Owner/Mgr | Detail. |
+| POST | `/messes/:messId/payments/:paymentId/approve` | Manager | Ledger it. |
+| POST | `/messes/:messId/payments/:paymentId/cancel` | Owner/Mgr | Soft-cancel. |
 
-## Operations (Meals, Menus, Notice)
+---
 
-| Method | Endpoint | Auth Rule | Sample Body | Sample Query | Description |
-|--------|----------|-----------|-------------|--------------|-------------|
-| POST | `/messes/:messId/meals` | Manager/Member | `{"messMemberId":"...","date":"2024-03-24","count":1}` | - | Add meal entry. |
-| GET | `/messes/:messId/meals` | Member/Manager | - | `date=2024-03-24` | List meals. |
-| POST | `/messes/:messId/meal-off-requests` | Member/Manager | `{"startDate":"...","endDate":"..."}` | - | Apply for meal off. |
-| POST | `/messes/:messId/menu-plans` | Manager | `{"date":"...","meals":{...}}` | - | Set day menu. |
-| POST | `/messes/:messId/notices` | Manager | `{"title":"...","content":"..."}` | - | Post mess announcement. |
-| POST | `/messes/:messId/complaints` | Member/Manager | `{"title":"...","description":"..."}` | - | Submit mess complaint. |
-| POST | `/messes/:messId/ai-shopping/generate` | Manager | `{"menuPlanId":"..."}` | - | AI-assisted bazar list. |
+## 6. Expenses
+| Method | Endpoint | Auth | Description |
+|:---:|:---|:---:|:---|
+| POST | `/messes/:messId/expenses` | Member+ | Submit expense. |
+| GET | `/messes/:messId/expenses` | Member+ | History. |
+| GET | `/messes/:messId/expenses/:expenseId` | Owner/Mgr | Detail. |
+| POST | `/messes/:messId/expenses/:expenseId/approve` | Manager | Ledger it. |
+| POST | `/messes/:messId/expenses/:expenseId/cancel` | Owner/Mgr | Soft-cancel. |
+| POST | `/messes/:messId/expenses/:expenseId/reimburse` | Manager | Liquidate debt. |
 
-## Reports & Subscriptions
+---
 
-| Method | Endpoint | Auth Rule | Sample Body | Sample Query | Description |
-|--------|----------|-----------|-------------|--------------|-------------|
-| GET | `/messes/:messId/reports/summary` | Member/Manager | - | - | Real-time dash stats. |
-| GET | `/messes/:messId/reports/financial` | Member/Manager | - | `start=...&end=...` | Approved transaction audit. |
-| GET | `/messes/:messId/reports/export/csv` | Member/Manager | - | `type=expenses` | Download analytics CSV. |
-| GET | `/subscriptions/plans` | Public | - | - | Global pricing tiers. |
-| POST | `/messes/:messId/subscriptions/trial` | Manager | - | - | Activate 7-day trial. |
-| POST | `/messes/:messId/subscriptions/history` | Manager | - | - | Mess payment history audit. |
+## 7. Billing cycle
+| Method | Endpoint | Auth | Description |
+|:---:|:---|:---:|:---|
+| GET | `/messes/:messId/billing` | Member+ | View cycles. |
+| POST | `/messes/:messId/billing/preview` | Manager | Calc preview. |
+| POST | `/messes/:messId/billing/finalize` | Manager | Seal period. |
+| GET | `/messes/:messId/billing/:cycleId/members` | Member+ | Detailed bills. |
+| POST | `/messes/:messId/billing/:cycleId/reopen` | Manager | Unseal period. |
 
-## Platform Administration
+---
 
-| Method | Endpoint | Auth Rule | Sample Body | Sample Query | Description |
-|--------|----------|-----------|-------------|--------------|-------------|
-| GET | `/admin/users` | Super Admin | - | `page=1&limit=20` | Manage all platform users. |
-| GET | `/admin/stats` | Super Admin | - | - | Health/Usage metric overview. |
-| PATCH | `/admin/messes/:messId/suspend` | Super Admin | - | - | Platform-level suspension. |
+## 8. Meals & Management
+| Method | Endpoint | Auth | Description |
+|:---:|:---|:---:|:---|
+| GET | `/messes/:messId/meals` | Member+ | Consumption list. |
+| POST | `/messes/:messId/meals` | Manager | Log entry. |
+| GET | `/messes/:messId/meal-off-requests` | Member+ | Off requests. |
+| POST | `/messes/:messId/meal-off-requests` | Member+ | Apply off. |
+| POST | `/messes/:messId/meal-off-requests/:requestId/approve` | Manager | Approve off. |
+
+---
+
+## 9. Operation Sub-modules (Notice, Complaint, UI, etc.)
+| Method | Endpoint | Auth | Description |
+|:---:|:---|:---:|:---|
+| GET | `/messes/:messId/notices` | Member+ | List. |
+| POST | `/messes/:messId/notices` | Manager | Post. |
+| GET | `/messes/:messId/complaints` | Member+ | List. |
+| POST | `/messes/:messId/complaints` | Member+ | Submit. |
+| POST | `/messes/:messId/utility-bills` | Manager | Log bill. |
+| POST | `/messes/:messId/market-schedule` | Manager | Set duty. |
+| POST | `/messes/:messId/menu-plans` | Manager | Set menu. |
+| POST | `/messes/:messId/ai-shopping/generate` | Manager | AI bazar list. |
+
+---
+
+## 10. Reports
+| Method | Endpoint | Auth | Description |
+|:---:|:---|:---:|:---|
+| GET | `/messes/:messId/reports/summary` | Member+ | Dashboard stats. |
+| GET | `/messes/:messId/reports/financial` | Member+ | Audit trail. |
+
+---
+
+## 11. Subscriptions
+| Method | Endpoint | Auth | Description |
+|:---:|:---|:---:|:---|
+| GET | `/subscriptions/plans` | Public | Global tiers. |
+| POST | `/messes/:messId/subscriptions/trial` | Manager | Activate trial. |
+
+---
+
+## 12. Administration
+| Method | Endpoint | Auth | Description |
+|:---:|:---|:---:|:---|
+| GET | `/admin/users` | Admin | List all. |
+| GET | `/admin/messes` | Admin | List all. |
+| PATCH | `/admin/messes/:messId/suspend` | Admin | Block mess. |

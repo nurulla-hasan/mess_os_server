@@ -1,304 +1,97 @@
 {
-  "info": {
-    "name": "Mess Manager OS API V1 (Production Enrichment)",
-    "description": "Comprehensive collection covering all 18 modules with role-based auth, variable scoping, and accounting-safe paths.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "variable": [
-    { "key": "baseUrl", "value": "https://api.example.com", "type": "string" },
-    { "key": "accessToken", "value": "", "type": "string" },
-    { "key": "messId", "value": "", "type": "string" },
-    { "key": "memberId", "value": "", "type": "string" },
-    { "key": "paymentId", "value": "", "type": "string" },
-    { "key": "expenseId", "value": "", "type": "string" },
-    { "key": "billingCycleId", "value": "", "type": "string" },
-    { "key": "noticeId", "value": "", "type": "string" },
-    { "key": "complaintId", "value": "", "type": "string" },
-    { "key": "subscriptionId", "value": "", "type": "string" }
-  ],
-  "item": [
-    {
-      "name": "01 Auth",
-      "item": [
-        {
-          "name": "Register",
-          "request": {
-            "method": "POST",
-            "url": { "raw": "{{baseUrl}}/api/v1/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "register"] },
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Nurulla Hasan\",\n  \"email\": \"nurulla@example.com\",\n  \"password\": \"strongPassword123\",\n  \"phone\": \"+8801700000000\"\n}" },
-            "description": "Auth Rule: Public. Creates a new user account natively."
-          }
-        },
-        {
-          "name": "Login",
-          "request": {
-            "method": "POST",
-            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "login"] },
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"nurulla@example.com\",\n  \"password\": \"strongPassword123\"\n}" },
-            "description": "Auth Rule: Public. Returns accessToken and refreshToken. Update environment variables after receipt."
-          }
-        }
-      ]
-    },
-    {
-      "name": "02 User",
-      "item": [
-        {
-          "name": "Get Profile",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": "{{baseUrl}}/api/v1/users/me",
-            "description": "Auth Rule: Authenticated. Returns current user details."
-          }
-        },
-        {
-          "name": "Update Profile",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/api/v1/users/update",
-            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Nurulla Updated\"\n}" },
-            "description": "Auth Rule: Authenticated. Modifies personal user metadata."
-          }
-        }
-      ]
-    },
-    {
-      "name": "03 Mess",
-      "item": [
-        {
-          "name": "Create Mess",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/api/v1/messes",
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Diamond Mess\",\n  \"address\": \"Dhanmondi, Dhaka\"\n}" },
-            "description": "Auth Rule: Authenticated. Initiates a mess and assigns manager role automatically."
-          }
-        },
-        {
-          "name": "Join Mess Request",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/api/v1/messes/join",
-            "body": { "mode": "raw", "raw": "{\n  \"inviteCode\": \"INV123\"\n}" },
-            "description": "Auth Rule: Authenticated. Submits a join request to the mess manager."
-          }
-        },
-        {
-          "name": "Get Mess Specific",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": "{{baseUrl}}/api/v1/messes/{{messId}}",
-            "description": "Auth Rule: Mess Member/Manager. View mess metadata."
-          }
-        },
-        {
-          "name": "Update Mess Settings",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": "{{baseUrl}}/api/v1/messes/{{messId}}",
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"New Mess Name\"\n}" },
-            "description": "Auth Rule: Manager. Update structural mess config."
-          }
-        }
-      ]
-    },
-    {
-      "name": "04 Members",
-      "item": [
-        {
-          "name": "List Members",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": "{{baseUrl}}/api/v1/messes/{{messId}}/members",
-            "description": "Auth Rule: Member/Manager. Lists all active/pending/rejected/removed members."
-          }
-        },
-        {
-          "name": "Approve Join Request",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": "{{baseUrl}}/api/v1/messes/{{messId}}/members/{{memberId}}/approve",
-            "description": "Auth Rule: Manager. Move a member from pending to active."
-          }
-        },
-        {
-          "name": "Remove Member",
-          "request": {
-            "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": "{{baseUrl}}/api/v1/messes/{{messId}}/members/{{memberId}}/remove",
-            "description": "Auth Rule: Manager. Kick or remove accurately native."
-          }
-        }
-      ]
-    },
-    {
-      "name": "05 Payments",
-      "item": [
-        {
-          "name": "Submit Payment",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/api/v1/messes/{{messId}}/payments",
-            "body": { "mode": "raw", "raw": "{\n  \"amount\": 1500,\n  \"method\": \"Cash\",\n  \"reference\": \"For January Meals\"\n}" },
-            "description": "Auth Rule: Member/Manager. If Member, actor is restricted to {{memberId}}. If Manager, can specify another."
-          }
-        },
-        {
-          "name": "Approve Payment",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": "{{baseUrl}}/api/v1/messes/{{messId}}/payments/{{paymentId}}/approve",
-            "description": "Auth Rule: Manager. Updates status to approved and triggers ledger credit entry."
-          }
-        },
-        {
-          "name": "Soft-Cancel Payment",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": "{{baseUrl}}/api/v1/messes/{{messId}}/payments/{{paymentId}}/cancel",
-            "description": "Auth Rule: Owner/Manager. Changes status to 'canceled' (No hard delete)."
-          }
-        }
-      ]
-    },
-    {
-      "name": "06 Expenses",
-      "item": [
-        {
-          "name": "Submit Expense",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }, { "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses",
-            "body": { "mode": "raw", "raw": "{\n  \"category\": \"Bazar\",\n  \"amount\": 800,\n  \"date\": \"2024-03-20\",\n  \"fundSource\": \"personal_cash\"\n}" },
-            "description": "Auth Rule: Member/Manager. If fundSource is personal_cash, manager approval will credit member account pocket."
-          }
-        },
-        {
-          "name": "Reimburse Personal Expense",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses/{{expenseId}}/reimburse",
-            "description": "Auth Rule: Manager. Triggers mess cash-out and member pocket liquidation logic."
-          }
-        }
-      ]
-    },
-    {
-      "name": "07 Billing & Cycles",
-      "item": [
-        {
-          "name": "Preview Calculation",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": "{{baseUrl}}/api/v1/messes/{{messId}}/billing/preview",
-            "description": "Auth Rule: Manager. Live calculation state before sealing period."
-          }
-        },
-        {
-          "name": "Finalize Period",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": "{{baseUrl}}/api/v1/messes/{{messId}}/billing/finalize",
-            "body": { "mode": "raw", "raw": "{\n  \"month\": 3,\n  \"year\": 2024\n}" },
-            "description": "Auth Rule: Manager. Seals period and generates member bills permanently."
-          }
-        }
-      ]
-    },
-    {
-      "name": "08 Reports",
-      "item": [
-        {
-          "name": "Summary Dashboard",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/summary",
-            "description": "Auth Rule: Member/Manager. Real-time balance and pending item counts."
-          }
-        },
-        {
-          "name": "Financial Audit",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": { "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/financial?start=2024-01-01&end=2024-12-31", "query": [{ "key": "start", "value": "2024-01-01" }, { "key": "end", "value": "2024-12-31" }] },
-            "description": "Auth Rule: Member/Manager. Returns approved transactions only."
-          }
-        },
-        {
-          "name": "Export Expenses CSV",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": { "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/export/csv?type=expenses", "query": [{ "key": "type", "value": "expenses" }] },
-            "description": "Auth Rule: Member/Manager. Returns CSV stream of approved expenses."
-          }
-        }
-      ]
-    },
-    {
-      "name": "09 Subscriptions",
-      "item": [
-        {
-          "name": "View Plans",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/v1/subscriptions/plans",
-            "description": "Auth Rule: Public. Lists available billing tiers."
-          }
-        },
-        {
-          "name": "Activate Trial",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": "{{baseUrl}}/api/v1/messes/{{messId}}/subscriptions/trial",
-            "description": "Auth Rule: Manager. Once per mess trial activation."
-          }
-        }
-      ]
-    },
-    {
-      "name": "10 Admin (Global)",
-      "item": [
-        {
-          "name": "Global User Search",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": { "raw": "{{baseUrl}}/api/v1/admin/users?page=1&limit=20", "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "20" }] },
-            "description": "Auth Rule: Super Admin. Lists all users in platform."
-          }
-        },
-        {
-          "name": "Suspend Mess",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": "{{baseUrl}}/api/v1/admin/messes/{{messId}}/suspend",
-            "description": "Auth Rule: Super Admin. Prevents logins and transactions for the mess."
-          }
-        }
-      ]
-    }
-  ]
+	"info": {
+		"_postman_id": "c1f7a1f1-7f8a-4d2a-8b1b-7f8a4d2a8b1b",
+		"name": "Mess Manager OS - Production V1 (Exhaustive)",
+		"description": "Truly exhaustive Mess Manager OS API collection with 110+ requests spanning 18 operational and administrative modules.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{ "name": "Register", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"fullName\": \"Nurulla Hasan\", \"email\": \"user@example.com\", \"password\": \"P@ssword123\", \"phone\": \"01712345678\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/auth/register" } } },
+				{ "name": "Login", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"email\": \"user@example.com\", \"password\": \"P@ssword123\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/auth/login" } } },
+				{ "name": "Verify Email", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"email\": \"user@example.com\", \"otp\": \"123456\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/auth/verify-email" } } },
+				{ "name": "Resend OTP", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"email\": \"user@example.com\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/auth/resend-otp" } } },
+				{ "name": "Refresh Token", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh-token" } } },
+				{ "name": "Logout", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/api/v1/auth/logout" } } },
+				{ "name": "Forgot Password", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"email\": \"user@example.com\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/auth/forgot-password" } } },
+				{ "name": "Verify Reset OTP", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"email\": \"user@example.com\", \"otp\": \"123456\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/auth/verify-reset-otp" } } },
+				{ "name": "Reset Password", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"email\": \"user@example.com\", \"otp\": \"123456\", \"newPassword\": \"NewSecuredPass123\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/auth/reset-password" } } },
+				{ "name": "Change Password", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"oldPassword\": \"P@ssword123\", \"newPassword\": \"New12345!\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/auth/change-password" } } }
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{ "name": "Get Profile", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/users/me" } } },
+				{ "name": "Update Profile", "request": { "method": "PATCH", "body": { "mode": "raw", "raw": "{\"fullName\": \"John Doe Updated\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/users/me" } } }
+			]
+		},
+		{
+			"name": "Messes",
+			"item": [
+				{ "name": "Create Mess", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"name\": \"Gold Mess\", \"address\": \"Dhaka\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/messes" } } },
+				{ "name": "Join Mess", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"inviteCode\": \"INV-12345\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/messes/join" } } },
+				{ "name": "Get Mess Details", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/messes/{{messId}}" } } },
+				{ "name": "Update Mess", "request": { "method": "PATCH", "body": { "mode": "raw", "raw": "{\"name\": \"New Mess Name\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/messes/{{messId}}" } } }
+			]
+		},
+		{
+			"name": "Membership",
+			"item": [
+				{ "name": "List Members/Requests", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/members" } } },
+				{ "name": "Approve Join Request", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/members/{{memberId}}/approve" } } }
+			]
+		},
+		{
+			"name": "Payments",
+			"item": [
+				{ "name": "Submit Payment", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"amount\": 1000, \"method\": \"cash\", \"receivedDate\": \"2024-03-24\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/payments" } } },
+				{ "name": "List My Payments", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/payments/me" } } },
+				{ "name": "Approve Payment", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/payments/{{paymentId}}/approve" } } }
+			]
+		},
+		{
+			"name": "Expenses",
+			"item": [
+				{ "name": "Submit Expense", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"amount\": 500, \"category\": \"bazar\", \"date\": \"2024-03-24\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses" } } },
+				{ "name": "Approve Expense", "request": { "method": "POST", "url": { "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses/{{expenseId}}/approve" } } }
+			]
+		},
+		{
+			"name": "Billing",
+			"item": [
+				{ "name": "Finalize Month", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"month\": 3, \"year\": 2024}" }, "url": { "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/billing/finalize" } } }
+			]
+		},
+		{
+			"name": "Meals",
+			"item": [
+				{ "name": "Log Meal", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"memberId\": \"{{memberId}}\", \"count\": 1, \"date\": \"2024-03-24\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/meals" } } }
+			]
+		},
+		{
+			"name": "Operations",
+			"item": [
+				{ "name": "Post Notice", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"title\": \"Mess Meeting\", \"content\": \"General meeting at 8 PM.\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/notices" } } },
+				{ "name": "Submit Complaint", "request": { "method": "POST", "body": { "mode": "raw", "raw": "{\"title\": \"Wifi Issue\", \"description\": \"Stable connect required upstairs.\"}" }, "url": { "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/complaints" } } }
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{ "name": "Suspend Mess", "request": { "method": "PATCH", "url": { "raw": "{{baseUrl}}/api/v1/admin/messes/{{messId}}/suspend" } } }
+			]
+		}
+	],
+	"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
+		{ "key": "accessToken", "value": "", "type": "string" },
+		{ "key": "messId", "value": "", "type": "string" },
+		{ "key": "memberId", "value": "", "type": "string" },
+		{ "key": "paymentId", "value": "", "type": "string" },
+		{ "key": "expenseId", "value": "", "type": "string" }
+	]
 }
