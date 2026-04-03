@@ -9,7 +9,11 @@ const router = Router({ mergeParams: true });
 
 router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.getExpenses);
 router.post('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.createExpenseSchema), ctl.createExpense);
-router.post('/:expenseId/approve', authorize(MESS_ROLES.MANAGER), validateRequest(val.expenseIdParamSchema), ctl.approveExpense);
-router.post('/:expenseId/reimburse', authorize(MESS_ROLES.MANAGER), validateRequest(val.expenseIdParamSchema), ctl.reimburseExpense);
+
+router.get('/:expenseId', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.getExpenseById);
+router.post('/:expenseId/approve', authorize(MESS_ROLES.MANAGER), ctl.approveExpense);
+router.post('/:expenseId/reject', authorize(MESS_ROLES.MANAGER), ctl.rejectExpense);
+router.post('/:expenseId/reimburse', authorize(MESS_ROLES.MANAGER), ctl.reimburseExpense);
+router.delete('/:expenseId', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.deleteExpense);
 
 export const expenseRoutes = router;

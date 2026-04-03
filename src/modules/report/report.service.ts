@@ -48,15 +48,21 @@ export const getExpenseReport = async (messId: string, start?: string, end?: str
 export const getPaymentReport = async (messId: string, start?: string, end?: string) => {
    const query: any = { messId };
    if (start && end) {
-       query.date = { $gte: new Date(start), $lte: new Date(end) };
+       // Corrected path: Payment model uses createdAt as primary time boundary for reports consistently
+       query.createdAt = { $gte: new Date(start), $lte: new Date(end) };
    }
-   return await Payment.find(query).sort({ date: -1 });
+   return await Payment.find(query).sort({ createdAt: -1 });
 };
 
 export const exportCsvReport = async (messId: string, type: 'expenses'|'payments') => {
    let data: object[];
-   if (type === 'expenses') data = await Expense.find({ messId, status: 'approved' }).lean() as object[];
-   else data = await Payment.find({ messId, status: 'approved' }).lean() as object[];
+   if (type === 'expenses') {
+       data = await Expense.find({ messId, status: 'approved' }).sort({ date: -1 }).lean() as object[];
+   } else {
+       data = await Payment.find({ messId, status: 'approved' }).sort({ createdAt: -1 }).lean() as object[];
+   }
+   
+   if (!data || data.length === 0) throw new AppError(404, 'No approved records found to export natively');
    
    return await parseAsync(data);
 };
