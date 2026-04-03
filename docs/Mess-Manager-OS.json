@@ -46,7 +46,7 @@
       "description": "Authentication endpoints. Public routes require no auth. Change password requires authentication.",
       "item": [
         {
-          "name": "Register",
+          "name": "Register (Public)",
           "request": {
             "auth": { "type": "noauth" },
             "method": "POST",
@@ -60,7 +60,7 @@
           }
         },
         {
-          "name": "Login (Saves accessToken)",
+          "name": "Login (Public)",
           "event": [
             {
               "listen": "test",
@@ -86,7 +86,7 @@
           }
         },
         {
-          "name": "Verify Email",
+          "name": "Verify Email (Public)",
           "request": {
             "auth": { "type": "noauth" },
             "method": "POST",
@@ -100,7 +100,7 @@
           }
         },
         {
-          "name": "Resend OTP",
+          "name": "Resend OTP (Public)",
           "request": {
             "auth": { "type": "noauth" },
             "method": "POST",
@@ -114,7 +114,7 @@
           }
         },
         {
-          "name": "Refresh Token",
+          "name": "Refresh Token (Public)",
           "request": {
             "auth": { "type": "noauth" },
             "method": "POST",
@@ -124,7 +124,7 @@
           }
         },
         {
-          "name": "Logout",
+          "name": "Logout (Public)",
           "request": {
             "auth": { "type": "noauth" },
             "method": "POST",
@@ -133,7 +133,7 @@
           }
         },
         {
-          "name": "Forgot Password",
+          "name": "Forgot Password (Public)",
           "request": {
             "auth": { "type": "noauth" },
             "method": "POST",
@@ -147,7 +147,7 @@
           }
         },
         {
-          "name": "Verify Reset OTP",
+          "name": "Verify Reset OTP (Public)",
           "request": {
             "auth": { "type": "noauth" },
             "method": "POST",
@@ -161,7 +161,7 @@
           }
         },
         {
-          "name": "Reset Password",
+          "name": "Reset Password (Public)",
           "request": {
             "auth": { "type": "noauth" },
             "method": "POST",
@@ -175,7 +175,7 @@
           }
         },
         {
-          "name": "Change Password",
+          "name": "Change Password (Auth)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -194,7 +194,7 @@
       "description": "User profile management. All routes require authentication.",
       "item": [
         {
-          "name": "Get Me",
+          "name": "Get Me (Auth)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/users/me",
@@ -202,7 +202,7 @@
           }
         },
         {
-          "name": "Update Me",
+          "name": "Update Me (Auth)",
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -221,7 +221,7 @@
       "description": "Mess management. Create, join, update mess. All routes require authentication. Routes under /:messId require mess membership (Manager or Member).",
       "item": [
         {
-          "name": "Create Mess",
+          "name": "Create Mess (Auth)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -234,7 +234,7 @@
           }
         },
         {
-          "name": "Join Mess (Request)",
+          "name": "Join Mess (Auth)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -247,7 +247,7 @@
           }
         },
         {
-          "name": "Get Mess",
+          "name": "Get Mess (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}",
@@ -255,7 +255,7 @@
           }
         },
         {
-          "name": "Update Mess",
+          "name": "Update Mess (Manager)",
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -268,7 +268,7 @@
           }
         },
         {
-          "name": "Regenerate Invite Code",
+          "name": "Regenerate Invite Code (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/regenerate-invite-code",
@@ -276,7 +276,7 @@
           }
         },
         {
-          "name": "Transfer Ownership",
+          "name": "Transfer Ownership (Manager)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -295,7 +295,7 @@
       "description": "Member management within a mess. Note: These routes don't explicitly enforce manager role in route file - parent mess context applies.",
       "item": [
         {
-          "name": "Get Members",
+          "name": "Get Members (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/members",
@@ -303,7 +303,7 @@
           }
         },
         {
-          "name": "Approve Member",
+          "name": "Approve Member (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/members/{{memberId}}/approve",
@@ -311,7 +311,7 @@
           }
         },
         {
-          "name": "Reject Member",
+          "name": "Reject Member (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/members/{{memberId}}/reject",
@@ -319,7 +319,7 @@
           }
         },
         {
-          "name": "Remove Member",
+          "name": "Remove Member (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/members/{{memberId}}/remove",
@@ -333,7 +333,7 @@
       "description": "Payment management. Members can create payments, managers can approve/reject.",
       "item": [
         {
-          "name": "List Payments",
+          "name": "List Payments (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/payments",
@@ -341,7 +341,7 @@
           }
         },
         {
-          "name": "Create Payment",
+          "name": "Create Payment (Member+)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -354,7 +354,7 @@
           }
         },
         {
-          "name": "Get My Payments",
+          "name": "Get My Payments (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/payments/me",
@@ -362,7 +362,7 @@
           }
         },
         {
-          "name": "Get Payment By Id",
+          "name": "Get Payment By Id (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/payments/{{paymentId}}",
@@ -370,7 +370,7 @@
           }
         },
         {
-          "name": "Approve Payment",
+          "name": "Approve Payment (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/payments/{{paymentId}}/approve",
@@ -378,7 +378,7 @@
           }
         },
         {
-          "name": "Reject Payment",
+          "name": "Reject Payment (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/payments/{{paymentId}}/reject",
@@ -386,7 +386,7 @@
           }
         },
         {
-          "name": "Cancel Payment",
+          "name": "Cancel Payment (Member+)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/payments/{{paymentId}}/cancel",
@@ -400,7 +400,7 @@
       "description": "Expense tracking. Members can create expenses, managers approve/reject/reimburse.",
       "item": [
         {
-          "name": "List Expenses",
+          "name": "List Expenses (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses",
@@ -408,7 +408,7 @@
           }
         },
         {
-          "name": "Create Expense",
+          "name": "Create Expense (Member+)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -421,7 +421,7 @@
           }
         },
         {
-          "name": "Get Expense By Id",
+          "name": "Get Expense By Id (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses/{{expenseId}}",
@@ -429,7 +429,7 @@
           }
         },
         {
-          "name": "Approve Expense",
+          "name": "Approve Expense (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses/{{expenseId}}/approve",
@@ -437,7 +437,7 @@
           }
         },
         {
-          "name": "Reject Expense",
+          "name": "Reject Expense (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses/{{expenseId}}/reject",
@@ -445,7 +445,7 @@
           }
         },
         {
-          "name": "Reimburse Expense",
+          "name": "Reimburse Expense (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses/{{expenseId}}/reimburse",
@@ -453,7 +453,7 @@
           }
         },
         {
-          "name": "Cancel Expense",
+          "name": "Cancel Expense (Member+)",
           "request": {
             "method": "DELETE",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses/{{expenseId}}",
@@ -467,7 +467,7 @@
       "description": "Billing cycle management. Managers preview and finalize monthly billing.",
       "item": [
         {
-          "name": "Get Billing Cycles",
+          "name": "Get Billing Cycles (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/billing",
@@ -475,7 +475,7 @@
           }
         },
         {
-          "name": "Get Member Bills",
+          "name": "Get Member Bills (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/billing/{{billingCycleId}}/members",
@@ -483,7 +483,7 @@
           }
         },
         {
-          "name": "Preview Billing",
+          "name": "Preview Billing (Manager)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -496,7 +496,7 @@
           }
         },
         {
-          "name": "Finalize Billing",
+          "name": "Finalize Billing (Manager)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -509,7 +509,7 @@
           }
         },
         {
-          "name": "Reopen Billing",
+          "name": "Reopen Billing (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/billing/{{billingCycleId}}/reopen",
@@ -523,7 +523,7 @@
       "description": "Meal logging. Managers log meals for members.",
       "item": [
         {
-          "name": "List Meals",
+          "name": "List Meals (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/meals",
@@ -531,7 +531,7 @@
           }
         },
         {
-          "name": "Log Meal",
+          "name": "Log Meal (Manager)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -550,7 +550,7 @@
       "description": "Meal off request management. Members create requests, managers approve/reject.",
       "item": [
         {
-          "name": "List Requests",
+          "name": "List Meal Off Requests (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/meal-off-requests",
@@ -558,7 +558,7 @@
           }
         },
         {
-          "name": "Create Request",
+          "name": "Create Meal Off Request (Member+)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -571,7 +571,7 @@
           }
         },
         {
-          "name": "Approve Request",
+          "name": "Approve Meal Off Request (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/meal-off-requests/{{requestId}}/approve",
@@ -579,7 +579,7 @@
           }
         },
         {
-          "name": "Reject Request",
+          "name": "Reject Meal Off Request (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/meal-off-requests/{{requestId}}/reject",
@@ -593,7 +593,7 @@
       "description": "Utility bill tracking. Managers create bills and mark as paid.",
       "item": [
         {
-          "name": "List Utility Bills",
+          "name": "List Utility Bills (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/utility-bills",
@@ -601,7 +601,7 @@
           }
         },
         {
-          "name": "Create Utility Bill",
+          "name": "Create Utility Bill (Manager)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -614,7 +614,7 @@
           }
         },
         {
-          "name": "Mark Paid",
+          "name": "Mark Utility Bill Paid (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/utility-bills/{{billId}}/pay",
@@ -628,7 +628,7 @@
       "description": "Market duty scheduling. Managers create schedules, assigned members complete them.",
       "item": [
         {
-          "name": "Get Schedules",
+          "name": "Get Market Schedules (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules",
@@ -636,7 +636,7 @@
           }
         },
         {
-          "name": "Get My Duties",
+          "name": "Get My Market Duties (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules/my-duties",
@@ -644,7 +644,7 @@
           }
         },
         {
-          "name": "Create Schedule",
+          "name": "Create Market Schedule (Manager)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -657,7 +657,7 @@
           }
         },
         {
-          "name": "Update Schedule",
+          "name": "Update Market Schedule (Manager)",
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -670,7 +670,7 @@
           }
         },
         {
-          "name": "Reassign",
+          "name": "Reassign Market Duty (Manager)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -683,7 +683,7 @@
           }
         },
         {
-          "name": "Update Spent",
+          "name": "Update Spent Amount (Member+)",
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -696,7 +696,7 @@
           }
         },
         {
-          "name": "Complete",
+          "name": "Complete Market Duty (Member+)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -709,7 +709,7 @@
           }
         },
         {
-          "name": "Void",
+          "name": "Void Market Schedule (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules/{{scheduleId}}/void",
@@ -723,7 +723,7 @@
       "description": "Menu planning. Managers create/publish/archive meal plans.",
       "item": [
         {
-          "name": "Get Menu Plans",
+          "name": "Get Menu Plans (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans",
@@ -731,7 +731,7 @@
           }
         },
         {
-          "name": "Get By Date",
+          "name": "Get Menu Plan By Date (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans/date/2025-01-01",
@@ -739,7 +739,7 @@
           }
         },
         {
-          "name": "Get By Id",
+          "name": "Get Menu Plan By Id (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans/{{planId}}",
@@ -747,7 +747,7 @@
           }
         },
         {
-          "name": "Create Menu Plan",
+          "name": "Create Menu Plan (Manager)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -760,7 +760,7 @@
           }
         },
         {
-          "name": "Update Menu Plan",
+          "name": "Update Menu Plan (Manager)",
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -773,7 +773,7 @@
           }
         },
         {
-          "name": "Publish",
+          "name": "Publish Menu Plan (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans/{{planId}}/publish",
@@ -781,7 +781,7 @@
           }
         },
         {
-          "name": "Archive",
+          "name": "Archive Menu Plan (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans/{{planId}}/archive",
@@ -795,7 +795,7 @@
       "description": "AI-generated shopping lists from menu plans.",
       "item": [
         {
-          "name": "Get Lists",
+          "name": "Get AI Shopping Lists (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/ai-shopping",
@@ -803,7 +803,7 @@
           }
         },
         {
-          "name": "Get List By Id",
+          "name": "Get AI Shopping List By Id (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/ai-shopping/{{listId}}",
@@ -811,7 +811,7 @@
           }
         },
         {
-          "name": "Generate",
+          "name": "Generate AI Shopping List (Manager)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -824,7 +824,7 @@
           }
         },
         {
-          "name": "Approve",
+          "name": "Approve AI Shopping List (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/ai-shopping/{{listId}}/approve",
@@ -832,7 +832,7 @@
           }
         },
         {
-          "name": "Reject",
+          "name": "Reject AI Shopping List (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/ai-shopping/{{listId}}/reject",
@@ -840,7 +840,7 @@
           }
         },
         {
-          "name": "Convert to Schedule",
+          "name": "Convert AI List To Schedule (Manager)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -859,7 +859,7 @@
       "description": "Notice board management. Managers create/update/pin notices.",
       "item": [
         {
-          "name": "List Notices",
+          "name": "List Notices (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/notices",
@@ -867,7 +867,7 @@
           }
         },
         {
-          "name": "Get Notice",
+          "name": "Get Notice (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/notices/{{noticeId}}",
@@ -875,7 +875,7 @@
           }
         },
         {
-          "name": "Create Notice",
+          "name": "Create Notice (Manager)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -888,7 +888,7 @@
           }
         },
         {
-          "name": "Update Notice",
+          "name": "Update Notice (Manager)",
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -901,7 +901,7 @@
           }
         },
         {
-          "name": "Pin",
+          "name": "Pin Notice (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/notices/{{noticeId}}/pin",
@@ -909,7 +909,7 @@
           }
         },
         {
-          "name": "Archive",
+          "name": "Archive Notice (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/notices/{{noticeId}}/archive",
@@ -923,7 +923,7 @@
       "description": "Complaint management. Members create complaints, managers update status/resolve/reject.",
       "item": [
         {
-          "name": "List Complaints",
+          "name": "List Complaints (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/complaints",
@@ -931,7 +931,7 @@
           }
         },
         {
-          "name": "List My Complaints",
+          "name": "List My Complaints (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/complaints/my",
@@ -939,7 +939,7 @@
           }
         },
         {
-          "name": "Get Complaint",
+          "name": "Get Complaint (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/complaints/{{complaintId}}",
@@ -947,7 +947,7 @@
           }
         },
         {
-          "name": "Create Complaint",
+          "name": "Create Complaint (Member+)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -960,7 +960,7 @@
           }
         },
         {
-          "name": "Update Status",
+          "name": "Update Complaint Status (Manager)",
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -973,7 +973,7 @@
           }
         },
         {
-          "name": "Resolve",
+          "name": "Resolve Complaint (Manager)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -986,7 +986,7 @@
           }
         },
         {
-          "name": "Reject",
+          "name": "Reject Complaint (Manager)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -1005,7 +1005,7 @@
       "description": "Reporting and analytics. Managers can export data.",
       "item": [
         {
-          "name": "Summary",
+          "name": "Get Reports Summary (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/summary",
@@ -1013,7 +1013,7 @@
           }
         },
         {
-          "name": "Financial",
+          "name": "Get Financial Report (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/financial",
@@ -1021,7 +1021,7 @@
           }
         },
         {
-          "name": "Member Statement",
+          "name": "Get Member Statement (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/members/{{memberId}}",
@@ -1029,7 +1029,7 @@
           }
         },
         {
-          "name": "Expenses Report",
+          "name": "Get Expenses Report (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/expenses",
@@ -1037,7 +1037,7 @@
           }
         },
         {
-          "name": "Payments Report",
+          "name": "Get Payments Report (Member+)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/payments",
@@ -1045,7 +1045,7 @@
           }
         },
         {
-          "name": "Export CSV",
+          "name": "Export CSV (Manager)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/export/csv",
@@ -1053,7 +1053,7 @@
           }
         },
         {
-          "name": "Export PDF",
+          "name": "Export PDF (Manager)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/export/pdf",
@@ -1067,7 +1067,7 @@
       "description": "Subscription management. Global plans are public. Mess subscriptions require manager role.",
       "item": [
         {
-          "name": "Get Plans",
+          "name": "Get Subscription Plans (Public)",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
@@ -1076,7 +1076,7 @@
           }
         },
         {
-          "name": "Get Current",
+          "name": "Get Current Subscription (Manager)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/subscriptions/current",
@@ -1084,7 +1084,7 @@
           }
         },
         {
-          "name": "Get History",
+          "name": "Get Subscription History (Manager)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/subscriptions/history",
@@ -1092,7 +1092,7 @@
           }
         },
         {
-          "name": "Start Trial",
+          "name": "Start Trial (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/subscriptions/trial",
@@ -1100,7 +1100,7 @@
           }
         },
         {
-          "name": "Subscribe",
+          "name": "Subscribe (Manager)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -1113,7 +1113,7 @@
           }
         },
         {
-          "name": "Cancel",
+          "name": "Cancel Subscription (Manager)",
           "request": {
             "method": "POST",
             "url": "{{baseUrl}}/api/v1/messes/{{messId}}/subscriptions/cancel",
@@ -1127,7 +1127,7 @@
       "description": "Platform administration. Strictly restricted to super_admin global role.",
       "item": [
         {
-          "name": "Get Users",
+          "name": "Get All Users (Super Admin)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/admin/users?page=1&limit=20",
@@ -1135,7 +1135,7 @@
           }
         },
         {
-          "name": "Get Messes",
+          "name": "Get All Messes (Super Admin)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/admin/messes?page=1&limit=20",
@@ -1143,7 +1143,7 @@
           }
         },
         {
-          "name": "Get Stats",
+          "name": "Get Platform Stats (Super Admin)",
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/v1/admin/stats",
@@ -1151,7 +1151,7 @@
           }
         },
         {
-          "name": "Update User Role",
+          "name": "Update User Role (Super Admin)",
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
@@ -1164,7 +1164,7 @@
           }
         },
         {
-          "name": "Block User",
+          "name": "Block User (Super Admin)",
           "request": {
             "method": "PATCH",
             "url": "{{baseUrl}}/api/v1/admin/users/{{userId}}/block",
@@ -1172,7 +1172,7 @@
           }
         },
         {
-          "name": "Suspend Mess",
+          "name": "Suspend Mess (Super Admin)",
           "request": {
             "method": "PATCH",
             "url": "{{baseUrl}}/api/v1/admin/messes/{{messId}}/suspend",
