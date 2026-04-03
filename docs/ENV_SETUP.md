@@ -15,7 +15,7 @@ To run the Mess Manager OS backend locally or deploy it cleanly explicitly to pr
 ### Critical Values Required to be Replaced
 
 - **Database Integrations**
-  - `MONGO_URI`: Replace standard mock uri targeting valid Atlas or active localized daemon endpoints cleanly securely.
+  - `MONGODB_URI`: Replace standard mock uri targeting valid Atlas or active localized daemon endpoints cleanly securely.
 
 - **Security Envelopes (Mandatory)**
   - `JWT_ACCESS_SECRET`: Replace via cryptographically hardened randomized bindings avoiding collisions internally seamlessly.
@@ -23,9 +23,14 @@ To run the Mess Manager OS backend locally or deploy it cleanly explicitly to pr
 
 - **SMTP Protocols (Required tightly for auth blocks & mapped notifications natively)**
   - `SMTP_USER` & `SMTP_PASS`: Replace seamlessly utilizing valid Mailtrap / AWS SES or targeted relay organically explicitly seamlessly correctly.
+  - `SMTP_FROM`: Set the canonical default out-bound explicit identity completely flawlessly.
 
 - **Cloudinary Configurations**
   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`: Map completely natively with cloud panel extraction keys safely.
+
+- **AI Layer Boundaries**
+  - `AI_PROVIDER`, `AI_MODEL`, `AI_MAX_TOKENS`: Safely bounded default structure strings spanning prompt execution bounds mapping externally natively.
+  - `AI_API_KEY`: Provide a secure canonical active key explicitly tracking boundaries spanning external proxy logic seamlessly securely.
 
 - **External Integrations**
   - `STRIPE_SECRET_KEY`: Override organically checking exact Stripe webhook bounds accurately cleanly strictly mapping.
