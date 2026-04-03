@@ -42,7 +42,6 @@ export const refreshToken = catchAsync(async (req: Request, res: Response) => {
     }
     const { accessToken, refreshToken: newRefreshToken } = await authService.refreshToken(token);
     
-    // Rotation: Update cookie
     res.cookie(REFRESH_COOKIE_NAME, newRefreshToken, {
       httpOnly: true,
       secure: config.env === 'production',
@@ -54,9 +53,8 @@ export const refreshToken = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const logout = catchAsync(async (req: Request, res: Response) => {
-    if (req.user) {
-        await authService.logout(req.user.userId);
-    }
+    const token = req.cookies[REFRESH_COOKIE_NAME];
+    await authService.logout(token);
     res.clearCookie(REFRESH_COOKIE_NAME);
     sendResponse(res, { statusCode: 200, success: true, message: 'Logout successful' });
 });

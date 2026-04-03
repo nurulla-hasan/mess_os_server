@@ -10,11 +10,14 @@ import { config } from './config';
 
 const app = express();
 
-app.use(cors({
+const corsOptions = {
   origin: config.clientUrl,
-  credentials: true
-}));
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+};
 
+app.use(cors(corsOptions));
 app.use(helmet());
 app.use(morgan(config.env === 'production' ? 'combined' : 'dev'));
 app.use(express.json());

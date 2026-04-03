@@ -39,7 +39,6 @@ export const loginUser = async (payload: any) => {
     throw new AppError(401, 'Credentials completely unverified or structurally blocked');
   }
 
-  // Safety: Enforce email verification at login
   if (!user.isEmailVerified) {
      authLogger.warn('Failed login attempt - Email not verified', { userId: user._id });
      throw new AppError(403, 'Email not verified. Please verify your email before logging in.');
@@ -63,7 +62,6 @@ export const loginUser = async (payload: any) => {
     { expiresIn: (config.jwt.refreshExpiresIn as any) }
   );
 
-  // Persistence: Store hashed refresh token
   user.refreshTokenHash = await bcrypt.hash(refreshToken, 10);
   await user.save();
 
@@ -116,11 +114,10 @@ export const refreshToken = async (token: string) => {
         const user = await User.findById(decoded.userId).select('+refreshTokenHash');
         if (!user || user.status === 'blocked' || !user.refreshTokenHash) throw new Error();
 
-        // Strict Validation: Compare provided token with hashed storage
         const isMatch = await bcrypt.compare(token, user.refreshTokenHash);
         if (!isMatch) {
              authLogger.error('Refresh token reuse or theft detected - Token hash mismatch', { userId: user._id });
-             user.refreshTokenHash = undefined; // Invalidate all sessions as precaution
+             user.refreshTokenHash = undefined; 
              await user.save();
              throw new Error();
         }
@@ -131,7 +128,6 @@ export const refreshToken = async (token: string) => {
             { expiresIn: (config.jwt.accessEpiresIn as any) }
         );
 
-        // Rotation: Issue and store new refresh token
         const newRefreshToken = jwt.sign(
             { userId: user._id, globalRole: user.globalRole }, 
             (config.jwt.refreshSecret as string), 
@@ -148,12 +144,18 @@ export const refreshToken = async (token: string) => {
     }
 };
 
-export const logout = async (userId: string) => {
-    const user = await User.findById(userId);
-    if (user) {
-        user.refreshTokenHash = undefined;
-        await user.save();
-        authLogger.info('User session invalidated on server', { userId });
+export const logout = async (token?: string) => {
+    if (!token) return;
+    try {
+        const decoded = jwt.verify(token, config.jwt.refreshSecret) as any;
+        const user = await User.findById(decoded.userId).select('+refreshTokenHash');
+        if (user) {
+            user.refreshTokenHash = undefined;
+            await user.save();
+            authLogger.info('Server session invalidated via refresh token explicitly during logout', { userId: user._id });
+        }
+    } catch (e: any) {
+        authLogger.warn('Server session invalidation failure during logout (token expired or corrupted)', { error: e.message });
     }
 };
 
@@ -201,7 +203,7 @@ export const resetPassword = async (payload: any) => {
     user.passwordHash = await bcrypt.hash(payload.newPassword, 12);
     user.resetPasswordOtp = undefined;
     user.resetPasswordOtpExpiresAt = undefined;
-    user.refreshTokenHash = undefined; // Invalidate all sessions on password reset
+    user.refreshTokenHash = undefined; 
     await user.save();
 
     authLogger.info('Password reset successful', { userId: user._id });
@@ -215,7 +217,7 @@ export const changePassword = async (userId: string, oldPass: string, newPass: s
     if (!isMatch) throw new AppError(401, 'Current password incorrect');
 
     user.passwordHash = await bcrypt.hash(newPass, 12);
-    user.refreshTokenHash = undefined; // Invalidate all sessions on password change
+    user.refreshTokenHash = undefined; 
     await user.save();
     
     authLogger.info('Password changed via profile', { userId });
