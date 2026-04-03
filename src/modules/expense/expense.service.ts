@@ -82,16 +82,22 @@ export const rejectExpense = async (messId: string, expenseId: string, managerId
   return exp;
 };
 
-export const deleteExpense = async (messId: string, expenseId: string, actorMemberId: string) => {
+export const cancelExpense = async (messId: string, expenseId: string, actorMemberId: string, actorRole: string) => {
   const exp = await Expense.findOne({ _id: new Types.ObjectId(expenseId), messId: new Types.ObjectId(messId) });
   if (!exp) throw new AppError(404, 'Expense not found');
-  if (exp.status !== 'pending') throw new AppError(400, 'Cannot delete a processed expense');
   
-  if (exp.paidBy.toString() !== actorMemberId) {
-     throw new AppError(403, 'Unauthorized to delete another member\'s expense natively');
+  if (exp.status !== 'pending') throw new AppError(400, 'Cannot cancel a processed expense record safely');
+  
+  // Ownership check
+  const isOwner = exp.paidBy.toString() === actorMemberId;
+  const isManager = actorRole === 'manager';
+
+  if (!isOwner && !isManager) {
+     throw new AppError(403, 'Unauthorized to explicitly cancel this expense record natively');
   }
 
-  return await Expense.findByIdAndDelete(expenseId);
+  exp.status = 'canceled';
+  return await exp.save();
 };
 
 export const reimburseExpense = async (messId: string, expenseId: string, managerId: string) => {
@@ -105,10 +111,6 @@ export const reimburseExpense = async (messId: string, expenseId: string, manage
 
     exp.reimbursementStatus = 'reimbursed';
     
-    // Clear the member credit by a charge in ledger (or simply credit is checked against debts)
-    // Business rule: Reimbursement from mess cash to member's pocket.
-    // 1. Mess cash out.
-    // 2. Member ledger charge to zero out the credit (or recorded as a reimbursement event).
     await ledgerHelper.createCashOut({ 
       messId: new Types.ObjectId(messId), 
       amount: exp.amount, 

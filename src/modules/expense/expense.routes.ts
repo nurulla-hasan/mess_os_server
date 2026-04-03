@@ -14,6 +14,6 @@ router.get('/:expenseId', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.
 router.post('/:expenseId/approve', authorize(MESS_ROLES.MANAGER), ctl.approveExpense);
 router.post('/:expenseId/reject', authorize(MESS_ROLES.MANAGER), ctl.rejectExpense);
 router.post('/:expenseId/reimburse', authorize(MESS_ROLES.MANAGER), ctl.reimburseExpense);
-router.delete('/:expenseId', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.deleteExpense);
+router.delete('/:expenseId', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.cancelExpense);
 
 export const expenseRoutes = router;

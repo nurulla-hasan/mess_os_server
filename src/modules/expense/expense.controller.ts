@@ -28,6 +28,13 @@ export const getExpenses = catchAsync(async (req: Request, res: Response) => {
 
 export const getExpenseById = catchAsync(async (req: Request, res: Response) => {
   const result = await expenseService.getExpenseById(req.messId!, String(req.params.expenseId));
+  
+  // Safety check: Manager or Owner only
+  const actor = req.messMember!;
+  if (actor.messRole !== 'manager' && result.paidBy.toString() !== actor.id.toString()) {
+     throw new AppError(403, 'Unauthorized to view this specific expense record');
+  }
+
   sendResponse(res, { statusCode: 200, success: true, message: 'Expense record uniquely isolated', data: result });
 });
 
@@ -46,7 +53,8 @@ export const reimburseExpense = catchAsync(async (req: Request, res: Response) =
   sendResponse(res, { statusCode: 200, success: true, message: 'Personal expense reimbursed from mess cash correctly', data: result });
 });
 
-export const deleteExpense = catchAsync(async (req: Request, res: Response) => {
-  const result = await expenseService.deleteExpense(req.messId!, String(req.params.expenseId), req.messMember!.id.toString());
-  sendResponse(res, { statusCode: 200, success: true, message: 'Pending expense record removed successfully', data: result });
+export const cancelExpense = catchAsync(async (req: Request, res: Response) => {
+  const actor = req.messMember!;
+  const result = await expenseService.cancelExpense(req.messId!, String(req.params.expenseId), actor.id.toString(), actor.messRole);
+  sendResponse(res, { statusCode: 200, success: true, message: 'Pending expense record canceled successfully', data: result });
 });

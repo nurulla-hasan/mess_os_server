@@ -22,7 +22,7 @@ export const getPayments = async (messId: string, query: any = {}) => {
 
 export const getPaymentById = async (messId: string, paymentId: string) => {
   const pay = await Payment.findOne({ _id: new Types.ObjectId(paymentId), messId: new Types.ObjectId(messId) });
-  if (!pay) throw new AppError(404, 'Payment not found accurately isolated securely');
+  if (!pay) throw new AppError(404, 'Payment not found uniquely isolated securely');
   return pay;
 };
 
@@ -78,18 +78,20 @@ export const rejectPayment = async (messId: string, paymentId: string, managerId
   return pay;
 };
 
-export const cancelPayment = async (messId: string, paymentId: string, actorMemberId: string) => {
+export const cancelPayment = async (messId: string, paymentId: string, actorMemberId: string, actorRole: string) => {
   const pay = await Payment.findOne({ _id: new Types.ObjectId(paymentId), messId: new Types.ObjectId(messId) });
   if (!pay) throw new AppError(404, 'Payment not found');
-  if (pay.status !== 'pending') throw new AppError(400, 'Cannot cancel a processed payment');
   
-  // Safety: only the owner or a manager can delete/cancel a pending payment
-  // (In service we often just check existence and status, but ownership is checked in controller usually. 
-  // However we can pass actorMemberId here for extra safety.)
+  if (pay.status !== 'pending') throw new AppError(400, 'Cannot cancel a processed payment record safely');
   
-  if (pay.messMemberId.toString() !== actorMemberId) {
-     throw new AppError(403, 'Unauthorized to cancel another member\'s payment natively');
+  // Ownership check
+  const isOwner = pay.messMemberId.toString() === actorMemberId;
+  const isManager = actorRole === 'manager';
+
+  if (!isOwner && !isManager) {
+     throw new AppError(403, 'Unauthorized to explicitly cancel this payment record natively');
   }
 
-  return await Payment.findByIdAndDelete(paymentId);
+  pay.status = 'canceled';
+  return await pay.save();
 };

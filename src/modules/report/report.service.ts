@@ -9,7 +9,7 @@ import { parseAsync } from 'json2csv';
 import mongoose from 'mongoose';
 
 export const getMessSummary = async (messId: string) => {
-   const cashLedgers = await CashLedger.find({ messId, isVoided: false });
+   const cashLedgers = await CashLedger.find({ messId: new mongoose.Types.ObjectId(messId), isVoided: false });
    const totalMessCash = cashLedgers.reduce((sum, l) => sum + (l.type === 'IN' ? l.amount : -l.amount), 0);
    
    const pendingExpenses = await Expense.countDocuments({ messId, status: 'pending' });
@@ -38,7 +38,7 @@ export const getMemberStatement = async (messId: string, memberId: string) => {
 };
 
 export const getExpenseReport = async (messId: string, start?: string, end?: string) => {
-   const query: any = { messId };
+   const query: any = { messId, status: 'approved' };
    if (start && end) {
        query.date = { $gte: new Date(start), $lte: new Date(end) };
    }
@@ -46,12 +46,12 @@ export const getExpenseReport = async (messId: string, start?: string, end?: str
 };
 
 export const getPaymentReport = async (messId: string, start?: string, end?: string) => {
-   const query: any = { messId };
+   const query: any = { messId, status: 'approved' };
    if (start && end) {
-       // Corrected path: Payment model uses createdAt as primary time boundary for reports consistently
-       query.createdAt = { $gte: new Date(start), $lte: new Date(end) };
+       // Approved financial reporting uses receivedDate as the canonical accounting boundary natively
+       query.receivedDate = { $gte: new Date(start), $lte: new Date(end) };
    }
-   return await Payment.find(query).sort({ createdAt: -1 });
+   return await Payment.find(query).sort({ receivedDate: -1 });
 };
 
 export const exportCsvReport = async (messId: string, type: 'expenses'|'payments') => {
@@ -59,7 +59,7 @@ export const exportCsvReport = async (messId: string, type: 'expenses'|'payments
    if (type === 'expenses') {
        data = await Expense.find({ messId, status: 'approved' }).sort({ date: -1 }).lean() as object[];
    } else {
-       data = await Payment.find({ messId, status: 'approved' }).sort({ createdAt: -1 }).lean() as object[];
+       data = await Payment.find({ messId, status: 'approved' }).sort({ receivedDate: -1 }).lean() as object[];
    }
    
    if (!data || data.length === 0) throw new AppError(404, 'No approved records found to export natively');

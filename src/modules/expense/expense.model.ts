@@ -8,7 +8,7 @@ export interface IExpense extends Document {
   date: Date;
   paidBy: Types.ObjectId;
   fundSource: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'canceled';
   reimbursementStatus: 'not_applicable' | 'pending' | 'reimbursed';
   receiptUrl?: string;
   receiptPublicId?: string;
@@ -23,7 +23,7 @@ const expenseSchema = new Schema<IExpense>({
   date: { type: Date, required: true },
   paidBy: { type: Schema.Types.ObjectId, ref: 'MessMember', required: true },
   fundSource: { type: String, enum: Object.values(FUND_SOURCES), required: true },
-  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'approved', 'rejected', 'canceled'], default: 'pending' },
   reimbursementStatus: { type: String, enum: ['not_applicable', 'pending', 'reimbursed'], default: 'not_applicable' },
   receiptUrl: { type: String },
   receiptPublicId: { type: String },
