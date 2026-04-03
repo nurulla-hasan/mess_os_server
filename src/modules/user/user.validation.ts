@@ -8,9 +8,3 @@ export const updateMeSchema = z.object({
     bio: z.string().max(500).optional()
   }).strict()
 });
-
-export const updateAvatarSchema = z.object({
-  body: z.object({
-    avatarUrl: z.string().url()
-  }).strict()
-});

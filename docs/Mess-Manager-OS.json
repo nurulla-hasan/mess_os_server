@@ -218,13 +218,19 @@
           "name": "Update Avatar (Auth)",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
+            "header": [],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"avatarUrl\": \"https://example.com/avatar.jpg\"\n}"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": "/path/to/avatar.jpg"
+                }
+              ]
             },
             "url": "{{baseUrl}}/api/v1/users/me/avatar",
-            "description": "Role: Auth. Updates user avatar/profile picture. Body: { avatarUrl (string, URL, required) }"
+            "description": "Role: Auth. Upload avatar image file (JPEG, PNG, WebP, GIF). Max 5MB. Form field name: 'avatar'"
           }
         }
       ]

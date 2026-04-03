@@ -21,7 +21,7 @@ import { noticeRoutes } from '../notice/notice.routes';
 import { complaintRoutes } from '../complaint/complaint.routes';
 import { reportRoutes } from '../report/report.routes';
 import { messSubscriptionRoutes } from '../subscription/subscription.routes';
-import { MESS_ROLES } from '../../constants/roles';
+import { MESS_ROLES, GLOBAL_ROLES } from '../../constants/roles';
 
 const router = Router({ mergeParams: true });
 
@@ -29,7 +29,7 @@ router.use(authenticate);
 
 router.post('/join', validateRequest(memberVal.requestJoinSchema), requestJoin);
 
-router.post('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.SUPER_ADMIN), validateRequest(messVal.createMessSchema), messCtl.createMess);
+router.post('/', authorize(GLOBAL_ROLES.MANAGER, GLOBAL_ROLES.SUPER_ADMIN), validateRequest(messVal.createMessSchema), messCtl.createMess);
 
 router.use('/:messId', messContext);
 router.get('/:messId', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), messCtl.getMess);

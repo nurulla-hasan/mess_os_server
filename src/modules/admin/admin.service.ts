@@ -11,7 +11,7 @@ export const getAllMesses = async (page: number, limit: number) => {
 };
 
 export const updateUserRole = async (userId: string, targetRole: string) => {
-  if (!['user', 'super_admin'].includes(targetRole)) throw new AppError(400, 'Invalid platform globalRole specified');
+  if (!['user', 'manager', 'super_admin'].includes(targetRole)) throw new AppError(400, 'Invalid platform globalRole specified');
   const user = await User.findByIdAndUpdate(userId, { globalRole: targetRole }, { new: true }).select('-passwordHash');
   if(!user) throw new AppError(404, 'User not found in global mapping');
   return user;

@@ -8,6 +8,7 @@ export interface IUser extends Document {
   address?: string;
   bio?: string;
   avatarUrl?: string;
+  avatarPublicId?: string;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   status: 'active' | 'blocked';
@@ -28,6 +29,7 @@ const userSchema = new Schema<IUser>({
   address: { type: String },
   bio: { type: String },
   avatarUrl: { type: String },
+  avatarPublicId: { type: String },
   isEmailVerified: { type: Boolean, default: false },
   isPhoneVerified: { type: Boolean, default: false },
   status: { type: String, enum: ['active', 'blocked'], default: 'active' },
