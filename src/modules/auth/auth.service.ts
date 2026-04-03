@@ -11,7 +11,7 @@ const OTP_RESEND_COOLDOWN_SEC = 60;
 
 export const registerUser = async (payload: any) => {
   const existing = await User.findOne({ email: payload.email });
-  if (existing) throw new AppError(400, 'Email already formally tied to system');
+  if (existing) throw new AppError(400, 'Email already used!');
   
   const passwordHash = await bcrypt.hash(payload.password, 12);
   const otp = generateOtp();

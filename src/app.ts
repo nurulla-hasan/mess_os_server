@@ -25,6 +25,13 @@ app.use(cookieParser());
 
 app.use('/api/v1', v1Routes);
 
+app.use('/', (req, res, next) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Hello from MessManagerOS API!',
+  });
+});
+
 app.all('*', (req, res, next) => {
   next(new AppError(404, `Target securely missed: ${req.originalUrl}`));
 });
