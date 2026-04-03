@@ -1179,7 +1179,7 @@
               "raw": "{\n  \"globalRole\": \"super_admin\"\n}"
             },
             "url": "{{baseUrl}}/api/v1/admin/users/{{userId}}/role",
-            "description": "Role: Super Admin. Updates user global role. Body: { globalRole ('user'|'super_admin', required) }. Requires userId variable."
+            "description": "Role: Super Admin. Updates user global role. Body: { globalRole ('user'|'manager'|'super_admin', required) }. Requires userId variable."
           }
         },
         {
