@@ -22,7 +22,7 @@ export const login = catchAsync(async (req: Request, res: Response) => {
     maxAge: 7 * 24 * 60 * 60 * 1000 
   });
 
-  sendResponse(res, { statusCode: 200, success: true, message: 'Login successful', data: { user, accessToken } });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Login successful', data: { accessToken } });
 });
 
 export const verifyEmail = catchAsync(async (req: Request, res: Response) => {
