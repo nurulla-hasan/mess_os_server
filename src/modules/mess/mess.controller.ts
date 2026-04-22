@@ -1,19 +1,29 @@
 import { Request, Response } from 'express';
 import { catchAsync } from '../../shared/utils/asyncHandler';
 import { sendResponse } from '../../shared/utils/apiResponse';
+import * as messService from './mess.service';
 
 export const createMess = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 201, success: true, message: 'Created', data: {} });
+  const mess = await messService.createMess(req.user!.userId, req.body);
+  sendResponse(res, { statusCode: 201, success: true, message: 'Mess created successfully', data: mess });
 });
+
 export const getMess = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Fetched', data: {} });
+  const mess = await messService.getMess(req.params.messId as string);
+  sendResponse(res, { statusCode: 200, success: true, message: 'Mess fetched successfully', data: mess });
 });
+
 export const updateMess = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Updated', data: {} });
+  const mess = await messService.updateMess(req.params.messId as string, req.body);
+  sendResponse(res, { statusCode: 200, success: true, message: 'Mess updated successfully', data: mess });
 });
+
 export const regenerateInviteCode = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Regenerated', data: {} });
+  const mess = await messService.regenerateInviteCode(req.params.messId as string);
+  sendResponse(res, { statusCode: 200, success: true, message: 'Invite code regenerated successfully', data: mess });
 });
+
 export const transferOwnership = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Transferred', data: {} });
+  const result = await messService.transferOwnership(req.params.messId as string, req.user!.userId, req.body.newManagerUserId);
+  sendResponse(res, { statusCode: 200, success: true, message: 'Ownership transferred successfully', data: result });
 });
