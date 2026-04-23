@@ -1865,7 +1865,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Nurulla Mess\",\n  \"address\": \"Dhaka\",\n  \"settings\": {\n    \"mealCategories\": [\n      \"grocery\",\n      \"bazar\"\n    ],\n    \"equalShareCategories\": [\n      \"rent\",\n      \"wifi\",\n      \"electricity\"\n    ]\n  }\n}"
+              "raw": "{\n  \"name\": \"Super Boys Mess\",\n  \"address\": \"123 Test Street, Dhaka\",\n  \"settings\": {\n    \"mealCategories\": [\n      \"breakfast\",\n      \"lunch\",\n      \"dinner\"\n    ],\n    \"equalShareCategories\": [\n      \"utilities\",\n      \"rent\",\n      \"internet\"\n    ]\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes",
@@ -3122,6 +3122,13 @@
                 "billing",
                 "{{billingCycleId}}",
                 "members"
+              ],
+              "query": [
+                {
+                  "key": "history",
+                  "value": "true",
+                  "description": "Set to true to include archived historical bills"
+                }
               ]
             },
             "description": "Role: Member+. Gets bills for specific cycle. Requires messId and billingCycleId variables."
@@ -3534,7 +3541,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"assignedTo\": [\"{{memberId}}\"],\n  \"targetDate\": \"2025-01-01T00:00:00.000Z\",\n  \"shoppingItems\": [{\"name\": \"Rice\", \"quantity\": \"5kg\"}],\n  \"estimatedBudget\": 2000\n}"
+              "raw": "{\n  \"assignedTo\": [\n    \"65e4a8f9c1b2a3d4e5f60000\"\n  ],\n  \"targetDate\": \"2026-04-26T10:00:00.000Z\",\n  \"shoppingItems\": [\n    {\n      \"name\": \"Rice\",\n      \"quantity\": \"5 KG\"\n    },\n    {\n      \"name\": \"Oil\",\n      \"quantity\": \"2 L\"\n    }\n  ],\n  \"estimatedBudget\": 1500\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules",
@@ -3800,7 +3807,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"date\": \"2025-01-01T00:00:00.000Z\",\n  \"meals\": {\n    \"breakfast\": \"Paratha and Egg\",\n    \"lunch\": \"Rice and Fish\",\n    \"dinner\": \"Khichuri\"\n  },\n  \"isAiGenerated\": false\n}"
+              "raw": "{\n  \"date\": \"2026-04-25T10:00:00.000Z\",\n  \"meals\": {\n    \"breakfast\": \"Bread, Egg\",\n    \"lunch\": \"Rice, Chicken, Dal\",\n    \"dinner\": \"Rice, Fish\"\n  },\n  \"isAiGenerated\": false\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans",
@@ -3964,7 +3971,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"menuPlanId\": \"{{planId}}\",\n  \"targetDate\": \"2025-01-01T00:00:00.000Z\"\n}"
+              "raw": "{\n  \"menuPlanId\": \"65e4a8f9c1b2a3d4e5f60001\",\n  \"targetDate\": \"2026-04-25T10:00:00.000Z\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/ai-shopping/generate",
