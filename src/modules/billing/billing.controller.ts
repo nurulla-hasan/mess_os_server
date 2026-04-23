@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { catchAsync } from '../../shared/utils/asyncHandler';
 import { sendResponse } from '../../shared/utils/apiResponse';
 import * as billingService from './billing.service';
+import { AppError } from '../../shared/utils/apiError';
 
 export const getBillingCycles = catchAsync(async (req: Request, res: Response) => {
   const result = await billingService.getBillingCycles(req.messId!);
@@ -10,7 +11,15 @@ export const getBillingCycles = catchAsync(async (req: Request, res: Response) =
 
 export const getMemberBills = catchAsync(async (req: Request, res: Response) => {
   const includeHistory = req.query.history === 'true';
-  const result = await billingService.getMemberBills(req.messId!, String(req.params.billingCycleId), includeHistory);
+  const role = req.messRole ?? req.user?.globalRole;
+
+  if (includeHistory && role !== 'manager' && role !== 'super_admin') {
+    throw new AppError(403, 'Billing history is restricted to managers only');
+  }
+
+  const targetMemberId = (role === 'member') ? String(req.messMember?._id) : undefined;
+
+  const result = await billingService.getMemberBills(req.messId!, String(req.params.billingCycleId), targetMemberId, includeHistory);
   sendResponse(res, { statusCode: 200, success: true, message: 'Member bills retrieved', data: result });
 });
 

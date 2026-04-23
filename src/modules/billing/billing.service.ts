@@ -17,9 +17,10 @@ export const getBillingCycles = async (messId: string) => {
   return await BillingCycle.find({ messId }).sort({ year: -1, month: -1 });
 };
 
-export const getMemberBills = async (messId: string, cycleId: string, includeHistory = false) => {
-  const filter: any = { messId, billingCycleId: cycleId };
+export const getMemberBills = async (messId: string, cycleId: string, memberId?: string, includeHistory = false) => {
+  const filter: Record<string, unknown> = { messId, billingCycleId: cycleId };
   if (!includeHistory) filter.isArchived = false;
+  if (memberId) filter.messMemberId = memberId;
   return await MemberBill.find(filter).sort({ isArchived: 1, createdAt: -1 });
 };
 
