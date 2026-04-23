@@ -3105,7 +3105,7 @@
           "response": []
         },
         {
-          "name": "Get Member Bills (Member+)",
+          "name": "Get All Member Bills (Manager Only)",
           "request": {
             "method": "GET",
             "header": [],
@@ -3131,7 +3131,30 @@
                 }
               ]
             },
-            "description": "Role: Member+. Gets bills for specific cycle. Requires messId and billingCycleId variables."
+            "description": "Role: Manager. Retrieve all member bills for a specific billing cycle. Optionally include archived history using ?history=true query flag."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Bill (Member/Manager)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/billing/{{billingCycleId}}/my-bill",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "billing",
+                "{{billingCycleId}}",
+                "my-bill"
+              ],
+              "query": []
+            },
+            "description": "Role: Member/Manager. Retrieve the specific bill for the currently logged-in user in the given billing cycle."
           },
           "response": []
         },

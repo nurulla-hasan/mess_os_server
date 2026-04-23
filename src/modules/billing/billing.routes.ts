@@ -8,6 +8,7 @@ import { MESS_ROLES } from '../../constants/roles';
 const router = Router({ mergeParams: true });
 
 router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.getBillingCycles);
+router.get('/:billingCycleId/my-bill', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.getMyBill);
 router.get('/:billingCycleId/members', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.getMemberBills);
 
 router.post('/preview', authorize(MESS_ROLES.MANAGER), validateRequest(val.previewBillingSchema), ctl.previewBilling);

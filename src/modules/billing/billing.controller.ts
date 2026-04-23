@@ -23,6 +23,13 @@ export const getMemberBills = catchAsync(async (req: Request, res: Response) => 
   sendResponse(res, { statusCode: 200, success: true, message: 'Member bills retrieved', data: result });
 });
 
+export const getMyBill = catchAsync(async (req: Request, res: Response) => {
+  const result = await billingService.getMemberBills(req.messId!, String(req.params.billingCycleId), String(req.messMember?._id), false);
+  // Return the first object since it's a specific member's bill
+  const bill = result.length > 0 ? result[0] : null;
+  sendResponse(res, { statusCode: 200, success: true, message: 'My bill retrieved', data: bill });
+});
+
 export const previewBilling = catchAsync(async (req: Request, res: Response) => {
   const { month, year } = req.body;
   const result = await billingService.previewBillingCycle(req.messId!, parseInt(month), parseInt(year));
