@@ -1,15 +1,19 @@
 import { Router } from 'express';
+import { authorize } from '../../shared/middlewares/authorize';
+import { MESS_ROLES } from '../../constants/roles';
 import * as ctl from './mess-member.controller';
 
 // Note: These routes are mounted under /messes/:messId/members
 // Parent router (mess.routes.ts) applies authenticate + messContext middleware
-// Authorization checks are handled in the controller based on messRole
 
 const router = Router({ mergeParams: true });
 
-router.get('/', ctl.getMembers);
-router.post('/:memberId/approve', ctl.approveMember);
-router.post('/:memberId/reject', ctl.rejectMember);
-router.post('/:memberId/remove', ctl.removeMember);
+// Any active member (including manager) can view the member list
+router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.getMembers);
+
+// Only manager can approve, reject, or remove members
+router.post('/:memberId/approve', authorize(MESS_ROLES.MANAGER), ctl.approveMember);
+router.post('/:memberId/reject', authorize(MESS_ROLES.MANAGER), ctl.rejectMember);
+router.post('/:memberId/remove', authorize(MESS_ROLES.MANAGER), ctl.removeMember);
 
 export const messMemberRoutes = router;
