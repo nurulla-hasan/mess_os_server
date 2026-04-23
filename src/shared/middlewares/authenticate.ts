@@ -5,13 +5,14 @@ import { config } from '../../config';
 
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return next(new AppError(401, 'No authorization token comprehensively found'));
+  if (!token) return next(new AppError(401, 'Authorization token is required'));
 
   try {
     const decoded = jwt.verify(token, config.jwt.accessSecret) as any;
     req.user = { userId: decoded.userId, globalRole: decoded.globalRole };
     next();
   } catch (error) {
-    next(new AppError(401, 'Security token globally invalid natively aborted'));
+    next(new AppError(401, 'Invalid or expired authorization token'));
   }
 };
+

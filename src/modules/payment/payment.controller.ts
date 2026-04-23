@@ -18,7 +18,7 @@ export const createPayment = catchAsync(async (req: Request, res: Response) => {
   }
 
   const result = await paymentService.createPayment(messId, body);
-  sendResponse(res, { statusCode: 201, success: true, message: 'Payment record created natively reflecting accurately', data: result });
+  sendResponse(res, { statusCode: 201, success: true, message: 'Payment record created successfully', data: result });
 });
 
 export const getPayments = catchAsync(async (req: Request, res: Response) => {
@@ -35,7 +35,7 @@ export const getPaymentById = catchAsync(async (req: Request, res: Response) => 
      throw new AppError(403, 'Unauthorized to view this specific payment record');
   }
 
-  sendResponse(res, { statusCode: 200, success: true, message: 'Payment record accurately isolated', data: result });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Payment record fetched successfully', data: result });
 });
 
 export const getMyPayments = catchAsync(async (req: Request, res: Response) => {

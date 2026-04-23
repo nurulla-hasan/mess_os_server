@@ -22,7 +22,7 @@ export const getPayments = async (messId: string, query: any = {}) => {
 
 export const getPaymentById = async (messId: string, paymentId: string) => {
   const pay = await Payment.findOne({ _id: new Types.ObjectId(paymentId), messId: new Types.ObjectId(messId) });
-  if (!pay) throw new AppError(404, 'Payment not found uniquely isolated securely');
+  if (!pay) throw new AppError(404, 'Payment not found');
   return pay;
 };
 
@@ -89,7 +89,7 @@ export const cancelPayment = async (messId: string, paymentId: string, actorMemb
   const isManager = actorRole === 'manager';
 
   if (!isOwner && !isManager) {
-     throw new AppError(403, 'Unauthorized to explicitly cancel this payment record natively');
+     throw new AppError(403, 'You are not authorized to cancel this payment');
   }
 
   pay.status = 'canceled';

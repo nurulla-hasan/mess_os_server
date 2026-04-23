@@ -16,13 +16,13 @@ export const getMemberBills = catchAsync(async (req: Request, res: Response) => 
 export const previewBilling = catchAsync(async (req: Request, res: Response) => {
   const { month, year } = req.body;
   const result = await billingService.previewBillingCycle(req.messId!, parseInt(month), parseInt(year));
-  sendResponse(res, { statusCode: 200, success: true, message: 'Billing cycle preview fully mapped', data: result });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Billing cycle preview generated successfully', data: result });
 });
 
 export const finalizeBilling = catchAsync(async (req: Request, res: Response) => {
   const { month, year } = req.body;
   const result = await billingService.finalizeBillingCycle(req.messId!, parseInt(month), parseInt(year), req.user!.userId);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Billing cycle successfully locked', data: result });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Billing cycle finalized successfully', data: result });
 });
 
 export const reopenBilling = catchAsync(async (req: Request, res: Response) => {

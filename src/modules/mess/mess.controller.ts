@@ -9,21 +9,21 @@ export const createMess = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getMess = catchAsync(async (req: Request, res: Response) => {
-  const mess = await messService.getMess(req.params.messId as string);
+  const mess = await messService.getMess(req.messId!);
   sendResponse(res, { statusCode: 200, success: true, message: 'Mess fetched successfully', data: mess });
 });
 
 export const updateMess = catchAsync(async (req: Request, res: Response) => {
-  const mess = await messService.updateMess(req.params.messId as string, req.body);
+  const mess = await messService.updateMess(req.messId!, req.body);
   sendResponse(res, { statusCode: 200, success: true, message: 'Mess updated successfully', data: mess });
 });
 
 export const regenerateInviteCode = catchAsync(async (req: Request, res: Response) => {
-  const mess = await messService.regenerateInviteCode(req.params.messId as string);
+  const mess = await messService.regenerateInviteCode(req.messId!);
   sendResponse(res, { statusCode: 200, success: true, message: 'Invite code regenerated successfully', data: mess });
 });
 
 export const transferOwnership = catchAsync(async (req: Request, res: Response) => {
-  const result = await messService.transferOwnership(req.params.messId as string, req.user!.userId, req.body.newManagerUserId);
+  const result = await messService.transferOwnership(req.messId!, req.user!.userId, req.body.newManagerUserId);
   sendResponse(res, { statusCode: 200, success: true, message: 'Ownership transferred successfully', data: result });
 });

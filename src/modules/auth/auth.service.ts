@@ -36,7 +36,7 @@ export const loginUser = async (payload: any) => {
   const user = await User.findOne({ email: payload.email }).select('+passwordHash');
   if (!user || user.status === 'blocked') {
     authLogger.warn('Failed login attempt - User not found or blocked', { email: payload.email });
-    throw new AppError(401, 'Credentials completely unverified or structurally blocked');
+    throw new AppError(401, 'Invalid email or password');
   }
 
   if (!user.isEmailVerified) {
@@ -47,13 +47,13 @@ export const loginUser = async (payload: any) => {
   const isMatch = await bcrypt.compare(payload.password, user.passwordHash);
   if (!isMatch) {
     authLogger.warn('Failed login attempt - Password mismatch', { userId: user._id });
-    throw new AppError(401, 'Credentials completely unverified');
+    throw new AppError(401, 'Invalid email or password');
   }
 
   const accessToken = jwt.sign(
     { userId: user._id, globalRole: user.globalRole }, 
     (config.jwt.accessSecret as string), 
-    { expiresIn: (config.jwt.accessEpiresIn as any) }
+    { expiresIn: (config.jwt.accessExpiresIn as any) }
   );
 
   const refreshToken = jwt.sign(
@@ -76,7 +76,7 @@ export const verifyEmail = async (email: string, otp: string) => {
     if (user.verificationOtpExpiresAt < new Date()) throw new AppError(400, 'OTP expired');
 
     const isMatch = await bcrypt.compare(otp, user.verificationOtp);
-    if (!isMatch) throw new AppError(400, 'Invalid OTP provided precisely');
+    if (!isMatch) throw new AppError(400, 'Invalid OTP');
 
     user.isEmailVerified = true;
     user.verificationOtp = undefined;
@@ -94,7 +94,7 @@ export const resendOtp = async (email: string) => {
 
     const now = new Date();
     if (user.lastOtpSentAt && (now.getTime() - user.lastOtpSentAt.getTime()) < OTP_RESEND_COOLDOWN_SEC * 1000) {
-        throw new AppError(429, `Please wait ${OTP_RESEND_COOLDOWN_SEC} seconds before resending OTP exactly.`);
+        throw new AppError(429, `Please wait ${OTP_RESEND_COOLDOWN_SEC} seconds before resending OTP.`);
     }
     
     const otp = generateOtp();
@@ -125,7 +125,7 @@ export const refreshToken = async (token: string) => {
         const accessToken = jwt.sign(
             { userId: user._id, globalRole: user.globalRole }, 
             (config.jwt.accessSecret as string), 
-            { expiresIn: (config.jwt.accessEpiresIn as any) }
+            { expiresIn: (config.jwt.accessExpiresIn as any) }
         );
 
         const newRefreshToken = jwt.sign(
@@ -140,7 +140,7 @@ export const refreshToken = async (token: string) => {
         return { accessToken, refreshToken: newRefreshToken };
     } catch (e) {
         authLogger.error('Refresh token rotation failed', e);
-        throw new AppError(401, 'Refresh token invalid or expired natively');
+        throw new AppError(401, 'Refresh token is invalid or expired');
     }
 };
 

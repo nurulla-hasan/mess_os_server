@@ -11,28 +11,32 @@ export const getMessSummary = catchAsync(async (req: Request, res: Response) => 
 export const getMonthlyFinancials = catchAsync(async (req: Request, res: Response) => {
   const month = parseInt(String(req.query.month));
   const year = parseInt(String(req.query.year));
-  if (!month || !year) throw new AppError(400, 'Month and year queries strictly required');
-  sendResponse(res, { statusCode: 200, success: true, message: 'Financials extracted via finalized tables', data: await rptService.getMonthlyFinancials(req.messId!, month, year) });
+  if (!month || !year) throw new AppError(400, 'Month and year query parameters are required');
+  sendResponse(res, { statusCode: 200, success: true, message: 'Monthly financials fetched successfully', data: await rptService.getMonthlyFinancials(req.messId!, month, year) });
 });
 
 export const getMemberStatement = catchAsync(async (req: Request, res: Response) => {
-  const isManager = req.messMember?.messRole === 'manager' || req.messRole === 'manager';
-  const callerMemberId = req.messMember!._id.toString();
+  const isManager = req.messRole === 'manager';
+  const callerMemberId = req.messMember!.id.toString();
   const targetMemberId = String(req.params.memberId);
   
   if (!isManager && targetMemberId !== callerMemberId) {
-     throw new AppError(403, 'Permission denied, safe boundaries violated for accessing member statement');
+     throw new AppError(403, 'You do not have permission to view this member statement');
   }
 
-  sendResponse(res, { statusCode: 200, success: true, message: 'Member statements calculated comprehensively', data: await rptService.getMemberStatement(req.messId!, targetMemberId) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Member statement fetched successfully', data: await rptService.getMemberStatement(req.messId!, targetMemberId) });
 });
 
 export const getExpenseReport = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Expenses aggregated securely', data: await rptService.getExpenseReport(req.messId!, String(req.query.start), String(req.query.end)) });
+  const start = req.query.start ? String(req.query.start) : undefined;
+  const end = req.query.end ? String(req.query.end) : undefined;
+  sendResponse(res, { statusCode: 200, success: true, message: 'Expenses aggregated successfully', data: await rptService.getExpenseReport(req.messId!, start, end) });
 });
 
 export const getPaymentReport = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Payments aggregated securely', data: await rptService.getPaymentReport(req.messId!, String(req.query.start), String(req.query.end)) });
+  const start = req.query.start ? String(req.query.start) : undefined;
+  const end = req.query.end ? String(req.query.end) : undefined;
+  sendResponse(res, { statusCode: 200, success: true, message: 'Payments aggregated successfully', data: await rptService.getPaymentReport(req.messId!, start, end) });
 });
 
 export const exportCsvReport = catchAsync(async (req: Request, res: Response) => {
@@ -44,5 +48,8 @@ export const exportCsvReport = catchAsync(async (req: Request, res: Response) =>
 });
 
 export const exportPdfReport = catchAsync(async (req: Request, res: Response) => {
-  await rptService.exportPdfReport(req.messId!);
+  const pdfBuffer = await rptService.exportPdfReport(req.messId!);
+  res.header('Content-Type', 'application/pdf');
+  res.attachment(`mess-report-${Date.now()}.pdf`);
+  res.send(pdfBuffer);
 });

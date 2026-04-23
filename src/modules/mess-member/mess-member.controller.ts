@@ -9,21 +9,26 @@ export const requestJoin = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getMembers = catchAsync(async (req: Request, res: Response) => {
-  const members = await memberService.getMembers(req.params.messId as string);
+  const members = await memberService.getMembers(req.messId!);
   sendResponse(res, { statusCode: 200, success: true, message: 'Members fetched successfully', data: members });
 });
 
+export const getPendingRequests = catchAsync(async (req: Request, res: Response) => {
+  const members = await memberService.getPendingRequests(req.messId!);
+  sendResponse(res, { statusCode: 200, success: true, message: 'Pending join requests fetched', data: members });
+});
+
 export const approveMember = catchAsync(async (req: Request, res: Response) => {
-  const member = await memberService.approveMember(req.params.messId as string, req.params.memberId as string);
+  const member = await memberService.approveMember(req.messId!, req.params.memberId as string);
   sendResponse(res, { statusCode: 200, success: true, message: 'Member approved successfully', data: member });
 });
 
 export const rejectMember = catchAsync(async (req: Request, res: Response) => {
-  const member = await memberService.rejectMember(req.params.messId as string, req.params.memberId as string);
+  const member = await memberService.rejectMember(req.messId!, req.params.memberId as string);
   sendResponse(res, { statusCode: 200, success: true, message: 'Member rejected successfully', data: member });
 });
 
 export const removeMember = catchAsync(async (req: Request, res: Response) => {
-  const member = await memberService.removeMember(req.params.messId as string, req.params.memberId as string);
+  const member = await memberService.removeMember(req.messId!, req.params.memberId as string);
   sendResponse(res, { statusCode: 200, success: true, message: 'Member removed successfully', data: member });
 });

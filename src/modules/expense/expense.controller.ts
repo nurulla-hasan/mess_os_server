@@ -18,12 +18,12 @@ export const createExpense = catchAsync(async (req: Request, res: Response) => {
   }
 
   const result = await expenseService.createExpense(messId, body);
-  sendResponse(res, { statusCode: 201, success: true, message: 'Expense record created reliably', data: result });
+  sendResponse(res, { statusCode: 201, success: true, message: 'Expense record created successfully', data: result });
 });
 
 export const getExpenses = catchAsync(async (req: Request, res: Response) => {
   const result = await expenseService.getExpenses(req.messId!, req.query);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Expenses extracted', data: result });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Expenses fetched successfully', data: result });
 });
 
 export const getExpenseById = catchAsync(async (req: Request, res: Response) => {
@@ -35,7 +35,7 @@ export const getExpenseById = catchAsync(async (req: Request, res: Response) => 
      throw new AppError(403, 'Unauthorized to view this specific expense record');
   }
 
-  sendResponse(res, { statusCode: 200, success: true, message: 'Expense record uniquely isolated', data: result });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Expense record fetched successfully', data: result });
 });
 
 export const approveExpense = catchAsync(async (req: Request, res: Response) => {

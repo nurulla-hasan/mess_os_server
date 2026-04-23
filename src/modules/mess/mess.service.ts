@@ -44,9 +44,19 @@ export const regenerateInviteCode = async (messId: string) => {
 };
 
 export const transferOwnership = async (messId: string, currentManagerId: string, newManagerUserId: string) => {
+  // Prevent transferring ownership to yourself
+  if (currentManagerId === newManagerUserId) {
+    throw new AppError(400, 'You cannot transfer ownership to yourself');
+  }
+
   // Verify the target user is an active member of this mess
   const newManager = await MessMember.findOne({ messId, userId: newManagerUserId, status: 'active' });
   if (!newManager) throw new AppError(400, 'Target user is not an active member of this mess');
+
+  // Prevent promoting someone who is already the manager
+  if (newManager.messRole === 'manager') {
+    throw new AppError(400, 'Target user is already the manager of this mess');
+  }
 
   // Demote the current manager to member
   await MessMember.findOneAndUpdate(

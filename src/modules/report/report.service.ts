@@ -21,7 +21,7 @@ export const getMessSummary = async (messId: string) => {
 
 export const getMonthlyFinancials = async (messId: string, month: number, year: number) => {
    const cycle = await BillingCycle.findOne({ messId, month, year, status: 'finalized' });
-   if (!cycle) throw new AppError(404, 'Finalized billing cycle not found safely for this strict period');
+   if (!cycle) throw new AppError(404, 'Finalized billing cycle not found for this period');
    return cycle;
 };
 
@@ -62,11 +62,11 @@ export const exportCsvReport = async (messId: string, type: 'expenses'|'payments
        data = await Payment.find({ messId, status: 'approved' }).sort({ receivedDate: -1 }).lean() as object[];
    }
    
-   if (!data || data.length === 0) throw new AppError(404, 'No approved records found to export natively');
+   if (!data || data.length === 0) throw new AppError(404, 'No approved records found to export');
    
    return await parseAsync(data);
 };
 
 export const exportPdfReport = async (messId: string) => {
-   throw new AppError(501, 'PDF binary generation explicitly unimplemented. Structural framework waiting on external wkhtmltopdf integration');
+   throw new AppError(501, 'PDF generation is not yet implemented');
 };

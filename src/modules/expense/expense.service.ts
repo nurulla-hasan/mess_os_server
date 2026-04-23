@@ -23,7 +23,7 @@ export const getExpenses = async (messId: string, query: any = {}) => {
 
 export const getExpenseById = async (messId: string, expenseId: string) => {
   const exp = await Expense.findOne({ _id: new Types.ObjectId(expenseId), messId: new Types.ObjectId(messId) });
-  if (!exp) throw new AppError(404, 'Expense not found uniquely isolated securely');
+  if (!exp) throw new AppError(404, 'Expense not found');
   return exp;
 };
 
@@ -93,7 +93,7 @@ export const cancelExpense = async (messId: string, expenseId: string, actorMemb
   const isManager = actorRole === 'manager';
 
   if (!isOwner && !isManager) {
-     throw new AppError(403, 'Unauthorized to explicitly cancel this expense record natively');
+     throw new AppError(403, 'You are not authorized to cancel this expense');
   }
 
   exp.status = 'canceled';

@@ -28,8 +28,8 @@ const generateBillingPayload = async (messId: string, billingMonth: number, bill
     const mess = await messQuery;
     if (!mess) throw new AppError(404, 'Mess not found');
 
-    const mealCategories = (mess as any).settings.mealCategories || [];
-    const equalShareCategories = (mess as any).settings.equalShareCategories || [];
+    const mealCategories: string[] = (mess as any).settings?.mealCategories ?? [];
+    const equalShareCategories: string[] = (mess as any).settings?.equalShareCategories ?? [];
 
     const expensesQuery = Expense.find({ messId, status: 'approved', date: { $gte: start, $lte: end } });
     const utilityBillsQuery = UtilityBill.find({ messId, status: 'paid', billingMonth: billingMonth, year: billingYear });
@@ -237,7 +237,7 @@ export const reopenBillingCycle = async (messId: string, billingCycleId: string)
 
     await session.commitTransaction();
     
-    return { success: true, message: 'Billing cycle cleanly reopened, math reversed from ledgers' };
+    return { success: true, message: 'Billing cycle reopened successfully' };
   } catch (err) {
     await session.abortTransaction();
     throw err;

@@ -10,7 +10,7 @@ export const config = {
   },
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET || 'secret',
-    accessEpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '1h',
+    accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '1h',
     refreshSecret: process.env.JWT_REFRESH_SECRET || 'refresh_secret',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },

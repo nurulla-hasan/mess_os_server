@@ -8,8 +8,11 @@ import * as ctl from './mess-member.controller';
 
 const router = Router({ mergeParams: true });
 
-// Any active member (including manager) can view the member list
+// Any active member (including manager) can view the active member list
 router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.getMembers);
+
+// Only manager can view pending join requests
+router.get('/pending', authorize(MESS_ROLES.MANAGER), ctl.getPendingRequests);
 
 // Only manager can approve, reject, or remove members
 router.post('/:memberId/approve', authorize(MESS_ROLES.MANAGER), ctl.approveMember);
