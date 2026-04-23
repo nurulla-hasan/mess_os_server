@@ -1865,7 +1865,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Nurulla Mess\",\n  \"address\": \"Dhaka\",\n  \"settings\": {}\n}"
+              "raw": "{\n  \"name\": \"Nurulla Mess\",\n  \"address\": \"Dhaka\",\n  \"settings\": {\n    \"mealCategories\": [\n      \"grocery\",\n      \"bazar\"\n    ],\n    \"equalShareCategories\": [\n      \"rent\",\n      \"wifi\",\n      \"electricity\"\n    ]\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes",
@@ -1878,7 +1878,7 @@
                 "messes"
               ]
             },
-            "description": "Role: Manager/Super Admin only. Creates new mess and sets creator as manager. Requires platform-level manager or super_admin role. Body schema: any (placeholder validation)"
+            "description": "Role: Manager / Super Admin. Body: { name, address, settings: { mealCategories: string[], equalShareCategories: string[] } }"
           },
           "response": [
             {
@@ -2299,7 +2299,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Mess Name\"\n}"
+              "raw": "{\n  \"name\": \"Updated Mess Name\",\n  \"settings\": {\n    \"mealCategories\": [\n      \"grocery\",\n      \"bazar\",\n      \"meat\"\n    ],\n    \"equalShareCategories\": [\n      \"rent\",\n      \"wifi\",\n      \"electricity\",\n      \"water\"\n    ]\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}",
@@ -2313,7 +2313,7 @@
                 "{{messId}}"
               ]
             },
-            "description": "Role: Manager only. Body schema: any (placeholder validation). Requires messId variable."
+            "description": "Role: Manager. Body: Optional fields to update (name, address, settings). settings can include mealCategories and equalShareCategories arrays."
           },
           "response": []
         },
@@ -2352,7 +2352,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"newManagerMemberId\": \"{{memberId}}\"\n}"
+              "raw": "{\n  \"newManagerUserId\": \"{{userId}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/transfer-ownership",
@@ -2367,7 +2367,7 @@
                 "transfer-ownership"
               ]
             },
-            "description": "Role: Manager only. Transfers manager role to another member. Body schema: any (placeholder validation). Requires messId and memberId variables."
+            "description": "Role: Manager. Body: { newManagerUserId: string }"
           },
           "response": []
         }
