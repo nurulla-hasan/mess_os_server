@@ -3,8 +3,9 @@ import { Payment } from './payment.model';
 import { ledgerHelper } from '../../shared/helpers/ledgerHelper';
 import { AppError } from '../../shared/utils/apiError';
 import { REFERENCE_TYPES } from '../../constants/ledgerEntryTypes';
+import { CreatePaymentPayload } from './payment.validation';
 
-export const createPayment = async (messId: string, payload: any) => {
+export const createPayment = async (messId: string, payload: CreatePaymentPayload) => {
   return await Payment.create({
     ...payload,
     messId: new Types.ObjectId(messId),
@@ -14,10 +15,20 @@ export const createPayment = async (messId: string, payload: any) => {
 
 export const getPayments = async (messId: string, query: any = {}) => {
   const filter: any = { messId: new Types.ObjectId(messId) };
-  if (query.messMemberId) filter.messMemberId = new Types.ObjectId(query.messMemberId);
+  if (query.messMemberId) filter.messMemberId = new Types.ObjectId(query.messMemberId as string);
   if (query.status) filter.status = query.status;
   
-  return await Payment.find(filter).sort({ createdAt: -1 });
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 20;
+  const skip = (page - 1) * limit;
+
+  const data = await Payment.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit);
+  const total = await Payment.countDocuments(filter);
+
+  return {
+    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    data
+  };
 };
 
 export const getPaymentById = async (messId: string, paymentId: string) => {

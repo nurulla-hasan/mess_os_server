@@ -23,7 +23,7 @@ export const createPayment = catchAsync(async (req: Request, res: Response) => {
 
 export const getPayments = catchAsync(async (req: Request, res: Response) => {
   const result = await paymentService.getPayments(req.messId!, req.query);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Payments retrieved', data: result });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Payments retrieved', meta: result.meta, data: result.data });
 });
 
 export const getPaymentById = catchAsync(async (req: Request, res: Response) => {
@@ -39,8 +39,8 @@ export const getPaymentById = catchAsync(async (req: Request, res: Response) => 
 });
 
 export const getMyPayments = catchAsync(async (req: Request, res: Response) => {
-  const result = await paymentService.getPayments(req.messId!, { messMemberId: req.messMember!.id.toString() });
-  sendResponse(res, { statusCode: 200, success: true, message: 'Your payment history extracted', data: result });
+  const result = await paymentService.getPayments(req.messId!, { ...req.query, messMemberId: req.messMember!.id.toString() });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Your payment history extracted', meta: result.meta, data: result.data });
 });
 
 export const approvePayment = catchAsync(async (req: Request, res: Response) => {

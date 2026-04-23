@@ -12,6 +12,8 @@ export const createPaymentSchema = z.object({
   }).strict()
 });
 
+export type CreatePaymentPayload = z.infer<typeof createPaymentSchema>['body'];
+
 // Approvals only need params validation realistically.
 export const updatePaymentStatusSchema = z.object({
   params: z.object({ paymentId: oId }).strict()

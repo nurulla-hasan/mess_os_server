@@ -3,8 +3,9 @@ import { Expense } from './expense.model';
 import { ledgerHelper } from '../../shared/helpers/ledgerHelper';
 import { AppError } from '../../shared/utils/apiError';
 import { REFERENCE_TYPES, FUND_SOURCES } from '../../constants/ledgerEntryTypes';
+import { CreateExpensePayload } from './expense.validation';
 
-export const createExpense = async (messId: string, payload: any) => { 
+export const createExpense = async (messId: string, payload: CreateExpensePayload) => { 
   return await Expense.create({ 
     ...payload,
     messId: new Types.ObjectId(messId), 
@@ -14,11 +15,21 @@ export const createExpense = async (messId: string, payload: any) => {
 
 export const getExpenses = async (messId: string, query: any = {}) => { 
   const filter: any = { messId: new Types.ObjectId(messId) };
-  if (query.paidBy) filter.paidBy = new Types.ObjectId(query.paidBy);
+  if (query.paidBy) filter.paidBy = new Types.ObjectId(query.paidBy as string);
   if (query.status) filter.status = query.status;
   if (query.fundSource) filter.fundSource = query.fundSource;
   
-  return await Expense.find(filter).sort({ date: -1 }); 
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 20;
+  const skip = (page - 1) * limit;
+
+  const data = await Expense.find(filter).sort({ date: -1 }).skip(skip).limit(limit);
+  const total = await Expense.countDocuments(filter);
+
+  return {
+    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    data
+  };
 };
 
 export const getExpenseById = async (messId: string, expenseId: string) => {

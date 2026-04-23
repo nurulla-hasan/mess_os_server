@@ -15,6 +15,8 @@ export const createExpenseSchema = z.object({
   }).strict()
 });
 
+export type CreateExpensePayload = z.infer<typeof createExpenseSchema>['body'];
+
 export const expenseIdParamSchema = z.object({
   params: z.object({ expenseId: oId }).strict()
 });

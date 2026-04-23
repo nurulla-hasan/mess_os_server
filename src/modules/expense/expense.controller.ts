@@ -23,7 +23,7 @@ export const createExpense = catchAsync(async (req: Request, res: Response) => {
 
 export const getExpenses = catchAsync(async (req: Request, res: Response) => {
   const result = await expenseService.getExpenses(req.messId!, req.query);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Expenses fetched successfully', data: result });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Expenses fetched successfully', meta: result.meta, data: result.data });
 });
 
 export const getExpenseById = catchAsync(async (req: Request, res: Response) => {

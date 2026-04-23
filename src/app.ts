@@ -33,7 +33,7 @@ app.use('/', (req, res, next) => {
 });
 
 app.all('*', (req, res, next) => {
-  next(new AppError(404, `Target securely missed: ${req.originalUrl}`));
+  next(new AppError(404, `Route not found: ${req.originalUrl}`));
 });
 
 app.use(globalErrorHandler);
