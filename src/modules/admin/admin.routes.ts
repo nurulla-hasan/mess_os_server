@@ -5,7 +5,9 @@ import { validateRequest } from '../../shared/middlewares/validateRequest';
 import * as ctl from './admin.controller';
 import * as val from './admin.validation';
 
-export const requireSuperAdmin = (req: any, res: any, next: any) => {
+import { Request, Response, NextFunction } from 'express';
+
+export const requireSuperAdmin = (req: Request, res: Response, next: NextFunction) => {
   if (req.user?.globalRole !== 'super_admin') {
     return next(new AppError(403, 'Restricted strictly to platform super administrators'));
   }

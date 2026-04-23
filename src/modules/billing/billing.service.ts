@@ -17,8 +17,10 @@ export const getBillingCycles = async (messId: string) => {
   return await BillingCycle.find({ messId }).sort({ year: -1, month: -1 });
 };
 
-export const getMemberBills = async (messId: string, cycleId: string) => {
-  return await MemberBill.find({ messId, billingCycleId: cycleId }).sort({ isArchived: 1, createdAt: -1 });
+export const getMemberBills = async (messId: string, cycleId: string, includeHistory = false) => {
+  const filter: any = { messId, billingCycleId: cycleId };
+  if (!includeHistory) filter.isArchived = false;
+  return await MemberBill.find(filter).sort({ isArchived: 1, createdAt: -1 });
 };
 
 const generateBillingPayload = async (messId: string, billingMonth: number, billingYear: number, session?: ClientSession) => {
@@ -28,8 +30,8 @@ const generateBillingPayload = async (messId: string, billingMonth: number, bill
     const mess = await messQuery;
     if (!mess) throw new AppError(404, 'Mess not found');
 
-    const mealCategories: string[] = (mess as any).settings?.mealCategories ?? [];
-    const equalShareCategories: string[] = (mess as any).settings?.equalShareCategories ?? [];
+    const mealCategories: string[] = mess.settings?.mealCategories ?? [];
+    const equalShareCategories: string[] = mess.settings?.equalShareCategories ?? [];
 
     const expensesQuery = Expense.find({ messId, status: 'approved', date: { $gte: start, $lte: end } });
     const utilityBillsQuery = UtilityBill.find({ messId, status: 'paid', billingMonth: billingMonth, year: billingYear });

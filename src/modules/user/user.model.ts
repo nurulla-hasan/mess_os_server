@@ -17,7 +17,8 @@ export interface IUser extends Document {
   verificationOtpExpiresAt?: Date;
   resetPasswordOtp?: string;
   resetPasswordOtpExpiresAt?: Date;
-  lastOtpSentAt?: Date;
+  lastVerificationOtpSentAt?: Date;
+  lastResetOtpSentAt?: Date;
   refreshTokenHash?: string;
 }
 
@@ -38,7 +39,8 @@ const userSchema = new Schema<IUser>({
   verificationOtpExpiresAt: { type: Date, select: false },
   resetPasswordOtp: { type: String, select: false },
   resetPasswordOtpExpiresAt: { type: Date, select: false },
-  lastOtpSentAt: Date,
+  lastVerificationOtpSentAt: { type: Date, select: false },
+  lastResetOtpSentAt: { type: Date, select: false },
   refreshTokenHash: { type: String, select: false }
 }, {
   timestamps: true,
@@ -53,6 +55,10 @@ const userSchema = new Schema<IUser>({
       delete (ret as any).avatarPublicId;
       delete (ret as any).verificationOtp;
       delete (ret as any).resetPasswordOtp;
+      delete (ret as any).verificationOtpExpiresAt;
+      delete (ret as any).resetPasswordOtpExpiresAt;
+      delete (ret as any).lastVerificationOtpSentAt;
+      delete (ret as any).lastResetOtpSentAt;
       return ret; 
     } 
   }

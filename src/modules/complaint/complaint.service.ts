@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
 import { Complaint } from './complaint.model';
 import { AppError } from '../../shared/utils/apiError';
+import { CreateComplaintPayload } from './complaint.validation';
 
-export const createComplaint = async (messId: string, payload: any, myMemberId: string) => {
+export const createComplaint = async (messId: string, payload: CreateComplaintPayload, myMemberId: string) => {
   return await Complaint.create({ messId, messMemberId: new mongoose.Types.ObjectId(myMemberId), ...payload });
 };
 
@@ -36,17 +37,21 @@ export const updateComplaintStatus = async (messId: string, complaintId: string,
 };
 
 export const resolveComplaint = async (messId: string, complaintId: string, resolvedNote: string, managerId: string) => {
-  return await Complaint.findOneAndUpdate(
+  const comp = await Complaint.findOneAndUpdate(
     { _id: complaintId, messId },
     { status: 'resolved', resolvedNote, resolvedAt: new Date(), resolvedBy: new mongoose.Types.ObjectId(managerId) },
     { new: true }
   );
+  if (!comp) throw new AppError(404, 'Complaint not found');
+  return comp;
 };
 
 export const rejectComplaint = async (messId: string, complaintId: string, resolvedNote: string, managerId: string) => {
-  return await Complaint.findOneAndUpdate(
+  const comp = await Complaint.findOneAndUpdate(
     { _id: complaintId, messId },
     { status: 'rejected', resolvedNote, resolvedAt: new Date(), resolvedBy: new mongoose.Types.ObjectId(managerId) },
     { new: true }
   );
+  if (!comp) throw new AppError(404, 'Complaint not found');
+  return comp;
 };

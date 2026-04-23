@@ -13,8 +13,8 @@ export const createPayment = async (messId: string, payload: CreatePaymentPayloa
   });
 };
 
-export const getPayments = async (messId: string, query: any = {}) => {
-  const filter: any = { messId: new Types.ObjectId(messId) };
+export const getPayments = async (messId: string, query: Record<string, unknown> = {}) => {
+  const filter: Record<string, unknown> = { messId: new Types.ObjectId(messId) };
   if (query.messMemberId) filter.messMemberId = new Types.ObjectId(query.messMemberId as string);
   if (query.status) filter.status = query.status;
   

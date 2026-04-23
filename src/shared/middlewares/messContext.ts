@@ -19,7 +19,7 @@ export const messContext = async (req: Request, res: Response, next: NextFunctio
       return next(new AppError(403, 'You are not an active member of this mess'));
     }
 
-    req.messMember = member as any;
+    req.messMember = member;
     req.messRole = member.messRole;
     req.messId = messId;
     next();

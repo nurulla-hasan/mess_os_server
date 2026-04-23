@@ -38,7 +38,7 @@ export const getMemberStatement = async (messId: string, memberId: string) => {
 };
 
 export const getExpenseReport = async (messId: string, start?: string, end?: string) => {
-   const query: any = { messId, status: 'approved' };
+   const query: Record<string, unknown> = { messId, status: 'approved' };
    if (start && end) {
        query.date = { $gte: new Date(start), $lte: new Date(end) };
    }
@@ -46,7 +46,7 @@ export const getExpenseReport = async (messId: string, start?: string, end?: str
 };
 
 export const getPaymentReport = async (messId: string, start?: string, end?: string) => {
-   const query: any = { messId, status: 'approved' };
+   const query: Record<string, unknown> = { messId, status: 'approved' };
    if (start && end) {
        // Approved financial reporting uses receivedDate as the canonical accounting boundary natively
        query.receivedDate = { $gte: new Date(start), $lte: new Date(end) };

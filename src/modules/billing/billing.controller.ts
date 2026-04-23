@@ -9,7 +9,8 @@ export const getBillingCycles = catchAsync(async (req: Request, res: Response) =
 });
 
 export const getMemberBills = catchAsync(async (req: Request, res: Response) => {
-  const result = await billingService.getMemberBills(req.messId!, String(req.params.billingCycleId));
+  const includeHistory = req.query.history === 'true';
+  const result = await billingService.getMemberBills(req.messId!, String(req.params.billingCycleId), includeHistory);
   sendResponse(res, { statusCode: 200, success: true, message: 'Member bills retrieved', data: result });
 });
 

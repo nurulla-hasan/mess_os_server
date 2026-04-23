@@ -7,7 +7,7 @@ const oId = z.string().refine(isValidObjectId);
 export const createMarketScheduleSchema = z.object({
   body: z.object({
     assignedTo: z.array(oId).min(1),
-    targetDate: z.string().datetime().or(z.string()),
+    targetDate: z.string().datetime(),
     shoppingItems: z.array(z.object({ name: z.string(), quantity: z.string() })),
     estimatedBudget: z.number().positive()
   }).strict()

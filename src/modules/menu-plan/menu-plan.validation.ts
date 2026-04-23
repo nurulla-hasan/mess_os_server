@@ -5,7 +5,7 @@ const oId = z.string().refine(isValidObjectId);
 
 export const createMenuPlanSchema = z.object({
   body: z.object({
-    date: z.string().datetime().or(z.string()),
+    date: z.string().datetime(),
     meals: z.object({
       breakfast: z.string().optional(),
       lunch: z.string().optional(),

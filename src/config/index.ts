@@ -9,14 +9,14 @@ export const config = {
     uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/mess_os_local',
   },
   jwt: {
-    accessSecret: process.env.JWT_ACCESS_SECRET || 'secret',
+    accessSecret: process.env.JWT_ACCESS_SECRET || (() => { throw new Error('JWT_ACCESS_SECRET is not defined'); })(),
     accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '1h',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'refresh_secret',
+    refreshSecret: process.env.JWT_REFRESH_SECRET || (() => { throw new Error('JWT_REFRESH_SECRET is not defined'); })(),
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
   smtp: {
-    user: process.env.SMTP_USER || '',
-    pass: process.env.SMTP_PASS || '',
+    user: process.env.SMTP_USER || (() => { throw new Error('SMTP_USER is not defined'); })(),
+    pass: process.env.SMTP_PASS || (() => { throw new Error('SMTP_PASS is not defined'); })(),
     from: process.env.SMTP_FROM || 'noreply@messmanager.com'
   }
 };

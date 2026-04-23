@@ -1,13 +1,13 @@
 export interface AiProvider {
   generateMenuPlanContent(date: Date): Promise<{ breakfast?: string, lunch?: string, dinner?: string }>;
-  generateShoppingListItems(menuMeals: any): Promise<{ name: string, quantity: string, category: string }[]>;
+  generateShoppingListItems(menuMeals: { breakfast?: string, lunch?: string, dinner?: string }): Promise<{ name: string, quantity: string, category: string }[]>;
 }
 
 class MockAiProvider implements AiProvider {
   async generateMenuPlanContent(date: Date) {
     return { breakfast: 'Eggs & Bread', lunch: 'Chicken & Rice', dinner: 'Fish & Curry' };
   }
-  async generateShoppingListItems(menuMeals: any) {
+  async generateShoppingListItems(menuMeals: { breakfast?: string, lunch?: string, dinner?: string }) {
     return [
       { name: 'Eggs', quantity: '1 Dozen', category: 'bazar' },
       { name: 'Chicken', quantity: '2 KG', category: 'bazar' }

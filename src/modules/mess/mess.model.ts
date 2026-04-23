@@ -4,7 +4,10 @@ export interface IMess extends Document {
   name: string;
   address: string;
   inviteCode: string;
-  settings?: any;
+  settings?: {
+    mealCategories?: string[];
+    equalShareCategories?: string[];
+  };
   status: 'active' | 'suspended';
 }
 

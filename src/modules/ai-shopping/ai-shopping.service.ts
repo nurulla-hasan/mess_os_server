@@ -5,8 +5,9 @@ import { MarketSchedule } from '../market-schedule/market-schedule.model';
 import { aiService } from '../../shared/services/aiService';
 import { normalizeMealDate } from '../../shared/utils/dateUtils';
 import { AppError } from '../../shared/utils/apiError';
+import { GenerateListPayload, ConvertListPayload } from './ai-shopping.validation';
 
-export const generateShoppingList = async (messId: string, payload: any, userId: string) => {
+export const generateShoppingList = async (messId: string, payload: GenerateListPayload, userId: string) => {
   const menu = await MenuPlan.findOne({ _id: payload.menuPlanId, messId });
   if (!menu) throw new AppError(404, 'Menu plan not found');
 
@@ -51,7 +52,7 @@ export const rejectShoppingList = async (messId: string, listId: string) => {
   return list;
 };
 
-export const convertToMarketSchedule = async (messId: string, listId: string, userId: string, payload: any) => {
+export const convertToMarketSchedule = async (messId: string, listId: string, userId: string, payload: ConvertListPayload) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 

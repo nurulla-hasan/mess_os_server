@@ -5,11 +5,13 @@ import jwt from 'jsonwebtoken';
 import { config } from '../../config';
 import { sendEmail } from '../../shared/utils/emailHelper';
 import { authLogger } from '../../shared/utils/logger';
+import crypto from 'crypto';
+import { RegisterPayload, LoginPayload, ResetPasswordPayload } from './auth.validation';
 
-const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+const generateOtp = () => crypto.randomInt(100000, 999999).toString();
 const OTP_RESEND_COOLDOWN_SEC = 60;
 
-export const registerUser = async (payload: any) => {
+export const registerUser = async (payload: RegisterPayload) => {
   const existing = await User.findOne({ email: payload.email });
   if (existing) throw new AppError(400, 'Email already used!');
   
@@ -23,16 +25,22 @@ export const registerUser = async (payload: any) => {
     passwordHash, 
     verificationOtp: hashedOtp, 
     verificationOtpExpiresAt: expiresAt,
-    lastOtpSentAt: new Date()
+    lastVerificationOtpSentAt: new Date()
   });
 
-  await sendEmail(user.email, 'Verify your email', `<p>Your verification OTP is <b>${otp}</b>. It expires in 10 minutes.</p>`);
-  authLogger.info('User registration successful', { email: user.email });
+  try {
+    await sendEmail(user.email, 'Verify your email', `<p>Your verification OTP is <b>${otp}</b>. It expires in 10 minutes.</p>`);
+    authLogger.info('User registration successful', { email: user.email });
+  } catch (error) {
+    await User.findByIdAndDelete(user._id);
+    authLogger.error('Failed to send verification email, deleted user', { email: user.email, error });
+    throw new AppError(500, 'Failed to send verification email. Please try registering again.');
+  }
   
   return user;
 };
 
-export const loginUser = async (payload: any) => {
+export const loginUser = async (payload: LoginPayload) => {
   const user = await User.findOne({ email: payload.email }).select('+passwordHash');
   if (!user || user.status === 'blocked') {
     authLogger.warn('Failed login attempt - User not found or blocked', { email: payload.email });
@@ -53,13 +61,13 @@ export const loginUser = async (payload: any) => {
   const accessToken = jwt.sign(
     { userId: user._id, globalRole: user.globalRole }, 
     (config.jwt.accessSecret as string), 
-    { expiresIn: (config.jwt.accessExpiresIn as any) }
+    { expiresIn: config.jwt.accessExpiresIn as jwt.SignOptions['expiresIn'] }
   );
 
   const refreshToken = jwt.sign(
     { userId: user._id, globalRole: user.globalRole }, 
     (config.jwt.refreshSecret as string), 
-    { expiresIn: (config.jwt.refreshExpiresIn as any) }
+    { expiresIn: config.jwt.refreshExpiresIn as jwt.SignOptions['expiresIn'] }
   );
 
   user.refreshTokenHash = await bcrypt.hash(refreshToken, 10);
@@ -88,29 +96,42 @@ export const verifyEmail = async (email: string, otp: string) => {
 };
 
 export const resendOtp = async (email: string) => {
-    const user = await User.findOne({ email }).select('+verificationOtp +verificationOtpExpiresAt +lastOtpSentAt');
+    const user = await User.findOne({ email }).select('+verificationOtp +verificationOtpExpiresAt +lastVerificationOtpSentAt');
     if (!user) throw new AppError(404, 'User not found');
     if (user.isEmailVerified) throw new AppError(400, 'Email is already verified');
 
     const now = new Date();
-    if (user.lastOtpSentAt && (now.getTime() - user.lastOtpSentAt.getTime()) < OTP_RESEND_COOLDOWN_SEC * 1000) {
+    if (user.lastVerificationOtpSentAt && (now.getTime() - user.lastVerificationOtpSentAt.getTime()) < OTP_RESEND_COOLDOWN_SEC * 1000) {
         throw new AppError(429, `Please wait ${OTP_RESEND_COOLDOWN_SEC} seconds before resending OTP.`);
     }
     
     const otp = generateOtp();
     const hashedOtp = await bcrypt.hash(otp, 10);
+    
+    const oldOtp = user.verificationOtp;
+    const oldExpiresAt = user.verificationOtpExpiresAt;
+    const oldSentAt = user.lastVerificationOtpSentAt;
+
     user.verificationOtp = hashedOtp;
     user.verificationOtpExpiresAt = new Date(now.getTime() + 10 * 60 * 1000);
-    user.lastOtpSentAt = now;
+    user.lastVerificationOtpSentAt = now;
     await user.save();
 
-    await sendEmail(user.email, 'Verification OTP Resent', `<p>Your new verification OTP is <b>${otp}</b>.</p>`);
-    authLogger.info('Verification OTP resent', { userId: user._id });
+    try {
+      await sendEmail(user.email, 'Verification OTP Resent', `<p>Your new verification OTP is <b>${otp}</b>.</p>`);
+      authLogger.info('Verification OTP resent', { userId: user._id });
+    } catch (e) {
+      user.verificationOtp = oldOtp;
+      user.verificationOtpExpiresAt = oldExpiresAt;
+      user.lastVerificationOtpSentAt = oldSentAt;
+      await user.save();
+      throw new AppError(500, 'Failed to send OTP email. Please try again later.');
+    }
 };
 
 export const refreshToken = async (token: string) => {
     try {
-        const decoded = jwt.verify(token, config.jwt.refreshSecret) as any;
+        const decoded = jwt.verify(token, config.jwt.refreshSecret) as jwt.JwtPayload;
         const user = await User.findById(decoded.userId).select('+refreshTokenHash');
         if (!user || user.status === 'blocked' || !user.refreshTokenHash) throw new Error();
 
@@ -125,13 +146,13 @@ export const refreshToken = async (token: string) => {
         const accessToken = jwt.sign(
             { userId: user._id, globalRole: user.globalRole }, 
             (config.jwt.accessSecret as string), 
-            { expiresIn: (config.jwt.accessExpiresIn as any) }
+            { expiresIn: config.jwt.accessExpiresIn as jwt.SignOptions['expiresIn'] }
         );
 
         const newRefreshToken = jwt.sign(
             { userId: user._id, globalRole: user.globalRole }, 
             (config.jwt.refreshSecret as string), 
-            { expiresIn: (config.jwt.refreshExpiresIn as any) }
+            { expiresIn: config.jwt.refreshExpiresIn as jwt.SignOptions['expiresIn'] }
         );
 
         user.refreshTokenHash = await bcrypt.hash(newRefreshToken, 10);
@@ -147,36 +168,51 @@ export const refreshToken = async (token: string) => {
 export const logout = async (token?: string) => {
     if (!token) return;
     try {
-        const decoded = jwt.verify(token, config.jwt.refreshSecret) as any;
+        const decoded = jwt.verify(token, config.jwt.refreshSecret) as jwt.JwtPayload;
         const user = await User.findById(decoded.userId).select('+refreshTokenHash');
         if (user) {
             user.refreshTokenHash = undefined;
             await user.save();
             authLogger.info('Server session invalidated via refresh token explicitly during logout', { userId: user._id });
         }
-    } catch (e: any) {
-        authLogger.warn('Server session invalidation failure during logout (token expired or corrupted)', { error: e.message });
+    } catch (e: unknown) {
+        if (e instanceof Error) {
+            authLogger.warn('Server session invalidation failure during logout (token expired or corrupted)', { error: e.message });
+        }
     }
 };
 
 export const forgotPassword = async (email: string) => {
-    const user = await User.findOne({ email }).select('+lastOtpSentAt');
+    const user = await User.findOne({ email }).select('+lastResetOtpSentAt');
     if (!user) throw new AppError(404, 'User not found');
 
     const now = new Date();
-    if (user.lastOtpSentAt && (now.getTime() - user.lastOtpSentAt.getTime()) < OTP_RESEND_COOLDOWN_SEC * 1000) {
+    if (user.lastResetOtpSentAt && (now.getTime() - user.lastResetOtpSentAt.getTime()) < OTP_RESEND_COOLDOWN_SEC * 1000) {
         throw new AppError(429, `Please wait ${OTP_RESEND_COOLDOWN_SEC} seconds before requesting another reset OTP.`);
     }
 
     const otp = generateOtp();
     const hashedOtp = await bcrypt.hash(otp, 10);
+    
+    const oldOtp = user.resetPasswordOtp;
+    const oldExpiresAt = user.resetPasswordOtpExpiresAt;
+    const oldSentAt = user.lastResetOtpSentAt;
+
     user.resetPasswordOtp = hashedOtp;
     user.resetPasswordOtpExpiresAt = new Date(now.getTime() + 15 * 60 * 1000);
-    user.lastOtpSentAt = now;
+    user.lastResetOtpSentAt = now;
     await user.save();
 
-    await sendEmail(email, 'Password Reset OTP', `<p>Your reset OTP is <b>${otp}</b>. It expires in 15 minutes.</p>`);
-    authLogger.info('Forgot password requested', { email });
+    try {
+      await sendEmail(email, 'Password Reset OTP', `<p>Your reset OTP is <b>${otp}</b>. It expires in 15 minutes.</p>`);
+      authLogger.info('Forgot password requested', { email });
+    } catch (e) {
+      user.resetPasswordOtp = oldOtp;
+      user.resetPasswordOtpExpiresAt = oldExpiresAt;
+      user.lastResetOtpSentAt = oldSentAt;
+      await user.save();
+      throw new AppError(500, 'Failed to send reset OTP email. Please try again later.');
+    }
 };
 
 export const verifyResetOtp = async (email: string, otp: string) => {
@@ -191,7 +227,7 @@ export const verifyResetOtp = async (email: string, otp: string) => {
     return true;
 };
 
-export const resetPassword = async (payload: any) => {
+export const resetPassword = async (payload: ResetPasswordPayload) => {
     const user = await User.findOne({ email: payload.email }).select('+resetPasswordOtp +resetPasswordOtpExpiresAt');
     if (!user) throw new AppError(400, 'Invalid email');
     if (!user.resetPasswordOtp || !user.resetPasswordOtpExpiresAt) throw new AppError(400, 'No pending reset found');

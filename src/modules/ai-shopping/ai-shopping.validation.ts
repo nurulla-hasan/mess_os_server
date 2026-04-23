@@ -6,7 +6,7 @@ const oId = z.string().refine(isValidObjectId);
 export const generateListSchema = z.object({
   body: z.object({
     menuPlanId: oId,
-    targetDate: z.string().datetime().or(z.string())
+    targetDate: z.string().datetime()
   }).strict()
 });
 
@@ -16,3 +16,6 @@ export const convertListSchema = z.object({
     estimatedBudget: z.number().positive()
   }).strict()
 });
+
+export type GenerateListPayload = z.infer<typeof generateListSchema>['body'];
+export type ConvertListPayload = z.infer<typeof convertListSchema>['body'];

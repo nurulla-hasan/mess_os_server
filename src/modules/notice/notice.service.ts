@@ -2,8 +2,9 @@ import mongoose from 'mongoose';
 import { Notice } from './notice.model';
 import { emailService } from '../../shared/services/emailService';
 import { AppError } from '../../shared/utils/apiError';
+import { CreateNoticePayload, UpdateNoticePayload } from './notice.validation';
 
-export const createNotice = async (messId: string, payload: any, userId: string) => {
+export const createNotice = async (messId: string, payload: CreateNoticePayload, userId: string) => {
   const notice = await Notice.create({ messId, ...payload, createdBy: new mongoose.Types.ObjectId(userId) });
   emailService.sendNotice(messId, notice.title).catch(console.error);
   return notice;
@@ -19,7 +20,7 @@ export const getNotice = async (messId: string, noticeId: string) => {
   return note;
 };
 
-export const updateNotice = async (messId: string, noticeId: string, payload: any) => {
+export const updateNotice = async (messId: string, noticeId: string, payload: UpdateNoticePayload) => {
   const note = await Notice.findOneAndUpdate(
     { _id: noticeId, messId },
     payload,

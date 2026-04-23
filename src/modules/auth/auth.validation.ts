@@ -56,3 +56,8 @@ export const resendOtpSchema = z.object({
     email: z.string().email()
   }).strict()
 });
+
+export type RegisterPayload = z.infer<typeof registerSchema>['body'];
+export type LoginPayload = z.infer<typeof loginSchema>['body'];
+export type ResetPasswordPayload = z.infer<typeof resetPasswordSchema>['body'];
+

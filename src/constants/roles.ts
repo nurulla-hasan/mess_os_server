@@ -6,6 +6,5 @@ export const GLOBAL_ROLES = {
 
 export const MESS_ROLES = {
   MANAGER: 'manager',
-  MEMBER: 'member',
-  SUPER_ADMIN: 'super_admin'
+  MEMBER: 'member'
 };

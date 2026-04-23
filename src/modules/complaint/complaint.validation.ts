@@ -7,6 +7,9 @@ export const createComplaintSchema = z.object({
   }).strict()
 });
 
+export type CreateComplaintPayload = z.infer<typeof createComplaintSchema>['body'];
+
+
 export const updateStatusSchema = z.object({
   body: z.object({
     status: z.enum(['in_progress'])
