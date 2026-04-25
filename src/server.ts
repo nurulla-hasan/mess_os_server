@@ -13,7 +13,7 @@ async function bootstrap() {
       console.log(`Server actively running bound fully onto port ${config.port}`);
     });
   } catch (error) {
-    console.error(`Server abruptly crashed natively triggering termination`);
+    console.error(`Server abruptly crashed natively triggering termination:`, error);
     process.exit(1);
   }
 }
