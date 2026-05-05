@@ -3141,13 +3141,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/billing/{{billingCycleId}}/my-bill",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/billing/{{billingCycleId}}/my-bill",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "v1",
+                "messes",
+                "{{messId}}",
                 "billing",
                 "{{billingCycleId}}",
                 "my-bill"
