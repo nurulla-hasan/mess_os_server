@@ -70,7 +70,11 @@ export const getPendingRequests = async (messId: string) => {
 
 export const approveMember = async (messId: string, memberId: string) => {
   const member = await findMemberOrThrow(
-    { _id: memberId, messId, status: 'pending' },
+    { 
+      $or: [{ _id: memberId }, { userId: memberId }], 
+      messId, 
+      status: 'pending' 
+    },
     'Pending join request not found'
   );
 
@@ -83,7 +87,11 @@ export const approveMember = async (messId: string, memberId: string) => {
 
 export const rejectMember = async (messId: string, memberId: string) => {
   const member = await findMemberOrThrow(
-    { _id: memberId, messId, status: 'pending' },
+    { 
+      $or: [{ _id: memberId }, { userId: memberId }], 
+      messId, 
+      status: 'pending' 
+    },
     'Pending join request not found'
   );
 
@@ -95,7 +103,11 @@ export const rejectMember = async (messId: string, memberId: string) => {
 
 export const removeMember = async (messId: string, memberId: string) => {
   const member = await findMemberOrThrow(
-    { _id: memberId, messId, status: 'active' },
+    { 
+      $or: [{ _id: memberId }, { userId: memberId }], 
+      messId, 
+      status: 'active' 
+    },
     'Active member not found'
   );
 
