@@ -4836,6 +4836,27 @@
           "response": []
         },
         {
+          "name": "Get Platform Analytics (Super Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/analytics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "analytics"
+              ]
+            },
+            "description": "Role: Super Admin. Gets rich platform analytics with user, manager, mess, member summary and daily growth trends."
+          },
+          "response": []
+        },
+        {
           "name": "List Manager Requests (Super Admin)",
           "request": {
             "method": "GET",

@@ -1,6 +1,7 @@
 import { User } from '../user/user.model';
 import { Mess } from '../mess/mess.model';
 import { MessMember } from '../mess-member/mess-member.model';
+import { ManagerRequest } from '../manager-request/manager-request.model';
 import { AppError } from '../../shared/utils/apiError';
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -133,6 +134,34 @@ export const updateMessStatus = async (messId: string, status: 'active' | 'suspe
   return mess;
 };
 
+const buildDailyTrend = async (model: any, dateField: string, days = 30) => {
+  const since = new Date();
+  since.setHours(0, 0, 0, 0);
+  since.setDate(since.getDate() - (days - 1));
+
+  const results = await model.aggregate([
+    { $match: { [dateField]: { $gte: since } } },
+    {
+      $group: {
+        _id: { $dateToString: { format: '%Y-%m-%d', date: `$${dateField}` } },
+        count: { $sum: 1 }
+      }
+    },
+    { $sort: { _id: 1 } }
+  ]);
+
+  const trends: Array<{ date: string; count: number }> = [];
+  for (let i = 0; i < days; i += 1) {
+    const date = new Date(since);
+    date.setDate(since.getDate() + i);
+    const dateKey = date.toISOString().slice(0, 10);
+    const match = results.find((item: any) => item._id === dateKey);
+    trends.push({ date: dateKey, count: match ? match.count : 0 });
+  }
+
+  return trends;
+};
+
 export const getPlatformStats = async () => {
   const totalUsers = await User.countDocuments();
   const totalMesses = await Mess.countDocuments();
@@ -140,4 +169,55 @@ export const getPlatformStats = async () => {
   const activeMesses = await Mess.countDocuments({ status: 'active' });
   
   return { totalUsers, totalMesses, suspendedMesses, activeMesses };
+};
+
+export const getPlatformAnalytics = async () => {
+  const [
+    totalUsers,
+    activeUsers,
+    blockedUsers,
+    totalManagers,
+    activeManagers,
+    blockedManagers,
+    totalMesses,
+    activeMesses,
+    suspendedMesses,
+    totalActiveMembers,
+    pendingManagerRequests,
+  ] = await Promise.all([
+    User.countDocuments(),
+    User.countDocuments({ status: 'active' }),
+    User.countDocuments({ status: 'blocked' }),
+    User.countDocuments({ globalRole: 'manager' }),
+    User.countDocuments({ globalRole: 'manager', status: 'active' }),
+    User.countDocuments({ globalRole: 'manager', status: 'blocked' }),
+    Mess.countDocuments(),
+    Mess.countDocuments({ status: 'active' }),
+    Mess.countDocuments({ status: 'suspended' }),
+    MessMember.countDocuments({ status: 'active' }),
+    ManagerRequest.countDocuments({ status: 'pending' }),
+  ]);
+
+  const [dailyNewUsers, dailyNewMesses] = await Promise.all([
+    buildDailyTrend(User, 'createdAt', 30),
+    buildDailyTrend(Mess, 'createdAt', 30),
+  ]);
+
+  return {
+    summary: {
+      users: { total: totalUsers, active: activeUsers, blocked: blockedUsers },
+      managers: { total: totalManagers, active: activeManagers, blocked: blockedManagers },
+      messes: { total: totalMesses, active: activeMesses, suspended: suspendedMesses },
+      members: { active: totalActiveMembers },
+      pendingManagerRequests,
+    },
+    trends: {
+      dailyNewUsers,
+      dailyNewMesses,
+    },
+    labels: {
+      userGrowth: 'Daily New Users (Last 30 Days)',
+      messGrowth: 'Daily New Messes (Last 30 Days)',
+    }
+  };
 };

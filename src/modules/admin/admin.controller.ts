@@ -24,6 +24,10 @@ export const getStats = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, { statusCode: 200, success: true, message: 'Platform statistics retrieved', data: await adminService.getPlatformStats() });
 });
 
+export const getAnalytics = catchAsync(async (req: Request, res: Response) => {
+  sendResponse(res, { statusCode: 200, success: true, message: 'Platform analytics retrieved', data: await adminService.getPlatformAnalytics() });
+});
+
 export const updateUserRole = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, { statusCode: 200, success: true, message: 'User role escalated/de-escalated', data: await adminService.updateUserRole(String(req.params.userId), req.body.globalRole) });
 });

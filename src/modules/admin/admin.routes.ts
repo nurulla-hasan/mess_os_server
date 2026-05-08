@@ -23,6 +23,7 @@ router.use(authenticate, requireSuperAdmin);
 router.get('/users', validateRequest(val.paginationSchema), ctl.getAllUsers);
 router.get('/messes', validateRequest(val.paginationSchema), ctl.getAllMesses);
 router.get('/stats', ctl.getStats);
+router.get('/analytics', ctl.getAnalytics);
 router.get('/manager-requests', validateRequest(managerRequestVal.listManagerRequestsSchema), managerRequestCtl.listManagerRequests);
 
 router.patch('/users/:userId/role', validateRequest(val.updateRoleSchema), ctl.updateUserRole);
