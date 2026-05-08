@@ -29,7 +29,7 @@ export const requestJoin = async (userId: string, inviteCode: string) => {
     const statusMessages: Record<string, string> = {
       active: 'You are already a member of this mess',
       pending: 'You already have a pending join request for this mess',
-      removed: 'You have been removed from this mess. Contact the manager',
+      removed: 'You have been removed from this mess.',
     };
     throw new AppError(400, statusMessages[existing.status] ?? 'Cannot join this mess');
   }

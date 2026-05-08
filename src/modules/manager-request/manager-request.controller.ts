@@ -17,7 +17,8 @@ export const listManagerRequests = catchAsync(async (req: Request, res: Response
   const page = parseInt(String(req.query.page)) || 1;
   const limit = parseInt(String(req.query.limit)) || 20;
   const status = req.query.status as 'pending' | 'approved' | 'rejected' | undefined;
-  const result = await managerRequestService.listManagerRequests(status, page, limit);
+  const searchTerm = req.query.searchTerm as string | undefined;
+  const result = await managerRequestService.listManagerRequests({ status, searchTerm, page, limit });
   sendResponse(res, {
     statusCode: 200,
     success: true,

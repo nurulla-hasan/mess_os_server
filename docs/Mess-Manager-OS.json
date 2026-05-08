@@ -4840,6 +4840,12 @@
                   "description": "Optional. pending, approved, or rejected."
                 },
                 {
+                  "key": "searchTerm",
+                  "value": "",
+                  "description": "Optional. Search by requester full name, email, or phone.",
+                  "disabled": true
+                },
+                {
                   "key": "page",
                   "value": "1"
                 },
@@ -4849,7 +4855,7 @@
                 }
               ]
             },
-            "description": "Role: Super Admin. Lists manager access requests. Optional query params: status, page, limit."
+            "description": "Role: Super Admin. Lists manager access requests. Optional query params: status, searchTerm, page, limit. searchTerm matches requester full name, email, or phone."
           },
           "response": []
         },
@@ -4887,7 +4893,7 @@
                 "status"
               ]
             },
-            "description": "Role: Super Admin. Reviews a pending manager access request. Body status=approved grants manager role, status=rejected rejects the request."
+            "description": "Role: Super Admin. Reviews a pending manager access request. Body status allowed values: approved, rejected. status=approved grants manager role, status=rejected rejects the request. adminNote is optional."
           },
           "response": []
         },

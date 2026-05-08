@@ -12,6 +12,7 @@ export const createManagerRequestSchema = z.object({
 export const listManagerRequestsSchema = z.object({
   query: z.object({
     status: z.enum(['pending', 'approved', 'rejected']).optional(),
+    searchTerm: z.string().trim().max(100).optional(),
     page: z.string().regex(/^\d+$/).optional(),
     limit: z.string().regex(/^\d+$/).optional(),
   }).strict(),

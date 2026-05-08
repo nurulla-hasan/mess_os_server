@@ -4,6 +4,14 @@ import { AppError } from '../../shared/utils/apiError';
 
 type RequestStatus = 'pending' | 'approved' | 'rejected';
 type ReviewStatus = 'approved' | 'rejected';
+type ListManagerRequestsOptions = {
+  status?: RequestStatus;
+  searchTerm?: string;
+  page: number;
+  limit: number;
+};
+
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export const createManagerRequest = async (userId: string, reason?: string) => {
   const user = await User.findById(userId);
@@ -34,8 +42,30 @@ export const getMyManagerRequest = async (userId: string) => {
   return ManagerRequest.findOne({ userId }).sort({ createdAt: -1 }).lean();
 };
 
-export const listManagerRequests = async (status: RequestStatus | undefined, page: number, limit: number) => {
-  const query = status ? { status } : {};
+export const listManagerRequests = async (options: ListManagerRequestsOptions) => {
+  const { status, searchTerm, page, limit } = options;
+  const query: Record<string, unknown> = status ? { status } : {};
+
+  if (searchTerm?.trim()) {
+    const regex = new RegExp(escapeRegExp(searchTerm.trim()), 'i');
+    const users = await User.find({
+      $or: [
+        { fullName: regex },
+        { email: regex },
+        { phone: regex },
+      ],
+    }).select('_id').lean();
+
+    if (!users.length) {
+      return {
+        items: [],
+        pagination: { page, limit, total: 0, totalPages: 0 },
+      };
+    }
+
+    query.userId = { $in: users.map((user) => user._id) };
+  }
+
   const [items, total] = await Promise.all([
     ManagerRequest.find(query)
       .populate('userId', 'fullName email phone globalRole status')
