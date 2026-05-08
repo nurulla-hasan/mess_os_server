@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { catchAsync } from '../../shared/utils/asyncHandler';
 import { sendResponse } from '../../shared/utils/apiResponse';
+import { AppError } from '../../shared/utils/apiError';
 import * as memberService from './mess-member.service';
+import { MemberStatus } from './mess-member.service';
 
 export const requestJoin = catchAsync(async (req: Request, res: Response) => {
   const member = await memberService.requestJoin(req.user!.userId, req.body.inviteCode);
@@ -9,13 +11,16 @@ export const requestJoin = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getMembers = catchAsync(async (req: Request, res: Response) => {
-  const members = await memberService.getMembers(req.messId!);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Members fetched successfully', data: members });
-});
+  const status = req.query.status as MemberStatus | undefined;
+  const searchTerm = req.query.searchTerm as string | undefined;
+  const canViewNonActiveMembers = req.messRole === 'manager' || req.user?.globalRole === 'super_admin';
 
-export const getPendingRequests = catchAsync(async (req: Request, res: Response) => {
-  const members = await memberService.getPendingRequests(req.messId!);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Pending join requests fetched', data: members });
+  if ((!status || status !== 'active') && !canViewNonActiveMembers) {
+    throw new AppError(403, 'Only mess managers can view all or non-active members');
+  }
+
+  const members = await memberService.getMembers(req.messId!, { status, searchTerm });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Members fetched successfully', data: members });
 });
 
 export const approveMember = catchAsync(async (req: Request, res: Response) => {

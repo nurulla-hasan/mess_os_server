@@ -2393,9 +2393,23 @@
                 "messes",
                 "{{messId}}",
                 "members"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Optional. Leave empty to get all statuses as manager. Use active, pending, rejected, or removed to filter.",
+                  "disabled": true
+                },
+                {
+                  "key": "searchTerm",
+                  "value": "",
+                  "description": "Optional. Search by member full name, email, or phone.",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Role: Member+. Lists all mess members. Requires messId variable."
+            "description": "Role: Manager for all statuses; Member+ for status=active. Leave status empty to list all statuses. Optional filters: status=active|pending|rejected|removed, searchTerm=name/email/phone. Requires messId variable."
           },
           "response": [
             {
@@ -2414,6 +2428,18 @@
                     "messes",
                     "{{messId}}",
                     "members"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "",
+                      "disabled": true
+                    },
+                    {
+                      "key": "searchTerm",
+                      "value": "",
+                      "disabled": true
+                    }
                   ]
                 }
               },
@@ -2510,29 +2536,6 @@
               "body": "{\n    \"success\": true,\n    \"message\": \"Members fetched successfully\",\n    \"data\": [\n        {\n            \"id\": \"69e88a764f79d717bf2d29a5\",\n            \"messId\": \"69e88a764f79d717bf2d29a3\",\n            \"messRole\": \"manager\",\n            \"status\": \"active\",\n            \"joinedAt\": \"2026-04-22T08:44:38.574Z\",\n            \"user\": {\n                \"_id\": \"69d095dcc68e4c2c26877d3d\",\n                \"fullName\": \"Updated Name\",\n                \"email\": \"nurullahasan.dev@gmail.com\",\n                \"phone\": \"01800000000\",\n                \"avatarUrl\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1776847093/avatars/ueamhwga7ilxt1lyzcfy.jpg\"\n            }\n        }\n    ]\n}"
             }
           ]
-        },
-        {
-          "name": "Get Pending Requests (Manager)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/members/pending",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "members",
-                "pending"
-              ]
-            },
-            "description": "Role: Manager only. Lists all pending join requests for this mess. Returns members with status='pending'. Requires messId variable."
-          },
-          "response": []
         },
         {
           "name": "Approve Member (Manager)",
@@ -2721,7 +2724,7 @@
           "response": []
         }
       ],
-      "description": "Member management within a mess. GET / returns active members (manager+member). GET /pending returns pending join requests (manager only). POST approve/reject/remove require manager role. All routes protected by messContext middleware."
+      "description": "Member management within a mess. GET / returns all statuses for managers when status is omitted and supports ?status=active|pending|rejected|removed plus ?searchTerm= for name/email/phone search. Members can use status=active. POST approve/reject/remove require manager role. All routes protected by messContext middleware."
     },
     {
       "name": "Payments",

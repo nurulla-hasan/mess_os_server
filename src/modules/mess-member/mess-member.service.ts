@@ -1,4 +1,5 @@
 import { Mess } from '../mess/mess.model';
+import { User } from '../user/user.model';
 import { MessMember } from './mess-member.model';
 import { AppError } from '../../shared/utils/apiError';
 
@@ -36,9 +37,34 @@ export const requestJoin = async (userId: string, inviteCode: string) => {
   return member;
 };
 
-export const getMembers = async (messId: string) => {
-  // Only return active members — pending/rejected are internal state
-  const members = await MessMember.find({ messId, status: 'active' })
+export type MemberStatus = 'pending' | 'active' | 'rejected' | 'removed';
+
+type GetMembersOptions = {
+  status?: MemberStatus;
+  searchTerm?: string;
+};
+
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+export const getMembers = async (messId: string, options: GetMembersOptions = {}) => {
+  const { status, searchTerm } = options;
+  const query: Record<string, unknown> = status ? { messId, status } : { messId };
+
+  if (searchTerm?.trim()) {
+    const regex = new RegExp(escapeRegExp(searchTerm.trim()), 'i');
+    const users = await User.find({
+      $or: [
+        { fullName: regex },
+        { email: regex },
+        { phone: regex },
+      ],
+    }).select('_id').lean();
+
+    if (!users.length) return [];
+    query.userId = { $in: users.map((user) => user._id) };
+  }
+
+  const members = await MessMember.find(query)
     .populate('userId', 'fullName email phone avatarUrl')
     .lean();
 
@@ -48,23 +74,9 @@ export const getMembers = async (messId: string) => {
     messRole: m.messRole,
     status: m.status,
     joinedAt: m.joinedAt,
-    user: m.userId, // populated user info
-  }));
-};
-
-export const getPendingRequests = async (messId: string) => {
-  // Separate endpoint for managers to see pending join requests
-  const members = await MessMember.find({ messId, status: 'pending' })
-    .populate('userId', 'fullName email phone avatarUrl')
-    .lean();
-
-  return members.map((m) => ({
-    id: m._id,
-    messId: m.messId,
-    messRole: m.messRole,
-    status: m.status,
+    leftAt: m.leftAt,
     createdAt: (m as any).createdAt,
-    user: m.userId,
+    user: m.userId, // populated user info
   }));
 };
 

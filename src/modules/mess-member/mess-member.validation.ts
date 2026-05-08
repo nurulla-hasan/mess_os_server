@@ -6,6 +6,13 @@ export const requestJoinSchema = z.object({
   }),
 });
 
+export const getMembersSchema = z.object({
+  query: z.object({
+    status: z.enum(['pending', 'active', 'rejected', 'removed']).optional(),
+    searchTerm: z.string().trim().max(100).optional(),
+  }).strict(),
+});
+
 export const updateRoleSchema = z.object({
   body: z.object({
     messRole: z.enum(['manager', 'member']),
