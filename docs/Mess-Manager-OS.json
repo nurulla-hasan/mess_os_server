@@ -1845,9 +1845,68 @@
               "body": "{\n    \"success\": true,\n    \"message\": \"Avatar accurately updated robustly internally modified correctly\",\n    \"data\": {\n        \"fullName\": \"Updated Name\",\n        \"email\": \"nurullahasan.dev@gmail.com\",\n        \"phone\": \"01800000000\",\n        \"isEmailVerified\": true,\n        \"isPhoneVerified\": false,\n        \"status\": \"active\",\n        \"globalRole\": \"manager\",\n        \"lastOtpSentAt\": \"2026-04-04T04:47:33.296Z\",\n        \"createdAt\": \"2026-04-04T04:38:52.264Z\",\n        \"updatedAt\": \"2026-04-22T08:38:14.043Z\",\n        \"address\": \"Dhaka, Bangladesh\",\n        \"bio\": \"Software developer and mess enthusiast \",\n        \"id\": \"69d095dcc68e4c2c26877d3d\",\n        \"avatar\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1776847093/avatars/ueamhwga7ilxt1lyzcfy.jpg\"\n    }\n}"
             }
           ]
+        },
+        {
+          "name": "Get My Manager Request (Auth)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me/manager-request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me",
+                "manager-request"
+              ]
+            },
+            "description": "Role: Auth. Returns the current user's latest manager access request, or null if no request exists."
+          },
+          "response": []
+        },
+        {
+          "name": "Request Manager Access (Auth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"I want to create and manage my mess.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me/manager-request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me",
+                "manager-request"
+              ]
+            },
+            "description": "Role: Auth user. Submits a request for manager access. If the latest request was rejected, this reopens it as pending."
+          },
+          "response": []
         }
       ],
-      "description": "User profile management. All routes require authentication."
+      "description": "User profile and manager access request management. All routes require authentication."
     },
     {
       "name": "Messes",
@@ -4759,6 +4818,80 @@
           "response": []
         },
         {
+          "name": "List Manager Requests (Super Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/manager-requests?status=pending&page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "manager-requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "Optional. pending, approved, or rejected."
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Role: Super Admin. Lists manager access requests. Optional query params: status, page, limit."
+          },
+          "response": []
+        },
+        {
+          "name": "Review Manager Request (Super Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\",\n  \"adminNote\": \"Approved for mess creation.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/manager-requests/{{managerRequestId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "manager-requests",
+                "{{managerRequestId}}",
+                "status"
+              ]
+            },
+            "description": "Role: Super Admin. Reviews a pending manager access request. Body status=approved grants manager role, status=rejected rejects the request."
+          },
+          "response": []
+        },
+        {
           "name": "Update User Role (Super Admin)",
           "request": {
             "method": "PATCH",
@@ -4838,7 +4971,7 @@
           "response": []
         }
       ],
-      "description": "Platform administration. Strictly restricted to super_admin global role."
+      "description": "Platform administration. Strictly restricted to super_admin global role. Includes user, mess, stats, and manager access request review."
     }
   ],
   "auth": {
@@ -4930,6 +5063,10 @@
     },
     {
       "key": "complaintId",
+      "value": ""
+    },
+    {
+      "key": "managerRequestId",
       "value": ""
     },
     {
