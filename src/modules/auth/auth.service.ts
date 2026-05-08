@@ -47,11 +47,6 @@ export const loginUser = async (payload: LoginPayload) => {
     throw new AppError(401, 'Invalid email or password');
   }
 
-  if (user.status === 'blocked') {
-    authLogger.warn('Failed login attempt - User blocked', { email: payload.email, userId: user._id });
-    throw new AppError(403, 'Your account has been blocked by administrator');
-  }
-
   if (!user.isEmailVerified) {
      authLogger.warn('Failed login attempt - Email not verified', { userId: user._id });
      throw new AppError(403, 'Email not verified. Please verify your email before logging in.');
