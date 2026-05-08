@@ -21,7 +21,11 @@ export const blockUserSchema = z.object({
 export const suspendMessSchema = z.object({
   params: z.object({
     messId: oId
-  })
+  }),
+  body: z.object({
+    status: z.enum(['active', 'suspended']),
+    suspensionNote: z.string().trim().max(500).optional()
+  }).strict()
 });
 
 export const paginationSchema = z.object({

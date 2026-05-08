@@ -1,5 +1,6 @@
 import { User } from '../user/user.model';
 import { Mess } from '../mess/mess.model';
+import { MessMember } from '../mess-member/mess-member.model';
 import { AppError } from '../../shared/utils/apiError';
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -18,7 +19,20 @@ export const getAllUsers = async (page: number, limit: number, searchTerm?: stri
     ];
   }
 
-  return await User.find(query).select('-passwordHash').skip((page - 1) * limit).limit(limit).sort({ createdAt: -1 });
+  const [items, total] = await Promise.all([
+    User.find(query).select('-passwordHash').skip((page - 1) * limit).limit(limit).sort({ createdAt: -1 }),
+    User.countDocuments(query),
+  ]);
+
+  return {
+    items,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 export const getAllMesses = async (page: number, limit: number, searchTerm?: string, status?: 'active' | 'suspended') => {
@@ -26,14 +40,73 @@ export const getAllMesses = async (page: number, limit: number, searchTerm?: str
 
   if (searchTerm?.trim()) {
     const regex = new RegExp(escapeRegExp(searchTerm.trim()), 'i');
+    const matchingManagers = await User.find({
+      $or: [
+        { fullName: regex },
+        { email: regex },
+        { phone: regex },
+      ],
+    }).select('_id').lean();
+
+    const managerMemberships = matchingManagers.length
+      ? await MessMember.find({
+          userId: { $in: matchingManagers.map((user) => user._id) },
+          messRole: 'manager',
+          status: 'active',
+        }).select('messId').lean()
+      : [];
+
     query.$or = [
       { name: regex },
       { address: regex },
       { inviteCode: regex },
+      ...(managerMemberships.length ? [{ _id: { $in: managerMemberships.map((member) => member.messId) } }] : []),
     ];
   }
 
-  return await Mess.find(query).skip((page - 1) * limit).limit(limit).sort({ createdAt: -1 });
+  const [messes, total] = await Promise.all([
+    Mess.find(query).skip((page - 1) * limit).limit(limit).sort({ createdAt: -1 }).lean(),
+    Mess.countDocuments(query),
+  ]);
+  const managerMemberships = await MessMember.find({
+    messId: { $in: messes.map((mess) => mess._id) },
+    messRole: 'manager',
+    status: 'active',
+  })
+    .populate('userId', 'fullName email phone avatarUrl globalRole status')
+    .lean();
+
+  const managerByMessId = new Map(managerMemberships.map((member) => [String(member.messId), member.userId]));
+  const memberCounts = await MessMember.aggregate([
+    {
+      $match: {
+        messId: { $in: messes.map((mess) => mess._id) },
+        status: 'active',
+      },
+    },
+    {
+      $group: {
+        _id: '$messId',
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+  const memberCountByMessId = new Map(memberCounts.map((item) => [String(item._id), item.count]));
+
+  return {
+    items: messes.map((mess) => ({
+      ...mess,
+      id: mess._id,
+      manager: managerByMessId.get(String(mess._id)) ?? null,
+      memberCount: memberCountByMessId.get(String(mess._id)) ?? 0,
+    })),
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 export const updateUserRole = async (userId: string, targetRole: string) => {
@@ -49,8 +122,12 @@ export const blockUser = async (userId: string) => {
   return user;
 };
 
-export const suspendMess = async (messId: string) => {
-  const mess = await Mess.findByIdAndUpdate(messId, { status: 'suspended' }, { new: true });
+export const updateMessStatus = async (messId: string, status: 'active' | 'suspended', adminId: string, suspensionNote?: string) => {
+  const update = status === 'suspended'
+    ? { status, suspensionNote, suspendedAt: new Date(), suspendedBy: adminId }
+    : { status, $unset: { suspensionNote: '', suspendedAt: '', suspendedBy: '' } };
+
+  const mess = await Mess.findByIdAndUpdate(messId, update, { new: true });
   if(!mess) throw new AppError(404, 'Mess not found');
   return mess;
 };

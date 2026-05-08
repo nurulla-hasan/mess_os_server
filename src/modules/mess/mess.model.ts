@@ -1,4 +1,4 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IMess extends Document {
   name: string;
@@ -9,6 +9,9 @@ export interface IMess extends Document {
     equalShareCategories?: string[];
   };
   status: 'active' | 'suspended';
+  suspensionNote?: string;
+  suspendedAt?: Date;
+  suspendedBy?: Types.ObjectId;
 }
 
 const messSchema = new Schema<IMess>({
@@ -16,7 +19,10 @@ const messSchema = new Schema<IMess>({
   address: { type: String, required: true },
   inviteCode: { type: String, required: true, unique: true },
   settings: { type: Schema.Types.Mixed },
-  status: { type: String, enum: ['active', 'suspended'], default: 'active' }
+  status: { type: String, enum: ['active', 'suspended'], default: 'active' },
+  suspensionNote: { type: String },
+  suspendedAt: { type: Date },
+  suspendedBy: { type: Schema.Types.ObjectId, ref: 'User' },
 }, {
   timestamps: true, versionKey: false,
   toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } }

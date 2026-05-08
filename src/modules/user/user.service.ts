@@ -8,7 +8,9 @@ export const getUser = async (userId: string) => {
   const user = await User.findById(userId).lean();
   if (!user) throw new AppError(404, 'User not found');
   
-  const memberships = await MessMember.find({ userId }).populate('messId', 'name address status').lean();
+  const memberships = await MessMember.find({ userId })
+    .populate('messId', 'name address status suspensionNote suspendedAt suspendedBy')
+    .lean();
   
   return { ...user, memberships };
 };

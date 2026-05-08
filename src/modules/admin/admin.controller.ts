@@ -7,7 +7,8 @@ export const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const page = parseInt(String(req.query.page)) || 1;
   const limit = parseInt(String(req.query.limit)) || 20;
   const searchTerm = req.query.searchTerm as string | undefined;
-  sendResponse(res, { statusCode: 200, success: true, message: 'Platform users retrieved', data: await adminService.getAllUsers(page, limit, searchTerm) });
+  const result = await adminService.getAllUsers(page, limit, searchTerm);
+  sendResponse(res, { statusCode: 200, success: true, message: 'Platform users retrieved', meta: result.pagination, data: result.items });
 });
 
 export const getAllMesses = catchAsync(async (req: Request, res: Response) => {
@@ -15,7 +16,8 @@ export const getAllMesses = catchAsync(async (req: Request, res: Response) => {
   const limit = parseInt(String(req.query.limit)) || 20;
   const searchTerm = req.query.searchTerm as string | undefined;
   const status = req.query.status as 'active' | 'suspended' | undefined;
-  sendResponse(res, { statusCode: 200, success: true, message: 'Platform messes retrieved', data: await adminService.getAllMesses(page, limit, searchTerm, status) });
+  const result = await adminService.getAllMesses(page, limit, searchTerm, status);
+  sendResponse(res, { statusCode: 200, success: true, message: 'Platform messes retrieved', meta: result.pagination, data: result.items });
 });
 
 export const getStats = catchAsync(async (req: Request, res: Response) => {
@@ -31,5 +33,10 @@ export const blockUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const suspendMess = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Mess securely suspended globally', data: await adminService.suspendMess(String(req.params.messId)) });
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Mess status updated successfully',
+    data: await adminService.updateMessStatus(String(req.params.messId), req.body.status, req.user!.userId, req.body.suspensionNote)
+  });
 });

@@ -4767,7 +4767,7 @@
                 }
               ]
             },
-            "description": "Role: Super Admin. Lists all users. Query params: page, limit, searchTerm. searchTerm matches full name, email, phone, global role, or status."
+            "description": "Role: Super Admin. Lists all users with pagination meta. Query params: page, limit, searchTerm. searchTerm matches full name, email, phone, global role, or status."
           },
           "response": []
         },
@@ -4805,12 +4805,12 @@
                 {
                   "key": "searchTerm",
                   "value": "",
-                  "description": "Optional. Search by mess name, address, or invite code.",
+                  "description": "Optional. Search by mess name, address, invite code, or manager name/email/phone.",
                   "disabled": true
                 }
               ]
             },
-            "description": "Role: Super Admin. Lists all messes. Query params: page, limit, status, searchTerm. status allowed values: active, suspended. searchTerm matches mess name, address, or invite code."
+            "description": "Role: Super Admin. Lists all messes with pagination meta, current manager info, and active memberCount. Query params: page, limit, status, searchTerm. status allowed values: active, suspended. searchTerm matches mess name, address, invite code, or manager name/email/phone."
           },
           "response": []
         },
@@ -4972,10 +4972,25 @@
           "response": []
         },
         {
-          "name": "Suspend Mess (Super Admin)",
+          "name": "Update Mess Status (Super Admin)",
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"suspended\",\n  \"suspensionNote\": \"Payment policy violation.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/api/v1/admin/messes/{{messId}}/suspend",
               "host": [
@@ -4990,7 +5005,7 @@
                 "suspend"
               ]
             },
-            "description": "Role: Super Admin. Suspends mess. Requires messId variable."
+            "description": "Role: Super Admin. Updates mess platform status. Body status allowed values: active, suspended. suspensionNote is optional and useful when status=suspended. Suspended messes are blocked for managers and members; super admin can still access. Activating a mess clears suspensionNote, suspendedAt, and suspendedBy."
           },
           "response": []
         }
