@@ -21,8 +21,8 @@ export const getAllUsers = async (page: number, limit: number, searchTerm?: stri
   return await User.find(query).select('-passwordHash').skip((page - 1) * limit).limit(limit).sort({ createdAt: -1 });
 };
 
-export const getAllMesses = async (page: number, limit: number, searchTerm?: string) => {
-  const query: Record<string, unknown> = {};
+export const getAllMesses = async (page: number, limit: number, searchTerm?: string, status?: 'active' | 'suspended') => {
+  const query: Record<string, unknown> = status ? { status } : {};
 
   if (searchTerm?.trim()) {
     const regex = new RegExp(escapeRegExp(searchTerm.trim()), 'i');
@@ -30,7 +30,6 @@ export const getAllMesses = async (page: number, limit: number, searchTerm?: str
       { name: regex },
       { address: regex },
       { inviteCode: regex },
-      { status: regex },
     ];
   }
 

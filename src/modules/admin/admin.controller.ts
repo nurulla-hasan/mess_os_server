@@ -14,7 +14,8 @@ export const getAllMesses = catchAsync(async (req: Request, res: Response) => {
   const page = parseInt(String(req.query.page)) || 1;
   const limit = parseInt(String(req.query.limit)) || 20;
   const searchTerm = req.query.searchTerm as string | undefined;
-  sendResponse(res, { statusCode: 200, success: true, message: 'Platform messes retrieved', data: await adminService.getAllMesses(page, limit, searchTerm) });
+  const status = req.query.status as 'active' | 'suspended' | undefined;
+  sendResponse(res, { statusCode: 200, success: true, message: 'Platform messes retrieved', data: await adminService.getAllMesses(page, limit, searchTerm, status) });
 });
 
 export const getStats = catchAsync(async (req: Request, res: Response) => {

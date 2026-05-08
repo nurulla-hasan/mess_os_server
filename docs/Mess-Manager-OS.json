@@ -4797,14 +4797,20 @@
                   "value": "20"
                 },
                 {
+                  "key": "status",
+                  "value": "",
+                  "description": "Optional. active or suspended.",
+                  "disabled": true
+                },
+                {
                   "key": "searchTerm",
                   "value": "",
-                  "description": "Optional. Search by mess name, address, invite code, or status.",
+                  "description": "Optional. Search by mess name, address, or invite code.",
                   "disabled": true
                 }
               ]
             },
-            "description": "Role: Super Admin. Lists all messes. Query params: page, limit, searchTerm. searchTerm matches mess name, address, invite code, or status."
+            "description": "Role: Super Admin. Lists all messes. Query params: page, limit, status, searchTerm. status allowed values: active, suspended. searchTerm matches mess name, address, or invite code."
           },
           "response": []
         },
