@@ -116,8 +116,9 @@ export const updateUserRole = async (userId: string, targetRole: string) => {
   return user;
 };
 
-export const blockUser = async (userId: string) => {
-  const user = await User.findByIdAndUpdate(userId, { status: 'blocked' }, { new: true }).select('-passwordHash');
+export const blockUser = async (userId: string, status: 'active' | 'blocked') => {
+  if (!['active', 'blocked'].includes(status)) throw new AppError(400, 'Invalid status. Must be active or blocked');
+  const user = await User.findByIdAndUpdate(userId, { status }, { new: true }).select('-passwordHash');
   if(!user) throw new AppError(404, 'User not found');
   return user;
 };

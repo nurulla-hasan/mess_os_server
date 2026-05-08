@@ -42,9 +42,14 @@ export const registerUser = async (payload: RegisterPayload) => {
 
 export const loginUser = async (payload: LoginPayload) => {
   const user = await User.findOne({ email: payload.email }).select('+passwordHash');
-  if (!user || user.status === 'blocked') {
-    authLogger.warn('Failed login attempt - User not found or blocked', { email: payload.email });
+  if (!user) {
+    authLogger.warn('Failed login attempt - User not found', { email: payload.email });
     throw new AppError(401, 'Invalid email or password');
+  }
+
+  if (user.status === 'blocked') {
+    authLogger.warn('Failed login attempt - User blocked', { email: payload.email, userId: user._id });
+    throw new AppError(403, 'Your account has been blocked by administrator');
   }
 
   if (!user.isEmailVerified) {

@@ -15,7 +15,10 @@ export const updateRoleSchema = z.object({
 export const blockUserSchema = z.object({
   params: z.object({
     userId: oId
-  })
+  }),
+  body: z.object({
+    status: z.enum(['active', 'blocked']).describe('Toggle user status between active and blocked')
+  }).strict()
 });
 
 export const suspendMessSchema = z.object({

@@ -29,7 +29,8 @@ export const updateUserRole = catchAsync(async (req: Request, res: Response) => 
 });
 
 export const blockUser = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'User explicitly blocked from platform', data: await adminService.blockUser(String(req.params.userId)) });
+  const statusMessage = req.body.status === 'blocked' ? 'User blocked' : 'User unblocked';
+  sendResponse(res, { statusCode: 200, success: true, message: statusMessage, data: await adminService.blockUser(String(req.params.userId), req.body.status) });
 });
 
 export const suspendMess = catchAsync(async (req: Request, res: Response) => {

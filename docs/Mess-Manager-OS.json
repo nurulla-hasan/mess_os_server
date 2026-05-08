@@ -4949,12 +4949,27 @@
           "response": []
         },
         {
-          "name": "Block User (Super Admin)",
+          "name": "Update User Status (Super Admin)",
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"blocked\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/admin/users/{{userId}}/block",
+              "raw": "{{baseUrl}}/api/v1/admin/users/{{userId}}/status",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -4964,10 +4979,10 @@
                 "admin",
                 "users",
                 "{{userId}}",
-                "block"
+                "status"
               ]
             },
-            "description": "Role: Super Admin. Blocks user account. Requires userId variable."
+            "description": "Role: Super Admin. Update user account status. Body: { status: 'active' | 'blocked' }. Use 'blocked' to block user, 'active' to unblock. Requires userId variable."
           },
           "response": []
         },

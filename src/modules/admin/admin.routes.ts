@@ -26,7 +26,7 @@ router.get('/stats', ctl.getStats);
 router.get('/manager-requests', validateRequest(managerRequestVal.listManagerRequestsSchema), managerRequestCtl.listManagerRequests);
 
 router.patch('/users/:userId/role', validateRequest(val.updateRoleSchema), ctl.updateUserRole);
-router.patch('/users/:userId/block', validateRequest(val.blockUserSchema), ctl.blockUser);
+router.patch('/users/:userId/status', validateRequest(val.blockUserSchema), ctl.blockUser);
 router.patch('/messes/:messId/suspend', validateRequest(val.suspendMessSchema), ctl.suspendMess);
 router.patch('/manager-requests/:requestId/status', validateRequest(managerRequestVal.reviewManagerRequestSchema), managerRequestCtl.reviewManagerRequest);
 
