@@ -6,13 +6,15 @@ import * as adminService from './admin.service';
 export const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const page = parseInt(String(req.query.page)) || 1;
   const limit = parseInt(String(req.query.limit)) || 20;
-  sendResponse(res, { statusCode: 200, success: true, message: 'Platform users retrieved', data: await adminService.getAllUsers(page, limit) });
+  const searchTerm = req.query.searchTerm as string | undefined;
+  sendResponse(res, { statusCode: 200, success: true, message: 'Platform users retrieved', data: await adminService.getAllUsers(page, limit, searchTerm) });
 });
 
 export const getAllMesses = catchAsync(async (req: Request, res: Response) => {
   const page = parseInt(String(req.query.page)) || 1;
   const limit = parseInt(String(req.query.limit)) || 20;
-  sendResponse(res, { statusCode: 200, success: true, message: 'Platform messes retrieved', data: await adminService.getAllMesses(page, limit) });
+  const searchTerm = req.query.searchTerm as string | undefined;
+  sendResponse(res, { statusCode: 200, success: true, message: 'Platform messes retrieved', data: await adminService.getAllMesses(page, limit, searchTerm) });
 });
 
 export const getStats = catchAsync(async (req: Request, res: Response) => {

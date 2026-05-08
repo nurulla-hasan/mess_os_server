@@ -4758,10 +4758,16 @@
                 {
                   "key": "limit",
                   "value": "20"
+                },
+                {
+                  "key": "searchTerm",
+                  "value": "",
+                  "description": "Optional. Search by full name, email, phone, global role, or status.",
+                  "disabled": true
                 }
               ]
             },
-            "description": "Role: Super Admin. Lists all users. Query params: page, limit."
+            "description": "Role: Super Admin. Lists all users. Query params: page, limit, searchTerm. searchTerm matches full name, email, phone, global role, or status."
           },
           "response": []
         },
@@ -4789,10 +4795,16 @@
                 {
                   "key": "limit",
                   "value": "20"
+                },
+                {
+                  "key": "searchTerm",
+                  "value": "",
+                  "description": "Optional. Search by mess name, address, invite code, or status.",
+                  "disabled": true
                 }
               ]
             },
-            "description": "Role: Super Admin. Lists all messes. Query params: page, limit."
+            "description": "Role: Super Admin. Lists all messes. Query params: page, limit, searchTerm. searchTerm matches mess name, address, invite code, or status."
           },
           "response": []
         },

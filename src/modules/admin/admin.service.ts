@@ -2,12 +2,39 @@ import { User } from '../user/user.model';
 import { Mess } from '../mess/mess.model';
 import { AppError } from '../../shared/utils/apiError';
 
-export const getAllUsers = async (page: number, limit: number) => {
-  return await User.find().select('-passwordHash').skip((page - 1) * limit).limit(limit).sort({ createdAt: -1 });
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+export const getAllUsers = async (page: number, limit: number, searchTerm?: string) => {
+  const query: Record<string, unknown> = {};
+
+  if (searchTerm?.trim()) {
+    const regex = new RegExp(escapeRegExp(searchTerm.trim()), 'i');
+    query.$or = [
+      { fullName: regex },
+      { email: regex },
+      { phone: regex },
+      { globalRole: regex },
+      { status: regex },
+    ];
+  }
+
+  return await User.find(query).select('-passwordHash').skip((page - 1) * limit).limit(limit).sort({ createdAt: -1 });
 };
 
-export const getAllMesses = async (page: number, limit: number) => {
-  return await Mess.find().skip((page - 1) * limit).limit(limit).sort({ createdAt: -1 });
+export const getAllMesses = async (page: number, limit: number, searchTerm?: string) => {
+  const query: Record<string, unknown> = {};
+
+  if (searchTerm?.trim()) {
+    const regex = new RegExp(escapeRegExp(searchTerm.trim()), 'i');
+    query.$or = [
+      { name: regex },
+      { address: regex },
+      { inviteCode: regex },
+      { status: regex },
+    ];
+  }
+
+  return await Mess.find(query).skip((page - 1) * limit).limit(limit).sort({ createdAt: -1 });
 };
 
 export const updateUserRole = async (userId: string, targetRole: string) => {

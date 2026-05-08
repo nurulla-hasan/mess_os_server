@@ -27,6 +27,7 @@ export const suspendMessSchema = z.object({
 export const paginationSchema = z.object({
   query: z.object({
     page: z.string().regex(/^\d+$/).optional(),
-    limit: z.string().regex(/^\d+$/).optional()
+    limit: z.string().regex(/^\d+$/).optional(),
+    searchTerm: z.string().trim().max(100).optional()
   }).strict()
 });
