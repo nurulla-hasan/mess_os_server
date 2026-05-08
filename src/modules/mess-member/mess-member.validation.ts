@@ -13,8 +13,8 @@ export const getMembersSchema = z.object({
   }).strict(),
 });
 
-export const updateRoleSchema = z.object({
+export const updatePendingMemberStatusSchema = z.object({
   body: z.object({
-    messRole: z.enum(['manager', 'member']),
-  }),
+    status: z.enum(['active', 'rejected']),
+  }).strict(),
 });

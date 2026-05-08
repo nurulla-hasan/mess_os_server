@@ -13,9 +13,8 @@ const router = Router({ mergeParams: true });
 // Any active member can view active members; managers can filter by status.
 router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.getMembersSchema), ctl.getMembers);
 
-// Only manager can approve, reject, or remove members
-router.post('/:memberId/approve', authorize(MESS_ROLES.MANAGER), ctl.approveMember);
-router.post('/:memberId/reject', authorize(MESS_ROLES.MANAGER), ctl.rejectMember);
+// Only manager can approve/reject pending requests or remove active members.
+router.patch('/:memberId/status', authorize(MESS_ROLES.MANAGER), validateRequest(val.updatePendingMemberStatusSchema), ctl.updatePendingMemberStatus);
 router.post('/:memberId/remove', authorize(MESS_ROLES.MANAGER), ctl.removeMember);
 
 export const messMemberRoutes = router;

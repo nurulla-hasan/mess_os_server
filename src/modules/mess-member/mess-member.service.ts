@@ -18,10 +18,17 @@ export const requestJoin = async (userId: string, inviteCode: string) => {
   // Check if the user already has any record in this mess
   const existing = await MessMember.findOne({ messId: mess._id, userId });
   if (existing) {
+    if (existing.status === 'rejected') {
+      existing.status = 'pending';
+      existing.joinedAt = undefined;
+      existing.leftAt = undefined;
+      await existing.save();
+      return existing;
+    }
+
     const statusMessages: Record<string, string> = {
       active: 'You are already a member of this mess',
       pending: 'You already have a pending join request for this mess',
-      rejected: 'Your join request was previously rejected. Contact the manager',
       removed: 'You have been removed from this mess. Contact the manager',
     };
     throw new AppError(400, statusMessages[existing.status] ?? 'Cannot join this mess');
@@ -38,6 +45,7 @@ export const requestJoin = async (userId: string, inviteCode: string) => {
 };
 
 export type MemberStatus = 'pending' | 'active' | 'rejected' | 'removed';
+export type PendingMemberTargetStatus = 'active' | 'rejected';
 
 type GetMembersOptions = {
   status?: MemberStatus;
@@ -80,7 +88,11 @@ export const getMembers = async (messId: string, options: GetMembersOptions = {}
   }));
 };
 
-export const approveMember = async (messId: string, memberId: string) => {
+export const updatePendingMemberStatus = async (
+  messId: string,
+  memberId: string,
+  status: PendingMemberTargetStatus
+) => {
   const member = await findMemberOrThrow(
     { 
       $or: [{ _id: memberId }, { userId: memberId }], 
@@ -90,24 +102,8 @@ export const approveMember = async (messId: string, memberId: string) => {
     'Pending join request not found'
   );
 
-  member.status = 'active';
-  member.joinedAt = new Date();
-  await member.save();
-
-  return member;
-};
-
-export const rejectMember = async (messId: string, memberId: string) => {
-  const member = await findMemberOrThrow(
-    { 
-      $or: [{ _id: memberId }, { userId: memberId }], 
-      messId, 
-      status: 'pending' 
-    },
-    'Pending join request not found'
-  );
-
-  member.status = 'rejected';
+  member.status = status;
+  if (status === 'active') member.joinedAt = new Date();
   await member.save();
 
   return member;
