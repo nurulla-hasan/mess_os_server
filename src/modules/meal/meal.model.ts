@@ -5,6 +5,7 @@ export interface IMeal extends Document {
   messMemberId: Types.ObjectId;
   date: Date;
   mealCount: number;
+  meals?: Record<string, number>;
   createdBy: Types.ObjectId;
 }
 
@@ -13,6 +14,7 @@ const mealSchema = new Schema<IMeal>({
   messMemberId: { type: Schema.Types.ObjectId, ref: 'MessMember', required: true },
   date: { type: Date, required: true },
   mealCount: { type: Number, required: true },
+  meals: { type: Map, of: Number, default: {} },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true } // Audit constraint
 }, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
 

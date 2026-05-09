@@ -4,7 +4,14 @@ import { sendResponse } from '../../shared/utils/apiResponse';
 import * as mealService from './meal.service';
 
 export const logMeal = catchAsync(async (req: Request, res: Response) => {
-  const result = await mealService.createOrUpdateMeal(req.messId!, req.body.messMemberId, req.body.date, req.body.mealCount, req.user!.userId);
+  const result = await mealService.createOrUpdateMeal(
+    req.messId!,
+    req.body.messMemberId,
+    req.body.date,
+    req.body.mealCount,
+    req.body.meals,
+    req.user!.userId
+  );
   sendResponse(res, { statusCode: 200, success: true, message: 'Meal count logged successfully', data: result });
 });
 
@@ -20,6 +27,7 @@ export const listMeals = catchAsync(async (req: Request, res: Response) => {
     page: parseInt(String(req.query.page)) || 1,
     limit: parseInt(String(req.query.limit)) || 20,
     memberId: req.query.memberId ? String(req.query.memberId) : undefined,
+    searchTerm: req.query.searchTerm ? String(req.query.searchTerm) : undefined,
     start,
     end,
     requesterMemberId: req.messMember?._id.toString(),

@@ -4,11 +4,15 @@ import { DHAKA_OFFSET_MS, normalizeMealDate } from '../../shared/utils/dateUtils
 import { MessMember } from '../mess-member/mess-member.model';
 import { BillingCycle } from '../billing/billing-cycle.model';
 import { AppError } from '../../shared/utils/apiError';
+import { User } from '../user/user.model';
+import { isValidObjectId } from 'mongoose';
+import { Mess } from '../mess/mess.model';
 
 export type ListMealsOptions = {
   page?: number;
   limit?: number;
   memberId?: string;
+  searchTerm?: string;
   start?: string;
   end?: string;
   requesterMemberId?: string;
@@ -18,8 +22,13 @@ export type ListMealsOptions = {
 
 export type MealEntryPayload = {
   messMemberId: string;
-  mealCount: number;
+  mealCount?: number;
+  meals?: Record<string, number>;
 };
+
+const EXTRA_MEAL_CATEGORIES = ['Guest'];
+const MAX_REGULAR_MEALS_PER_DAY = 3;
+const MAX_TOTAL_MEALS_PER_DAY = 50;
 
 const getMonthYearFromMealDate = (mealDate: Date) => {
   const dhakaDate = new Date(mealDate.getTime() + DHAKA_OFFSET_MS);
@@ -40,6 +49,77 @@ const assertBillingCycleEditable = async (messId: string, mealDate: Date) => {
 const assertActiveMemberInMess = async (messId: string, messMemberId: string) => {
   const member = await MessMember.findOne({ _id: messMemberId, messId, status: 'active' }).select('_id').lean();
   if (!member) throw new AppError(400, 'Active mess member not found for this mess');
+};
+
+const getAllowedMealCategories = async (messId: string) => {
+  const mess = await Mess.findById(messId).select('settings.mealCategories').lean();
+  if (!mess) throw new AppError(404, 'Mess not found');
+  return [...(mess.settings?.mealCategories ?? []), ...EXTRA_MEAL_CATEGORIES];
+};
+
+const getRegularMealTotal = (meals: Record<string, number>) => {
+  return Object.entries(meals)
+    .filter(([category]) => category.toLowerCase() !== 'guest')
+    .reduce((sum, [, count]) => sum + count, 0);
+};
+
+const normalizeMealsBreakdown = async (messId: string, meals: Record<string, number>) => {
+  const allowedCategories = await getAllowedMealCategories(messId);
+  const allowedCategorySet = new Set(allowedCategories.map((category) => category.toLowerCase()));
+  const normalizedMeals: Record<string, number> = {};
+
+  for (const [category, count] of Object.entries(meals)) {
+    const trimmedCategory = category.trim();
+    if (!trimmedCategory) throw new AppError(400, 'Meal category cannot be empty');
+    if (allowedCategorySet.size && !allowedCategorySet.has(trimmedCategory.toLowerCase())) {
+      throw new AppError(400, `Invalid meal category: ${trimmedCategory}. Allowed categories: ${allowedCategories.join(', ')}`);
+    }
+    normalizedMeals[trimmedCategory] = count;
+  }
+
+  return { allowedCategories, normalizedMeals };
+};
+
+const assertMealTotals = (normalizedMeals: Record<string, number>) => {
+  const calculatedMealCount = Object.values(normalizedMeals).reduce((sum, count) => sum + count, 0);
+  const regularMealCount = getRegularMealTotal(normalizedMeals);
+
+  if (regularMealCount > MAX_REGULAR_MEALS_PER_DAY) {
+    throw new AppError(400, `Regular meal count cannot be greater than ${MAX_REGULAR_MEALS_PER_DAY}`);
+  }
+
+  if (calculatedMealCount > MAX_TOTAL_MEALS_PER_DAY) {
+    throw new AppError(400, `Total meal count including guest cannot be greater than ${MAX_TOTAL_MEALS_PER_DAY}`);
+  }
+
+  return calculatedMealCount;
+};
+
+const normalizeMealPayload = async (messId: string, mealCount?: number, meals?: Record<string, number>) => {
+  if (!meals) return { mealCount: mealCount ?? 0, meals: {} };
+
+  const { normalizedMeals } = await normalizeMealsBreakdown(messId, meals);
+  const calculatedMealCount = assertMealTotals(normalizedMeals);
+
+  if (mealCount !== undefined && mealCount !== calculatedMealCount) {
+    throw new AppError(400, 'mealCount must match the sum of meals breakdown');
+  }
+
+  return { mealCount: calculatedMealCount, meals: normalizedMeals };
+};
+
+const normalizeMealPayloads = async (messId: string, entries: MealEntryPayload[]) => {
+  return Promise.all(entries.map(async (entry) => {
+    if (!entry.meals) return { ...entry, mealCount: entry.mealCount ?? 0, meals: {} };
+
+    const { normalizedMeals } = await normalizeMealsBreakdown(messId, entry.meals);
+    const calculatedMealCount = assertMealTotals(normalizedMeals);
+    if (entry.mealCount !== undefined && entry.mealCount !== calculatedMealCount) {
+      throw new AppError(400, 'mealCount must match the sum of meals breakdown');
+    }
+
+    return { ...entry, mealCount: calculatedMealCount, meals: normalizedMeals };
+  }));
 };
 
 const buildMealQuery = (messId: string, options: ListMealsOptions) => {
@@ -68,20 +148,59 @@ const buildMealQuery = (messId: string, options: ListMealsOptions) => {
   return query;
 };
 
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const applyMemberSearch = async (messId: string, query: Record<string, unknown>, searchTerm?: string) => {
+  if (!searchTerm?.trim() || query.messMemberId) return true;
+
+  const trimmedSearchTerm = searchTerm.trim();
+  const regex = new RegExp(escapeRegExp(trimmedSearchTerm), 'i');
+  const users = await User.find({
+    $or: [
+      { fullName: regex },
+      { email: regex },
+      { phone: regex },
+    ],
+  }).select('_id').lean();
+
+  const memberQuery: Record<string, unknown> = { messId };
+  const memberOrConditions: Record<string, unknown>[] = [];
+
+  if (users.length) {
+    memberOrConditions.push({ userId: { $in: users.map((user) => user._id) } });
+  }
+
+  if (isValidObjectId(trimmedSearchTerm)) {
+    memberOrConditions.push({ _id: new mongoose.Types.ObjectId(trimmedSearchTerm) });
+  }
+
+  if (!memberOrConditions.length) return false;
+
+  memberQuery.$or = memberOrConditions;
+  const members = await MessMember.find(memberQuery).select('_id').lean();
+
+  if (!members.length) return false;
+
+  query.messMemberId = { $in: members.map((member) => member._id) };
+  return true;
+};
+
 export const createOrUpdateMeal = async (
   messId: string,
   messMemberId: string,
   dateStr: string,
-  mealCount: number,
+  mealCount: number | undefined,
+  meals: Record<string, number> | undefined,
   managerId: string
 ) => {
   const targetDate = normalizeMealDate(dateStr);
   await assertBillingCycleEditable(messId, targetDate);
   await assertActiveMemberInMess(messId, messMemberId);
+  const normalizedPayload = await normalizeMealPayload(messId, mealCount, meals);
 
   return await Meal.findOneAndUpdate(
     { messId, messMemberId, date: targetDate },
-    { mealCount, createdBy: new mongoose.Types.ObjectId(managerId) },
+    { ...normalizedPayload, createdBy: new mongoose.Types.ObjectId(managerId) },
     { new: true, upsert: true, runValidators: true }
   ).populate({
     path: 'messMemberId',
@@ -114,10 +233,12 @@ export const bulkCreateOrUpdateMeals = async (
     throw new AppError(400, 'All meal entries must target active members of this mess');
   }
 
-  await Meal.bulkWrite(entries.map((entry) => ({
+  const normalizedEntries = await normalizeMealPayloads(messId, entries);
+
+  await Meal.bulkWrite(normalizedEntries.map((entry) => ({
     updateOne: {
       filter: { messId, messMemberId: entry.messMemberId, date: targetDate },
-      update: { mealCount: entry.mealCount, createdBy: new mongoose.Types.ObjectId(managerId) },
+      update: { mealCount: entry.mealCount, meals: entry.meals, createdBy: new mongoose.Types.ObjectId(managerId) },
       upsert: true,
     },
   })), { ordered: true });
@@ -138,6 +259,15 @@ export const listMeals = async (messId: string, options: ListMealsOptions = {}) 
   if (options.memberId) await assertActiveMemberInMess(messId, options.memberId);
 
   const query = buildMealQuery(messId, options);
+  const hasSearchMatches = await applyMemberSearch(messId, query, options.searchTerm);
+  if (!hasSearchMatches) {
+    return {
+      items: [],
+      pagination: { page, limit, total: 0, totalPages: 0 },
+      summary: { totalMeals: 0, totalRecords: 0 },
+    };
+  }
+
   const [items, total, summary] = await Promise.all([
     Meal.find(query)
       .populate({

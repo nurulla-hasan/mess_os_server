@@ -3308,6 +3308,12 @@
                   "disabled": true
                 },
                 {
+                  "key": "searchTerm",
+                  "value": "",
+                  "description": "Optional for manager/super admin. Search by mess member id, member full name, email, or phone.",
+                  "disabled": true
+                },
+                {
                   "key": "start",
                   "value": "",
                   "description": "Optional ISO datetime. startDate is also accepted.",
@@ -3321,7 +3327,7 @@
                 }
               ]
             },
-            "description": "Role: Manager sees all meal records; Member sees only own meal records. Optional query params: page, limit(max 100), memberId(manager/super admin only), start/end or startDate/endDate. Response includes pagination meta and summary totalMeals/totalRecords. Requires messId variable."
+            "description": "Role: Manager sees all meal records; Member sees only own meal records. Optional query params: page, limit(max 100), memberId(manager/super admin only), searchTerm(manager/super admin; mess member id/name/email/phone), start/end or startDate/endDate. Response includes pagination meta and summary totalMeals/totalRecords. Requires messId variable."
           },
           "response": []
         },
@@ -3338,7 +3344,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"messMemberId\": \"{{memberId}}\",\n  \"date\": \"2025-01-01T00:00:00.000Z\",\n  \"mealCount\": 2\n}"
+              "raw": "{\n  \"messMemberId\": \"{{memberId}}\",\n  \"date\": \"2025-01-01T00:00:00.000Z\",\n  \"meals\": {\n    \"Breakfast\": 1,\n    \"Lunch\": 1,\n    \"Dinner\": 1,\n    \"Guest\": 2\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/meals",
@@ -3353,7 +3359,7 @@
                 "meals"
               ]
             },
-            "description": "Role: Manager. Creates or updates one member's meal count for a date. Body: messMemberId must be an active member of this mess; date is ISO datetime; mealCount allowed values are 0 to 3 in 0.5 increments. Locked if that month has a finalized billing cycle."
+            "description": "Role: Manager. Creates or updates one member's meal count for a date. Preferred body uses meals breakdown from mess settings mealCategories plus special Guest category, for example { meals: { Breakfast: 1, Lunch: 1, Dinner: 1, Guest: 2 } }. Backend calculates mealCount from meals, so guest meals increase that member's total. Backward compatible body { mealCount: 2 } is also accepted. Counts support 0.5 increments. Regular meals cannot exceed 3; total including Guest cannot exceed 50. Locked if that month has a finalized billing cycle."
           },
           "response": []
         },
@@ -3370,7 +3376,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"date\": \"2025-01-01T00:00:00.000Z\",\n  \"entries\": [\n    {\n      \"messMemberId\": \"{{memberId}}\",\n      \"mealCount\": 2\n    }\n  ]\n}"
+              "raw": "{\n  \"date\": \"2025-01-01T00:00:00.000Z\",\n  \"entries\": [\n    {\n      \"messMemberId\": \"{{memberId}}\",\n      \"meals\": {\n        \"Breakfast\": 1,\n        \"Lunch\": 1,\n        \"Dinner\": 1,\n        \"Guest\": 2\n      }\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/meals/bulk",
@@ -3386,12 +3392,12 @@
                 "bulk"
               ]
             },
-            "description": "Role: Manager. Creates or updates meal counts for multiple active members on one date. Body entries max 200. Duplicate messMemberId is rejected. mealCount allowed values are 0 to 3 in 0.5 increments. Locked if that month has a finalized billing cycle."
+            "description": "Role: Manager. Creates or updates meal counts for multiple active members on one date. Preferred entries use meals breakdown from mess settings mealCategories plus special Guest category. Backend calculates mealCount from meals, so guest meals increase that member's total. Backward compatible mealCount entries are also accepted. Body entries max 200. Duplicate messMemberId is rejected. Counts support 0.5 increments. Regular meals cannot exceed 3; total including Guest cannot exceed 50. Locked if that month has a finalized billing cycle."
           },
           "response": []
         }
       ],
-      "description": "Production meal logging. Managers can log single or bulk meals; members can read only their own meals. Meal records are locked after the monthly billing cycle is finalized."
+      "description": "Production meal logging. Managers can log single or bulk meals with category breakdown such as Breakfast/Lunch/Dinner/Guest; backend stores both meals breakdown and total mealCount for billing. Guest meals are charged to the selected member. Members can read only their own meals. Meal records are locked after the monthly billing cycle is finalized."
     },
     {
       "name": "Meal Off Requests",

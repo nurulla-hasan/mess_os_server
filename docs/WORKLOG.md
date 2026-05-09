@@ -97,8 +97,9 @@ Endpoints:
 List query params:
 
 - `page`
-- `limit`
+- `limit` max 100
 - `memberId` for manager/super admin only
+- `searchTerm` for manager/super admin, searches mess member id or member name/email/phone
 - `start`/`end`
 - `startDate`/`endDate` aliases
 
@@ -109,6 +110,11 @@ Rules:
 - Meal writes require manager role.
 - `messMemberId` must be an active member of the same mess.
 - `mealCount` must be from `0` to `3` in `0.5` increments.
+- Preferred write body uses category breakdown from mess `settings.mealCategories`, plus special `Guest`, for example `meals: { Breakfast: 1, Lunch: 1, Dinner: 1, Guest: 2 }`.
+- Backend calculates and stores total `mealCount` from `meals`.
+- Guest meals increase the selected member's total meal count.
+- Regular meal total cannot exceed `3`; total including `Guest` cannot exceed `50`.
+- Backward compatible `mealCount`-only writes are still accepted.
 - Meal writes are blocked when the related monthly billing cycle is finalized; reopen billing first.
 - Bulk meal logging rejects duplicate `messMemberId` values and supports up to 200 entries.
 
