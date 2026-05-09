@@ -4,6 +4,7 @@ import { MessMember } from '../mess-member/mess-member.model';
 import { ManagerRequest } from '../manager-request/manager-request.model';
 import { Subscription } from '../subscription/subscription.model';
 import { SubscriptionPlan } from '../subscription/subscription-plan.model';
+import { SubscriptionHistory } from '../subscription/subscription-history.model';
 import { AppError } from '../../shared/utils/apiError';
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -267,6 +268,72 @@ const buildDailyTrend = async (model: any, dateField: string, days = 30) => {
   return trends;
 };
 
+const buildSubscriptionAnalytics = async () => {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const [
+    totalSubscriptions,
+    activeSubscriptions,
+    statusBreakdown,
+    byPlan,
+    activePlans,
+    recentPaymentFailures,
+    recentSubscribedEvents,
+  ] = await Promise.all([
+    Subscription.countDocuments(),
+    Subscription.countDocuments({ status: 'active' }),
+    Subscription.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+    ]),
+    Subscription.aggregate([
+      { $group: { _id: '$planId', count: { $sum: 1 }, active: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } } } },
+      { $sort: { count: -1 } },
+    ]),
+    SubscriptionPlan.find({ isActive: true }).select('code name price currency billingCycle').lean(),
+    SubscriptionHistory.countDocuments({ action: 'payment_failed', createdAt: { $gte: sevenDaysAgo } }),
+    SubscriptionHistory.countDocuments({ action: 'subscribed', createdAt: { $gte: sevenDaysAgo } }),
+  ]);
+
+  const planByCode = new Map(activePlans.map((plan) => [plan.code, plan]));
+  const byPlanWithDetails = byPlan.map((item) => {
+    const plan = planByCode.get(item._id);
+    return {
+      planId: item._id,
+      planName: plan?.name ?? item._id,
+      price: plan?.price ?? 0,
+      currency: plan?.currency ?? 'BDT',
+      billingCycle: plan?.billingCycle ?? null,
+      count: item.count,
+      active: item.active,
+    };
+  });
+
+  const paidActivePlans = byPlanWithDetails.filter((item) => item.price > 0 && item.active > 0);
+  const estimatedMonthlyRecurringRevenue = paidActivePlans.reduce((total, item) => {
+    const monthlyPrice = item.billingCycle === 'yearly' ? item.price / 12 : item.price;
+    return total + (monthlyPrice * item.active);
+  }, 0);
+
+  return {
+    total: totalSubscriptions,
+    active: activeSubscriptions,
+    paidActive: paidActivePlans.reduce((total, item) => total + item.active, 0),
+    freeActive: byPlanWithDetails
+      .filter((item) => item.price === 0)
+      .reduce((total, item) => total + item.active, 0),
+    estimatedMonthlyRecurringRevenue,
+    currency: paidActivePlans[0]?.currency ?? activePlans[0]?.currency ?? 'BDT',
+    byStatus: statusBreakdown.map((item) => ({ status: item._id, count: item.count })),
+    byPlan: byPlanWithDetails,
+    recent: {
+      subscribedLast7Days: recentSubscribedEvents,
+      paymentFailedLast7Days: recentPaymentFailures,
+    },
+  };
+};
+
 export const getPlatformStats = async () => {
   const totalUsers = await User.countDocuments();
   const totalMesses = await Mess.countDocuments();
@@ -289,6 +356,7 @@ export const getPlatformAnalytics = async () => {
     suspendedMesses,
     totalActiveMembers,
     pendingManagerRequests,
+    subscriptionAnalytics,
   ] = await Promise.all([
     User.countDocuments(),
     User.countDocuments({ status: 'active' }),
@@ -301,6 +369,7 @@ export const getPlatformAnalytics = async () => {
     Mess.countDocuments({ status: 'suspended' }),
     MessMember.countDocuments({ status: 'active' }),
     ManagerRequest.countDocuments({ status: 'pending' }),
+    buildSubscriptionAnalytics(),
   ]);
 
   const [dailyNewUsers, dailyNewMesses] = await Promise.all([
@@ -314,6 +383,7 @@ export const getPlatformAnalytics = async () => {
       managers: { total: totalManagers, active: activeManagers, blocked: blockedManagers },
       messes: { total: totalMesses, active: activeMesses, suspended: suspendedMesses },
       members: { active: totalActiveMembers },
+      subscriptions: subscriptionAnalytics,
       pendingManagerRequests,
     },
     trends: {

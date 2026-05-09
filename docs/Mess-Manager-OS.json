@@ -4929,7 +4929,7 @@
                 "analytics"
               ]
             },
-            "description": "Role: Super Admin. Gets rich platform analytics with user, manager, mess, member summary and daily growth trends."
+            "description": "Role: Super Admin. Gets rich platform analytics with user, manager, mess, member, subscription summary, estimated monthly recurring revenue, subscription status/plan breakdown, recent subscription events, and daily growth trends."
           },
           "response": []
         },
