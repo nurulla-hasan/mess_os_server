@@ -3,7 +3,7 @@ import { Schema, model, Document, Types } from 'mongoose';
 export interface ISubscriptionHistory extends Document {
   messId: Types.ObjectId;
   planId: string;
-  action: 'trial_started' | 'subscribed' | 'canceled' | 'payment_failed';
+  action: 'default_assigned' | 'subscribed' | 'canceled' | 'fallback_to_default' | 'payment_failed';
   amount?: number;
   note?: string;
   createdAt: Date;
@@ -12,7 +12,7 @@ export interface ISubscriptionHistory extends Document {
 const subHistorySchema = new Schema<ISubscriptionHistory>({
   messId: { type: Schema.Types.ObjectId, ref: 'Mess', required: true },
   planId: { type: String, required: true },
-  action: { type: String, required: true, enum: ['trial_started', 'subscribed', 'canceled', 'payment_failed'] },
+  action: { type: String, required: true, enum: ['default_assigned', 'subscribed', 'canceled', 'fallback_to_default', 'payment_failed'] },
   amount: { type: Number },
   note: { type: String }
 }, {

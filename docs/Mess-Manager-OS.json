@@ -4668,7 +4668,7 @@
                 "trial"
               ]
             },
-            "description": "Role: Manager. Starts free trial. Requires messId variable."
+            "description": "Role: Manager. Backward-compatible endpoint. Initializes the default Free subscription if the mess does not already have one. New messes get this automatically during mess creation."
           },
           "response": []
         },
@@ -4685,7 +4685,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"planId\": \"basic\",\n  \"paymentToken\": \"stripe_token_123\"\n}"
+              "raw": "{\n  \"planId\": \"pro\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/subscriptions/subscribe",
@@ -4701,7 +4701,7 @@
                 "subscribe"
               ]
             },
-            "description": "Role: Manager. Subscribes to plan. Body: { planId (string, required), paymentToken (string, required) }"
+            "description": "Role: Manager. Subscribes to an active plan by plan code or plan id. Use planId=free for Free. Paid plans initialize an SSLCommerz payment session and return gatewayUrl; frontend must redirect the user to gatewayUrl."
           },
           "response": []
         },
@@ -4724,12 +4724,112 @@
                 "cancel"
               ]
             },
-            "description": "Role: Manager. Cancels subscription. Requires messId variable."
+            "description": "Role: Manager. Cancels paid subscription by falling back to the default Free plan. Requires messId variable."
+          },
+          "response": []
+        },
+        {
+          "name": "SSLCommerz Success Callback (Public)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/subscriptions/sslcommerz/success",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "subscriptions",
+                "sslcommerz",
+                "success"
+              ]
+            },
+            "description": "Public callback used by SSLCommerz. Validates val_id/tran_id with SSLCommerz and activates the paid subscription, then redirects to CLIENT_URL/payment/success."
+          },
+          "response": []
+        },
+        {
+          "name": "SSLCommerz Fail Callback (Public)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/subscriptions/sslcommerz/fail",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "subscriptions",
+                "sslcommerz",
+                "fail"
+              ]
+            },
+            "description": "Public callback used by SSLCommerz when payment fails. Marks the subscription payment as failed and redirects to CLIENT_URL/payment/failed."
+          },
+          "response": []
+        },
+        {
+          "name": "SSLCommerz Cancel Callback (Public)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/subscriptions/sslcommerz/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "subscriptions",
+                "sslcommerz",
+                "cancel"
+              ]
+            },
+            "description": "Public callback used by SSLCommerz when the customer cancels payment. Marks the subscription payment as canceled and redirects to CLIENT_URL/payment/canceled."
+          },
+          "response": []
+        },
+        {
+          "name": "SSLCommerz IPN Callback (Public)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/subscriptions/sslcommerz/ipn",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "subscriptions",
+                "sslcommerz",
+                "ipn"
+              ]
+            },
+            "description": "Public IPN endpoint for SSLCommerz. Configure this URL in the SSLCommerz merchant panel. It validates val_id/tran_id and activates the paid subscription even if the browser return fails."
           },
           "response": []
         }
       ],
-      "description": "Subscription management. Global plans are public. Mess subscriptions require manager role."
+      "description": "Subscription management. Public plans come from admin-managed SubscriptionPlan records. New messes automatically receive the default Free plan. Mess subscriptions require manager role."
     },
     {
       "name": "Admin (Super Admin)",
@@ -4937,6 +5037,122 @@
           "response": []
         },
         {
+          "name": "List Subscription Plans (Super Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/subscription-plans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "subscription-plans"
+              ]
+            },
+            "description": "Role: Super Admin. Lists all subscription plans including inactive plans. Default Free/Pro/Max plans are seeded automatically if no plans exist."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Subscription Plan (Super Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Pro\",\n  \"code\": \"pro_custom\",\n  \"price\": 499,\n  \"currency\": \"BDT\",\n  \"billingCycle\": \"monthly\",\n  \"durationDays\": 30,\n  \"maxMembers\": 50,\n  \"features\": {\n    \"meals\": true,\n    \"expenses\": true,\n    \"billing\": true,\n    \"reports\": true,\n    \"marketSchedule\": true,\n    \"aiShopping\": false,\n    \"notices\": true,\n    \"complaints\": true,\n    \"prioritySupport\": false\n  },\n  \"isDefault\": false,\n  \"isActive\": true,\n  \"sortOrder\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/subscription-plans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "subscription-plans"
+              ]
+            },
+            "description": "Role: Super Admin. Creates a subscription plan. billingCycle allowed values: free, monthly, yearly. code can contain lowercase letters, numbers, and underscores. If isDefault=true, other plans are unset as default."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Subscription Plan (Super Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 599,\n  \"maxMembers\": 60,\n  \"features\": {\n    \"aiShopping\": true\n  },\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/subscription-plans/{{subscriptionPlanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "subscription-plans",
+                "{{subscriptionPlanId}}"
+              ]
+            },
+            "description": "Role: Super Admin. Updates a subscription plan by MongoDB plan id. If isDefault=true, this plan is forced active and other plans are unset as default."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Subscription Plan (Super Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/subscription-plans/{{subscriptionPlanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "subscription-plans",
+                "{{subscriptionPlanId}}"
+              ]
+            },
+            "description": "Role: Super Admin. Deletes an unused non-default plan. If subscriptions already reference the plan code, the plan is deactivated instead. Default plan cannot be deleted."
+          },
+          "response": []
+        },
+        {
           "name": "Update User Role (Super Admin)",
           "request": {
             "method": "PATCH",
@@ -4965,7 +5181,7 @@
                 "role"
               ]
             },
-            "description": "Role: Super Admin. Updates user global role. Body: { globalRole ('user'|'manager'|'super_admin', required) }. Requires userId variable."
+            "description": "Role: Super Admin. Updates user global role. Body: { globalRole ('user'|'manager'|'super_admin', required) }. Guard: a user cannot be downgraded to globalRole=user while they are manager of any active mess; transfer ownership first. Requires userId variable."
           },
           "response": []
         },
@@ -5046,7 +5262,7 @@
           "response": []
         }
       ],
-      "description": "Platform administration. Strictly restricted to super_admin global role. Includes user, mess, stats, and manager access request review."
+      "description": "Platform administration. Strictly restricted to super_admin global role. Includes user, mess, stats, subscription plan management, and manager access request review."
     }
   ],
   "auth": {
@@ -5142,6 +5358,10 @@
     },
     {
       "key": "managerRequestId",
+      "value": ""
+    },
+    {
+      "key": "subscriptionPlanId",
       "value": ""
     },
     {

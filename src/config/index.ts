@@ -5,6 +5,7 @@ export const config = {
   port: process.env.PORT || 5000,
   env: process.env.NODE_ENV || 'development',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:3000',
+  apiBaseUrl: process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 5000}`,
   db: {
     uri: process.env.MONGODB_URI || process.env.DATABASE_URL || 'mongodb://localhost:27017/mess_os_local',
   },
@@ -18,5 +19,11 @@ export const config = {
     user: process.env.SMTP_USER || (() => { throw new Error('SMTP_USER is not defined'); })(),
     pass: process.env.SMTP_PASS || (() => { throw new Error('SMTP_PASS is not defined'); })(),
     from: process.env.SMTP_FROM || 'noreply@messmanager.com'
+  },
+  sslcommerz: {
+    storeId: process.env.SSLCOMMERZ_STORE_ID || '',
+    storePassword: process.env.SSLCOMMERZ_STORE_PASSWORD || '',
+    isSandbox: process.env.SSLCOMMERZ_IS_SANDBOX !== 'false',
+    transactionPrefix: process.env.SSLCOMMERZ_TRANSACTION_PREFIX || 'MOS'
   }
 };

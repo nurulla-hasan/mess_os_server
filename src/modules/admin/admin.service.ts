@@ -112,6 +112,23 @@ export const getAllMesses = async (page: number, limit: number, searchTerm?: str
 
 export const updateUserRole = async (userId: string, targetRole: string) => {
   if (!['user', 'manager', 'super_admin'].includes(targetRole)) throw new AppError(400, 'Invalid platform globalRole specified');
+
+  if (targetRole === 'user') {
+    const managedMess = await MessMember.findOne({
+      userId,
+      messRole: 'manager',
+      status: 'active',
+    }).populate('messId', 'name');
+
+    if (managedMess) {
+      const messName = (managedMess.messId as any)?.name;
+      throw new AppError(
+        400,
+        `Cannot downgrade this user while they manage an active mess${messName ? ` (${messName})` : ''}. Transfer ownership first.`
+      );
+    }
+  }
+
   const user = await User.findByIdAndUpdate(userId, { globalRole: targetRole }, { new: true }).select('-passwordHash');
   if(!user) throw new AppError(404, 'User not found in global mapping');
   return user;

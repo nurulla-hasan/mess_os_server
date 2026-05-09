@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { Mess } from './mess.model';
 import { MessMember } from '../mess-member/mess-member.model';
 import { AppError } from '../../shared/utils/apiError';
+import { assignDefaultSubscription } from '../subscription/subscription.service';
 
 // Generate a short random uppercase invite code (e.g. "A3F2B1C4")
 const generateInviteCode = (): string =>
@@ -20,6 +21,8 @@ export const createMess = async (userId: string, payload: { name: string; addres
     status: 'active',
     joinedAt: new Date(),
   });
+
+  await assignDefaultSubscription(String(mess._id));
 
   return mess;
 };

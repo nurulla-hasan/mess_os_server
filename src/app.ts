@@ -22,6 +22,7 @@ app.use(cors(corsOptions));
 app.use(helmet());
 app.use(morgan(config.env === 'production' ? 'combined' : 'dev'));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use('/api/v1', v1Routes);

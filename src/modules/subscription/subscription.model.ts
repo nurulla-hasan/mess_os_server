@@ -3,23 +3,19 @@ import { Schema, model, Document, Types } from 'mongoose';
 export interface ISubscription extends Document {
   messId: Types.ObjectId;
   planId: string;
-  status: 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid';
+  status: 'active' | 'past_due' | 'canceled' | 'unpaid';
   currentPeriodStart: Date;
-  currentPeriodEnd: Date;
+  currentPeriodEnd?: Date;
   cancelAtPeriodEnd: boolean;
-  stripeSubscriptionId?: string;
-  stripeCustomerId?: string;
 }
 
 const subSchema = new Schema<ISubscription>({
   messId: { type: Schema.Types.ObjectId, ref: 'Mess', required: true, unique: true },
   planId: { type: String, required: true },
-  status: { type: String, required: true, enum: ['trialing', 'active', 'past_due', 'canceled', 'unpaid'], default: 'trialing' },
+  status: { type: String, required: true, enum: ['active', 'past_due', 'canceled', 'unpaid'], default: 'active' },
   currentPeriodStart: { type: Date, required: true },
-  currentPeriodEnd: { type: Date, required: true },
+  currentPeriodEnd: { type: Date },
   cancelAtPeriodEnd: { type: Boolean, default: false },
-  stripeSubscriptionId: String,
-  stripeCustomerId: String
 }, {
   timestamps: true,
   versionKey: false,
