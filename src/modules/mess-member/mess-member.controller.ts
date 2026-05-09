@@ -13,14 +13,22 @@ export const requestJoin = catchAsync(async (req: Request, res: Response) => {
 export const getMembers = catchAsync(async (req: Request, res: Response) => {
   const status = req.query.status as MemberStatus | undefined;
   const searchTerm = req.query.searchTerm as string | undefined;
+  const page = parseInt(String(req.query.page)) || 1;
+  const limit = parseInt(String(req.query.limit)) || 20;
   const canViewNonActiveMembers = req.messRole === 'manager' || req.user?.globalRole === 'super_admin';
 
   if ((!status || status !== 'active') && !canViewNonActiveMembers) {
     throw new AppError(403, 'Only mess managers can view all or non-active members');
   }
 
-  const members = await memberService.getMembers(req.messId!, { status, searchTerm });
-  sendResponse(res, { statusCode: 200, success: true, message: 'Members fetched successfully', data: members });
+  const result = await memberService.getMembers(req.messId!, { status, searchTerm, page, limit });
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Members fetched successfully',
+    meta: result.pagination,
+    data: result.items,
+  });
 });
 
 export const updatePendingMemberStatus = catchAsync(async (req: Request, res: Response) => {

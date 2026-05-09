@@ -55,10 +55,14 @@ Members list:
 
 Query params:
 
+- `page`
+- `limit` max 100
 - `status=active|pending|rejected|removed`
 - `searchTerm=name/email/phone`
 
 No `status` as manager returns all statuses.
+
+Response includes pagination `meta`.
 
 Pending approval/rejection is one endpoint:
 
@@ -81,6 +85,32 @@ Remove member stays separate:
 Removed members cannot rejoin automatically.
 
 Rejected members can submit join request again; existing record is set back to `pending`.
+
+## Meals Flow
+
+Endpoints:
+
+- `GET /api/v1/messes/:messId/meals`
+- `POST /api/v1/messes/:messId/meals`
+- `POST /api/v1/messes/:messId/meals/bulk`
+
+List query params:
+
+- `page`
+- `limit`
+- `memberId` for manager/super admin only
+- `start`/`end`
+- `startDate`/`endDate` aliases
+
+Rules:
+
+- Managers can list all meal records.
+- Members can list only their own meal records.
+- Meal writes require manager role.
+- `messMemberId` must be an active member of the same mess.
+- `mealCount` must be from `0` to `3` in `0.5` increments.
+- Meal writes are blocked when the related monthly billing cycle is finalized; reopen billing first.
+- Bulk meal logging rejects duplicate `messMemberId` values and supports up to 200 entries.
 
 ## Admin Mess Management
 
@@ -324,3 +354,6 @@ Recently cleaned:
 - fixed invalid commented JSON body in Register request
 - added allowed status/role descriptions
 - made empty query filters safe for admin list endpoints
+- made empty query filters safe for manager request and mess member list endpoints
+- payment and expense list endpoints support validated `page`, `limit`, and `status`
+- report date filters accept both `start`/`end` and `startDate`/`endDate`

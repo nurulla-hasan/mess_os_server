@@ -3,6 +3,7 @@ import { isValidObjectId } from 'mongoose';
 import { FUND_SOURCES } from '../../constants/ledgerEntryTypes';
 
 const oId = z.string().refine(isValidObjectId);
+const emptyToUndefined = (value: unknown) => value === '' ? undefined : value;
 
 export const createExpenseSchema = z.object({
   body: z.object({
@@ -16,6 +17,14 @@ export const createExpenseSchema = z.object({
 });
 
 export type CreateExpensePayload = z.infer<typeof createExpenseSchema>['body'];
+
+export const listExpensesSchema = z.object({
+  query: z.object({
+    page: z.preprocess(emptyToUndefined, z.string().regex(/^\d+$/).optional()),
+    limit: z.preprocess(emptyToUndefined, z.string().regex(/^\d+$/).optional()),
+    status: z.preprocess(emptyToUndefined, z.enum(['pending', 'approved', 'rejected', 'canceled']).optional()),
+  }).strict()
+});
 
 export const expenseIdParamSchema = z.object({
   params: z.object({ expenseId: oId }).strict()

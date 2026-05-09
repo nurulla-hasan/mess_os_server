@@ -2455,6 +2455,18 @@
               ],
               "query": [
                 {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Optional. Page number.",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Optional. Items per page, max 100.",
+                  "disabled": true
+                },
+                {
                   "key": "status",
                   "value": "",
                   "description": "Optional. Leave empty to get all statuses as manager. Use active, pending, rejected, or removed to filter.",
@@ -2468,7 +2480,7 @@
                 }
               ]
             },
-            "description": "Role: Manager for all statuses; Member+ for status=active. Leave status empty to list all statuses. Optional filters: status=active|pending|rejected|removed, searchTerm=name/email/phone. Requires messId variable."
+            "description": "Role: Manager for all statuses; Member+ for status=active. Leave status empty to list all statuses. Optional query params: page, limit, status=active|pending|rejected|removed, searchTerm=name/email/phone. Response includes pagination meta. Requires messId variable."
           },
           "response": [
             {
@@ -2489,6 +2501,16 @@
                     "members"
                   ],
                   "query": [
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": true
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20",
+                      "disabled": true
+                    },
                     {
                       "key": "status",
                       "value": "",
@@ -2675,9 +2697,29 @@
                 "messes",
                 "{{messId}}",
                 "payments"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Optional. Page number.",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Optional. Items per page.",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Optional. pending, approved, rejected, or canceled.",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Role: Member+. Lists all payments in mess. Requires messId variable."
+            "description": "Role: Member+. Lists all payments in mess. Optional query params: page, limit, status=pending|approved|rejected|canceled. Requires messId variable."
           },
           "response": []
         },
@@ -2730,9 +2772,29 @@
                 "{{messId}}",
                 "payments",
                 "me"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Optional. Page number.",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Optional. Items per page.",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Optional. pending, approved, rejected, or canceled.",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Role: Member+. Lists current user's payments. Requires messId variable."
+            "description": "Role: Member+. Lists current user's payments. Optional query params: page, limit, status=pending|approved|rejected|canceled. Requires messId variable."
           },
           "response": []
         },
@@ -2853,9 +2915,29 @@
                 "messes",
                 "{{messId}}",
                 "expenses"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Optional. Page number.",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Optional. Items per page.",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Optional. pending, approved, rejected, or canceled.",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Role: Member+. Lists all expenses. Requires messId variable."
+            "description": "Role: Member+. Lists all expenses. Optional query params: page, limit, status=pending|approved|rejected|canceled. Requires messId variable."
           },
           "response": []
         },
@@ -3205,9 +3287,41 @@
                 "messes",
                 "{{messId}}",
                 "meals"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Optional. Page number.",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Optional. Items per page.",
+                  "disabled": true
+                },
+                {
+                  "key": "memberId",
+                  "value": "",
+                  "description": "Optional for manager/super admin. Filter by mess member id. Normal members only see their own meals.",
+                  "disabled": true
+                },
+                {
+                  "key": "start",
+                  "value": "",
+                  "description": "Optional ISO datetime. startDate is also accepted.",
+                  "disabled": true
+                },
+                {
+                  "key": "end",
+                  "value": "",
+                  "description": "Optional ISO datetime. endDate is also accepted.",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Role: Member+. Lists meal records. Requires messId variable."
+            "description": "Role: Manager sees all meal records; Member sees only own meal records. Optional query params: page, limit(max 100), memberId(manager/super admin only), start/end or startDate/endDate. Response includes pagination meta and summary totalMeals/totalRecords. Requires messId variable."
           },
           "response": []
         },
@@ -3239,12 +3353,45 @@
                 "meals"
               ]
             },
-            "description": "Role: Manager. Logs meal for member. Body: { messMemberId (ObjectId, required), date (ISO datetime, required), mealCount (number >=0, required) }"
+            "description": "Role: Manager. Creates or updates one member's meal count for a date. Body: messMemberId must be an active member of this mess; date is ISO datetime; mealCount allowed values are 0 to 3 in 0.5 increments. Locked if that month has a finalized billing cycle."
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Log Meals (Manager)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2025-01-01T00:00:00.000Z\",\n  \"entries\": [\n    {\n      \"messMemberId\": \"{{memberId}}\",\n      \"mealCount\": 2\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/meals/bulk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "messes",
+                "{{messId}}",
+                "meals",
+                "bulk"
+              ]
+            },
+            "description": "Role: Manager. Creates or updates meal counts for multiple active members on one date. Body entries max 200. Duplicate messMemberId is rejected. mealCount allowed values are 0 to 3 in 0.5 increments. Locked if that month has a finalized billing cycle."
           },
           "response": []
         }
       ],
-      "description": "Meal logging. Managers log meals for members."
+      "description": "Production meal logging. Managers can log single or bulk meals; members can read only their own meals. Meal records are locked after the monthly billing cycle is finalized."
     },
     {
       "name": "Meal Off Requests",
@@ -4496,9 +4643,23 @@
                 "{{messId}}",
                 "reports",
                 "expenses"
+              ],
+              "query": [
+                {
+                  "key": "start",
+                  "value": "",
+                  "description": "Optional. Start date; startDate is also accepted.",
+                  "disabled": true
+                },
+                {
+                  "key": "end",
+                  "value": "",
+                  "description": "Optional. End date; endDate is also accepted.",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Role: Member+. Gets expenses report. Query params: startDate, endDate. Requires messId variable."
+            "description": "Role: Member+. Gets expenses report. Optional query params: start/end or startDate/endDate. Requires messId variable."
           },
           "response": []
         },
@@ -4519,9 +4680,23 @@
                 "{{messId}}",
                 "reports",
                 "payments"
+              ],
+              "query": [
+                {
+                  "key": "start",
+                  "value": "",
+                  "description": "Optional. Start date; startDate is also accepted.",
+                  "disabled": true
+                },
+                {
+                  "key": "end",
+                  "value": "",
+                  "description": "Optional. End date; endDate is also accepted.",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Role: Member+. Gets payments report. Query params: startDate, endDate. Requires messId variable."
+            "description": "Role: Member+. Gets payments report. Optional query params: start/end or startDate/endDate. Requires messId variable."
           },
           "response": []
         },

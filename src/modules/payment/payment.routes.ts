@@ -7,14 +7,14 @@ import { MESS_ROLES } from '../../constants/roles';
 
 const router = Router({ mergeParams: true });
 
-router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.getPayments);
+router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.listPaymentsSchema), ctl.getPayments);
 router.post('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.createPaymentSchema), ctl.createPayment);
 
-router.get('/me', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.getMyPayments);
+router.get('/me', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.listPaymentsSchema), ctl.getMyPayments);
 
-router.get('/:paymentId', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.getPaymentById);
-router.post('/:paymentId/approve', authorize(MESS_ROLES.MANAGER), ctl.approvePayment);
-router.post('/:paymentId/reject', authorize(MESS_ROLES.MANAGER), ctl.rejectPayment);
-router.post('/:paymentId/cancel', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.cancelPayment);
+router.get('/:paymentId', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.updatePaymentStatusSchema), ctl.getPaymentById);
+router.post('/:paymentId/approve', authorize(MESS_ROLES.MANAGER), validateRequest(val.updatePaymentStatusSchema), ctl.approvePayment);
+router.post('/:paymentId/reject', authorize(MESS_ROLES.MANAGER), validateRequest(val.updatePaymentStatusSchema), ctl.rejectPayment);
+router.post('/:paymentId/cancel', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.updatePaymentStatusSchema), ctl.cancelPayment);
 
 export const paymentRoutes = router;

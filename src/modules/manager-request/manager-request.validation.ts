@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { isValidObjectId } from 'mongoose';
 
 const oId = z.string().refine(isValidObjectId, 'Invalid MongoDB ID');
+const emptyToUndefined = (value: unknown) => value === '' ? undefined : value;
 
 export const createManagerRequestSchema = z.object({
   body: z.object({
@@ -11,10 +12,10 @@ export const createManagerRequestSchema = z.object({
 
 export const listManagerRequestsSchema = z.object({
   query: z.object({
-    status: z.enum(['pending', 'approved', 'rejected']).optional(),
-    searchTerm: z.string().trim().max(100).optional(),
-    page: z.string().regex(/^\d+$/).optional(),
-    limit: z.string().regex(/^\d+$/).optional(),
+    status: z.preprocess(emptyToUndefined, z.enum(['pending', 'approved', 'rejected']).optional()),
+    searchTerm: z.preprocess(emptyToUndefined, z.string().trim().max(100).optional()),
+    page: z.preprocess(emptyToUndefined, z.string().regex(/^\d+$/).optional()),
+    limit: z.preprocess(emptyToUndefined, z.string().regex(/^\d+$/).optional()),
   }).strict(),
 });
 

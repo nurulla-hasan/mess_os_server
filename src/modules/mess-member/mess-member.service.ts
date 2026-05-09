@@ -50,12 +50,16 @@ export type PendingMemberTargetStatus = 'active' | 'rejected';
 type GetMembersOptions = {
   status?: MemberStatus;
   searchTerm?: string;
+  page?: number;
+  limit?: number;
 };
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export const getMembers = async (messId: string, options: GetMembersOptions = {}) => {
   const { status, searchTerm } = options;
+  const page = options.page || 1;
+  const limit = options.limit || 20;
   const query: Record<string, unknown> = status ? { messId, status } : { messId };
 
   if (searchTerm?.trim()) {
@@ -68,24 +72,43 @@ export const getMembers = async (messId: string, options: GetMembersOptions = {}
       ],
     }).select('_id').lean();
 
-    if (!users.length) return [];
+    if (!users.length) {
+      return {
+        items: [],
+        pagination: { page, limit, total: 0, totalPages: 0 },
+      };
+    }
     query.userId = { $in: users.map((user) => user._id) };
   }
 
-  const members = await MessMember.find(query)
-    .populate('userId', 'fullName email phone avatarUrl')
-    .lean();
+  const [members, total] = await Promise.all([
+    MessMember.find(query)
+      .populate('userId', 'fullName email phone avatarUrl')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
+    MessMember.countDocuments(query),
+  ]);
 
-  return members.map((m) => ({
-    id: m._id,
-    messId: m.messId,
-    messRole: m.messRole,
-    status: m.status,
-    joinedAt: m.joinedAt,
-    leftAt: m.leftAt,
-    createdAt: (m as any).createdAt,
-    user: m.userId, // populated user info
-  }));
+  return {
+    items: members.map((m) => ({
+      id: m._id,
+      messId: m.messId,
+      messRole: m.messRole,
+      status: m.status,
+      joinedAt: m.joinedAt,
+      leftAt: m.leftAt,
+      createdAt: (m as any).createdAt,
+      user: m.userId, // populated user info
+    })),
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 export const updatePendingMemberStatus = async (
@@ -130,4 +153,3 @@ export const removeMember = async (messId: string, memberId: string) => {
 
   return member;
 };
-

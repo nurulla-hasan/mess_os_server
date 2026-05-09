@@ -28,19 +28,19 @@ export const getMemberStatement = catchAsync(async (req: Request, res: Response)
 });
 
 export const getExpenseReport = catchAsync(async (req: Request, res: Response) => {
-  const start = req.query.start ? String(req.query.start) : undefined;
-  const end = req.query.end ? String(req.query.end) : undefined;
+  const start = req.query.start ? String(req.query.start) : req.query.startDate ? String(req.query.startDate) : undefined;
+  const end = req.query.end ? String(req.query.end) : req.query.endDate ? String(req.query.endDate) : undefined;
   sendResponse(res, { statusCode: 200, success: true, message: 'Expenses aggregated successfully', data: await rptService.getExpenseReport(req.messId!, start, end) });
 });
 
 export const getPaymentReport = catchAsync(async (req: Request, res: Response) => {
-  const start = req.query.start ? String(req.query.start) : undefined;
-  const end = req.query.end ? String(req.query.end) : undefined;
+  const start = req.query.start ? String(req.query.start) : req.query.startDate ? String(req.query.startDate) : undefined;
+  const end = req.query.end ? String(req.query.end) : req.query.endDate ? String(req.query.endDate) : undefined;
   sendResponse(res, { statusCode: 200, success: true, message: 'Payments aggregated successfully', data: await rptService.getPaymentReport(req.messId!, start, end) });
 });
 
 export const exportCsvReport = catchAsync(async (req: Request, res: Response) => {
-  const type = req.query.type as 'expenses' | 'payments' || 'expenses';
+  const type = req.query.type === 'payments' ? 'payments' : 'expenses';
   const csvData = await rptService.exportCsvReport(req.messId!, type);
   res.header('Content-Type', 'text/csv');
   res.attachment(`mess-report-${type}-${Date.now()}.csv`);
