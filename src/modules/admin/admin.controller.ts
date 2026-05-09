@@ -28,6 +28,24 @@ export const getAnalytics = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, { statusCode: 200, success: true, message: 'Platform analytics retrieved', data: await adminService.getPlatformAnalytics() });
 });
 
+export const getAllSubscriptions = catchAsync(async (req: Request, res: Response) => {
+  const page = parseInt(String(req.query.page)) || 1;
+  const limit = parseInt(String(req.query.limit)) || 20;
+  const result = await adminService.getAllSubscriptions(page, limit, {
+    searchTerm: req.query.searchTerm as string | undefined,
+    status: req.query.status as 'active' | 'past_due' | 'canceled' | 'unpaid' | undefined,
+    planId: req.query.planId as string | undefined,
+  });
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Platform subscriptions retrieved',
+    meta: result.pagination,
+    data: result.items,
+  });
+});
+
 export const updateUserRole = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, { statusCode: 200, success: true, message: 'User role escalated/de-escalated', data: await adminService.updateUserRole(String(req.params.userId), req.body.globalRole) });
 });

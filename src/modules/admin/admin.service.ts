@@ -2,6 +2,8 @@ import { User } from '../user/user.model';
 import { Mess } from '../mess/mess.model';
 import { MessMember } from '../mess-member/mess-member.model';
 import { ManagerRequest } from '../manager-request/manager-request.model';
+import { Subscription } from '../subscription/subscription.model';
+import { SubscriptionPlan } from '../subscription/subscription-plan.model';
 import { AppError } from '../../shared/utils/apiError';
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -149,6 +151,92 @@ export const updateMessStatus = async (messId: string, status: 'active' | 'suspe
   const mess = await Mess.findByIdAndUpdate(messId, update, { new: true });
   if(!mess) throw new AppError(404, 'Mess not found');
   return mess;
+};
+
+export const getAllSubscriptions = async (
+  page: number,
+  limit: number,
+  options: {
+    searchTerm?: string;
+    status?: 'active' | 'past_due' | 'canceled' | 'unpaid';
+    planId?: string;
+  } = {}
+) => {
+  const query: Record<string, unknown> = {};
+
+  if (options.status) query.status = options.status;
+  if (options.planId) query.planId = options.planId.trim().toLowerCase();
+
+  if (options.searchTerm?.trim()) {
+    const regex = new RegExp(escapeRegExp(options.searchTerm.trim()), 'i');
+    const [matchingMesses, matchingPlans, matchingManagers] = await Promise.all([
+      Mess.find({ $or: [{ name: regex }, { address: regex }, { inviteCode: regex }] }).select('_id').lean(),
+      SubscriptionPlan.find({ $or: [{ name: regex }, { code: regex }] }).select('code').lean(),
+      User.find({ $or: [{ fullName: regex }, { email: regex }, { phone: regex }] }).select('_id').lean(),
+    ]);
+
+    const managerMemberships = matchingManagers.length
+      ? await MessMember.find({
+          userId: { $in: matchingManagers.map((user) => user._id) },
+          messRole: 'manager',
+          status: 'active',
+        }).select('messId').lean()
+      : [];
+
+    query.$or = [
+      ...(matchingMesses.length ? [{ messId: { $in: matchingMesses.map((mess) => mess._id) } }] : []),
+      ...(managerMemberships.length ? [{ messId: { $in: managerMemberships.map((member) => member.messId) } }] : []),
+      ...(matchingPlans.length ? [{ planId: { $in: matchingPlans.map((plan) => plan.code) } }] : []),
+    ];
+
+    if (!(query.$or as unknown[]).length) {
+      return {
+        items: [],
+        pagination: { page, limit, total: 0, totalPages: 0 },
+      };
+    }
+  }
+
+  const [subscriptions, total] = await Promise.all([
+    Subscription.find(query).skip((page - 1) * limit).limit(limit).sort({ updatedAt: -1 }).lean(),
+    Subscription.countDocuments(query),
+  ]);
+
+  const messIds = subscriptions.map((subscription) => subscription.messId);
+  const planCodes = subscriptions.map((subscription) => subscription.planId);
+
+  const [messes, managerMemberships, plans] = await Promise.all([
+    Mess.find({ _id: { $in: messIds } }).lean(),
+    MessMember.find({ messId: { $in: messIds }, messRole: 'manager', status: 'active' })
+      .populate('userId', 'fullName email phone avatarUrl globalRole status')
+      .lean(),
+    SubscriptionPlan.find({ code: { $in: planCodes } }).lean(),
+  ]);
+
+  const messById = new Map(messes.map((mess) => [String(mess._id), mess]));
+  const managerByMessId = new Map(managerMemberships.map((member) => [String(member.messId), member.userId]));
+  const planByCode = new Map(plans.map((plan) => [plan.code, plan]));
+
+  return {
+    items: subscriptions.map((subscription) => {
+      const mess = messById.get(String(subscription.messId));
+      return {
+        subscription: {
+          ...subscription,
+          id: subscription._id,
+        },
+        mess: mess ? { ...mess, id: mess._id } : null,
+        manager: managerByMessId.get(String(subscription.messId)) ?? null,
+        plan: planByCode.get(subscription.planId) ?? null,
+      };
+    }),
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 const buildDailyTrend = async (model: any, dateField: string, days = 30) => {

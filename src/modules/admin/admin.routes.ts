@@ -26,6 +26,7 @@ router.get('/users', validateRequest(val.paginationSchema), ctl.getAllUsers);
 router.get('/messes', validateRequest(val.paginationSchema), ctl.getAllMesses);
 router.get('/stats', ctl.getStats);
 router.get('/analytics', ctl.getAnalytics);
+router.get('/subscriptions', validateRequest(val.subscriptionListSchema), ctl.getAllSubscriptions);
 router.get('/manager-requests', validateRequest(managerRequestVal.listManagerRequestsSchema), managerRequestCtl.listManagerRequests);
 router.get('/subscription-plans', subscriptionCtl.listPlansForAdmin);
 router.post('/subscription-plans', validateRequest(subscriptionVal.createPlanSchema), subscriptionCtl.createPlan);

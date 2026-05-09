@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { isValidObjectId } from 'mongoose';
 
 const oId = z.string().refine(isValidObjectId, 'Invalid MongoDB ID');
+const emptyToUndefined = (value: unknown) => value === '' ? undefined : value;
 
 export const updateRoleSchema = z.object({
   params: z.object({
@@ -37,5 +38,15 @@ export const paginationSchema = z.object({
     limit: z.string().regex(/^\d+$/).optional(),
     searchTerm: z.string().trim().max(100).optional(),
     status: z.enum(['active', 'suspended']).optional()
+  }).strict()
+});
+
+export const subscriptionListSchema = z.object({
+  query: z.object({
+    page: z.string().regex(/^\d+$/).optional(),
+    limit: z.string().regex(/^\d+$/).optional(),
+    searchTerm: z.preprocess(emptyToUndefined, z.string().trim().max(100).optional()),
+    status: z.preprocess(emptyToUndefined, z.enum(['active', 'past_due', 'canceled', 'unpaid']).optional()),
+    planId: z.preprocess(emptyToUndefined, z.string().trim().min(1).optional()),
   }).strict()
 });

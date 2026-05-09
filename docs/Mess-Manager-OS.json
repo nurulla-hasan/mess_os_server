@@ -4957,6 +4957,55 @@
           "response": []
         },
         {
+          "name": "List Subscriptions (Super Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/subscriptions?page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "subscriptions"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Optional. active, past_due, canceled, or unpaid.",
+                  "disabled": true
+                },
+                {
+                  "key": "planId",
+                  "value": "",
+                  "description": "Optional. Filter by plan code, for example free, pro, max.",
+                  "disabled": true
+                },
+                {
+                  "key": "searchTerm",
+                  "value": "",
+                  "description": "Optional. Search by mess name/address/invite code, manager name/email/phone, or plan name/code.",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Role: Super Admin. Lists all mess subscriptions with pagination meta, mess info, manager info, and plan info. Supports status, planId, and searchTerm filters."
+          },
+          "response": []
+        },
+        {
           "name": "List Manager Requests (Super Admin)",
           "request": {
             "method": "GET",
