@@ -27,7 +27,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "// {\n//   \"fullName\": \"Nurulla Hasan\",\n//   \"email\": \"nurullahasan.dev@gmail.com\",\n//   \"password\": \"111111\",\n//   \"phone\": \"01700000000\"\n// }\n{\n  \"fullName\": \"Golap Hasan\",\n  \"email\": \"golaphasan379@gmail.com\",\n  \"password\": \"111111\",\n  \"phone\": \"01700000000\"\n}"
+              "raw": "{\n  \"fullName\": \"Golap Hasan\",\n  \"email\": \"golaphasan379@gmail.com\",\n  \"password\": \"111111\",\n  \"phone\": \"01700000000\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/register",
@@ -2625,7 +2625,7 @@
                 "status"
               ]
             },
-            "description": "Role: Manager. Updates a pending join request. Body status=active approves, status=rejected rejects. Requires messId and memberId variables."
+            "description": "Role: Manager. Updates a pending join request. Body status allowed values: active, rejected. status=active approves, status=rejected rejects. Requires messId and memberId variables."
           },
           "response": []
         },
@@ -4331,7 +4331,7 @@
                 "status"
               ]
             },
-            "description": "Role: Manager. Updates complaint status. Body: { status ('in_progress', required) }"
+            "description": "Role: Manager. Updates complaint status. Body status allowed values: in_progress."
           },
           "response": []
         },
@@ -4646,29 +4646,6 @@
               ]
             },
             "description": "Role: Manager. Gets subscription history. Requires messId variable."
-          },
-          "response": []
-        },
-        {
-          "name": "Start Trial (Manager)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/subscriptions/trial",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "subscriptions",
-                "trial"
-              ]
-            },
-            "description": "Role: Manager. Backward-compatible endpoint. Initializes the default Free subscription if the mess does not already have one. New messes get this automatically during mess creation."
           },
           "response": []
         },
@@ -5230,7 +5207,7 @@
                 "role"
               ]
             },
-            "description": "Role: Super Admin. Updates user global role. Body: { globalRole ('user'|'manager'|'super_admin', required) }. Guard: a user cannot be downgraded to globalRole=user while they are manager of any active mess; transfer ownership first. Requires userId variable."
+            "description": "Role: Super Admin. Updates user global role. Body globalRole allowed values: user, manager, super_admin. Guard: a user cannot be downgraded to globalRole=user while they are manager of any active mess; transfer ownership first. Requires userId variable."
           },
           "response": []
         },
@@ -5268,7 +5245,7 @@
                 "status"
               ]
             },
-            "description": "Role: Super Admin. Update user account status. Body: { status: 'active' | 'blocked' }. Use 'blocked' to block user, 'active' to unblock. Requires userId variable."
+            "description": "Role: Super Admin. Updates user account status. Body status allowed values: active, blocked. Use blocked to block user, active to unblock. Requires userId variable."
           },
           "response": []
         },

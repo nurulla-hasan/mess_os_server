@@ -36,8 +36,8 @@ export const paginationSchema = z.object({
   query: z.object({
     page: z.string().regex(/^\d+$/).optional(),
     limit: z.string().regex(/^\d+$/).optional(),
-    searchTerm: z.string().trim().max(100).optional(),
-    status: z.enum(['active', 'suspended']).optional()
+    searchTerm: z.preprocess(emptyToUndefined, z.string().trim().max(100).optional()),
+    status: z.preprocess(emptyToUndefined, z.enum(['active', 'suspended']).optional())
   }).strict()
 });
 
