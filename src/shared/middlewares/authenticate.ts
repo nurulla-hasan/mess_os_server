@@ -12,7 +12,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     const decoded = jwt.verify(token, config.jwt.accessSecret) as any;
     
     // Check if user is still active
-    const user = await User.findById(decoded.userId).select('status');
+    const user = await User.findById(decoded.userId).select('status globalRole');
     if (!user) return next(new AppError(401, 'User not found'));
     if (user.status === 'blocked') {
       // For API requests, return JSON error
@@ -23,7 +23,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       return res.redirect('/blocked');
     }
     
-    req.user = { userId: decoded.userId, globalRole: decoded.globalRole };
+    req.user = { userId: decoded.userId, globalRole: user.globalRole };
     next();
   } catch (error) {
     next(new AppError(401, 'Invalid or expired authorization token'));
@@ -38,10 +38,10 @@ export const authenticateAllowBlocked = async (req: Request, res: Response, next
     const decoded = jwt.verify(token, config.jwt.accessSecret) as any;
     
     // Check if user exists (but allow blocked users)
-    const user = await User.findById(decoded.userId).select('status');
+    const user = await User.findById(decoded.userId).select('status globalRole');
     if (!user) return next(new AppError(401, 'User not found'));
     
-    req.user = { userId: decoded.userId, globalRole: decoded.globalRole };
+    req.user = { userId: decoded.userId, globalRole: user.globalRole };
     next();
   } catch (error) {
     next(new AppError(401, 'Invalid or expired authorization token'));
