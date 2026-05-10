@@ -7,9 +7,16 @@ import { sendEmail } from '../../shared/utils/emailHelper';
 import { authLogger } from '../../shared/utils/logger';
 import crypto from 'crypto';
 import { RegisterPayload, LoginPayload, ResetPasswordPayload } from './auth.validation';
+import { MessMember } from '../mess-member/mess-member.model';
 
 const generateOtp = () => crypto.randomInt(100000, 999999).toString();
 const OTP_RESEND_COOLDOWN_SEC = 60;
+
+const getUserMemberships = async (userId: string) => {
+  return MessMember.find({ userId })
+    .populate('messId', 'name address status suspensionNote suspendedAt suspendedBy')
+    .lean();
+};
 
 export const registerUser = async (payload: RegisterPayload) => {
   const existing = await User.findOne({ email: payload.email });
@@ -73,8 +80,11 @@ export const loginUser = async (payload: LoginPayload) => {
   user.refreshTokenHash = await bcrypt.hash(refreshToken, 10);
   await user.save();
 
+  const memberships = await getUserMemberships(String(user._id));
+  const userData = { ...user.toJSON(), memberships };
+
   authLogger.info('User login successful', { userId: user._id });
-  return { user, accessToken, refreshToken };
+  return { user: userData, accessToken, refreshToken };
 };
 
 export const verifyEmail = async (email: string, otp: string) => {
