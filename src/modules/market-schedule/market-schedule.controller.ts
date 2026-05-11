@@ -23,12 +23,6 @@ export const updateSchedule = catchAsync(async (req: Request, res: Response) => 
   sendResponse(res, { statusCode: 200, success: true, message: 'Schedule mutated', data: await msService.updateSchedule(req.messId!, String(req.params.scheduleId), req.body) });
 });
 
-export const updateActualSpent = catchAsync(async (req: Request, res: Response) => {
-  if (!req.messMember) throw new AppError(403, 'Context missing mapping bounds');
-  const isManager = req.messMember.messRole === 'manager' || req.messRole === 'manager';
-  sendResponse(res, { statusCode: 200, success: true, message: 'Spent budget updated', data: await msService.updateActualSpent(req.messId!, String(req.params.scheduleId), req.body.actualSpent, req.messMember._id.toString(), isManager) });
-});
-
 export const updateScheduleStatus = catchAsync(async (req: Request, res: Response) => {
   if (!req.messMember) throw new AppError(403, 'Context missing mapping bounds');
   const isManager = req.messMember.messRole === 'manager' || req.messRole === 'manager';

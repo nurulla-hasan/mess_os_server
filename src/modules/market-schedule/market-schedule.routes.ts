@@ -13,7 +13,6 @@ router.get('/my-duties', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), valid
 router.post('/', authorize(MESS_ROLES.MANAGER), validateRequest(val.createMarketScheduleSchema), ctl.createSchedule);
 
 router.patch('/:scheduleId', authorize(MESS_ROLES.MANAGER), validateRequest(val.updateMarketScheduleSchema), ctl.updateSchedule);
-router.patch('/:scheduleId/spent', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.updateActualSpentSchema), ctl.updateActualSpent);
 router.patch('/:scheduleId/status', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.updateMarketScheduleStatusSchema), ctl.updateScheduleStatus);
 
 export const marketScheduleRoutes = router;

@@ -77,20 +77,6 @@ export const updateSchedule = async (messId: string, scheduleId: string, payload
   return normalizeAssignedMembers(schedule);
 };
 
-export const updateActualSpent = async (messId: string, scheduleId: string, actualSpent: number, myMemberId: string, isManager: boolean) => {
-  const schedule = await MarketSchedule.findOne({ _id: scheduleId, messId, status: 'pending' });
-  if (!schedule) throw new AppError(404, 'Schedule not mutable');
-  
-  if (!isManager && !schedule.assignedTo.some(id => id.toString() === myMemberId)) {
-    throw new AppError(403, 'Permission denied, only managers or assigned members can update spent');
-  }
-
-  schedule.actualSpent = actualSpent;
-  await schedule.save();
-  const populated = await MarketSchedule.findById(schedule._id).populate(populateScheduleMembers).lean();
-  return normalizeAssignedMembers(populated);
-};
-
 const voidSchedule = async (messId: string, scheduleId: string) => {
   const schedule = await MarketSchedule.findOneAndUpdate(
     { _id: scheduleId, messId, status: 'pending' },

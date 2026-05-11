@@ -3733,7 +3733,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"estimatedBudget\": 2500,\n  \"shoppingItems\": [{\"name\": \"Rice\", \"quantity\": \"10kg\"}]\n}"
+              "raw": "{\n  \"assignedTo\": [\n    \"{{memberId}}\"\n  ],\n  \"estimatedBudget\": 1800,\n  \"shoppingItems\": [\n    {\n      \"name\": \"Rice\",\n      \"quantity\": \"5 kg\"\n    },\n    {\n      \"name\": \"Egg\",\n      \"quantity\": \"30 pcs\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules/{{scheduleId}}",
@@ -3749,7 +3749,7 @@
                 "{{scheduleId}}"
               ]
             },
-            "description": "Role: Manager. Body: { assignedTo (ObjectId[], optional), shoppingItems (array, optional), estimatedBudget (number, optional) }. Requires messId and scheduleId variables. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details."
+            "description": "Role: Manager. Updates a pending market schedule. Body fields are optional: assignedTo (array of active mess member ids), shoppingItems (array of { name, quantity }), estimatedBudget (positive number). Use this endpoint to reassign duties by changing assignedTo. Does not update actualSpent; actualSpent is provided when completing the schedule via PATCH /market-schedules/:scheduleId/status."
           },
           "response": []
         },
@@ -3786,43 +3786,9 @@
             "description": "Role: Member+. Updates schedule status through one endpoint. Body status: completed or void. For completed, actualSpent, actorMessMemberId, and fundSource are required; assigned members or managers can complete. Only managers can void. Reassignment is handled by PATCH /market-schedules/:scheduleId with assignedTo. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details."
           },
           "response": []
-        },
-        {
-          "name": "Update Spent Amount (Member+)",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"actualSpent\": 1800\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules/{{scheduleId}}/spent",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "market-schedules",
-                "{{scheduleId}}",
-                "spent"
-              ]
-            },
-            "description": "Role: Member+. Updates actual amount spent. Body: { actualSpent (number >=0, required) }. Requires messId and scheduleId variables. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details."
-          },
-          "response": []
         }
       ],
-      "description": "Market schedule management. Lists support page, limit, status. Managers create/update/reassign by editing assignedTo. Completion/void use one status endpoint."
+      "description": "Market schedule management. Lists support page, limit, status. Managers create/update/reassign by editing assignedTo. Completion/void use one status endpoint. actualSpent is submitted only when completing a schedule."
     },
     {
       "name": "Menu Plans",

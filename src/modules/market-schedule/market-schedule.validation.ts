@@ -34,12 +34,6 @@ export const updateMarketScheduleSchema = z.object({
   }).strict()
 });
 
-export const updateActualSpentSchema = z.object({
-  body: z.object({
-    actualSpent: z.number().nonnegative()
-  }).strict()
-});
-
 export const updateMarketScheduleStatusSchema = z.object({
   params: z.object({ messId: oId, scheduleId: oId }).strict(),
   body: z.object({

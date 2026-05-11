@@ -174,6 +174,8 @@ Market schedules:
 - Body `status=completed|void`
 - Completing requires `actualSpent`, `actorMessMemberId`, and `fundSource`.
 - Reassignment uses `PATCH /api/v1/messes/:messId/market-schedules/:scheduleId` with `assignedTo`.
+- Pending schedule update supports `assignedTo`, `shoppingItems`, and `estimatedBudget`.
+- `actualSpent` is submitted only when completing the schedule; the separate spent update endpoint was removed.
 - List and my-duties support `page`, `limit`, and `status`.
 - Market schedule responses populate `assignedTo` with mess member and nested `user` details.
 
