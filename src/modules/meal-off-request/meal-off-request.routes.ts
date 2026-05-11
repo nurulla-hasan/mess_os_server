@@ -10,7 +10,6 @@ const router = Router({ mergeParams: true });
 router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.listMealOffRequestsSchema), ctl.listRequests);
 router.post('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.createMealOffSchema), ctl.createRequest);
 
-router.post('/:requestId/approve', authorize(MESS_ROLES.MANAGER), ctl.approveRequest);
-router.post('/:requestId/reject', authorize(MESS_ROLES.MANAGER), ctl.rejectRequest);
+router.patch('/:requestId/status', authorize(MESS_ROLES.MANAGER), validateRequest(val.reviewMealOffRequestSchema), ctl.reviewRequest);
 
 export const mealOffRequestRoutes = router;

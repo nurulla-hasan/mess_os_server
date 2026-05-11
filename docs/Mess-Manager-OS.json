@@ -3359,7 +3359,7 @@
                 "meals"
               ]
             },
-            "description": "Role: Manager. Creates or updates one member's meal count for a date. Preferred body uses meals breakdown from mess settings mealCategories plus special Guest category, for example { meals: { Breakfast: 1, Lunch: 1, Dinner: 1, Guest: 2 } }. Backend calculates mealCount from meals, so guest meals increase that member's total. Backward compatible body { mealCount: 2 } is also accepted. Counts support 0.5 increments. Regular meals cannot exceed 3; total including Guest cannot exceed 50. Locked if that month has a finalized billing cycle."
+            "description": "Role: Manager. Creates or updates one member's meal count for a date. Preferred body uses meals breakdown from mess settings mealCategories plus special Guest category, for example { meals: { Breakfast: 1, Lunch: 1, Dinner: 1, Guest: 2 } }. Backend calculates mealCount from meals, so guest meals increase that member's total. Backward compatible body { mealCount: 2 } is also accepted. Counts support 0.5 increments. Regular meals cannot exceed 3; total including Guest cannot exceed 50. Locked if that month has a finalized billing cycle. Also blocked if the member has an approved meal off request for that date; cancel the meal off request first to log meals again."
           },
           "response": []
         },
@@ -3392,12 +3392,12 @@
                 "bulk"
               ]
             },
-            "description": "Role: Manager. Creates or updates meal counts for multiple active members on one date. Preferred entries use meals breakdown from mess settings mealCategories plus special Guest category. Backend calculates mealCount from meals, so guest meals increase that member's total. Backward compatible mealCount entries are also accepted. Body entries max 200. Duplicate messMemberId is rejected. Counts support 0.5 increments. Regular meals cannot exceed 3; total including Guest cannot exceed 50. Locked if that month has a finalized billing cycle."
+            "description": "Role: Manager. Creates or updates meal counts for multiple active members on one date. Preferred entries use meals breakdown from mess settings mealCategories plus special Guest category. Backend calculates mealCount from meals, so guest meals increase that member's total. Backward compatible mealCount entries are also accepted. Body entries max 200. Duplicate messMemberId is rejected. Counts support 0.5 increments. Regular meals cannot exceed 3; total including Guest cannot exceed 50. Locked if that month has a finalized billing cycle. Also blocked for any entry where the member has an approved meal off request for that date; cancel the meal off request first to log meals again."
           },
           "response": []
         }
       ],
-      "description": "Production meal logging. Managers can log single or bulk meals with category breakdown such as Breakfast/Lunch/Dinner/Guest; backend stores both meals breakdown and total mealCount for billing. Guest meals are charged to the selected member. Members can read only their own meals. Meal records are locked after the monthly billing cycle is finalized."
+      "description": "Production meal logging. Managers can log single or bulk meals with category breakdown such as Breakfast/Lunch/Dinner/Guest; backend stores both meals breakdown and total mealCount for billing. Guest meals are charged to the selected member. Members can read only their own meals. Meal records are locked after the monthly billing cycle is finalized and while an approved meal off request covers the member/date."
     },
     {
       "name": "Meal Off Requests",
@@ -3433,7 +3433,7 @@
                 {
                   "key": "status",
                   "value": "pending",
-                  "description": "Optional. Allowed values: pending, approved, rejected."
+                  "description": "Optional. Allowed values: pending, approved, rejected, canceled."
                 },
                 {
                   "key": "searchTerm",
@@ -3475,7 +3475,7 @@
                 }
               ]
             },
-            "description": "Role: Member+. Lists meal off requests with pagination and filters. Managers/super admins can list all requests in the mess. Members can list only their own requests. Query: page, limit (max 100), status=pending|approved|rejected, searchTerm, messMemberId/memberId, start/end or startDate/endDate. Date filters use range overlap logic. Response shape: { success, message, meta: { page, limit, total, totalPages }, data: [...] }. In each item, populated messMemberId includes user, messRole, and status; the populated user object is exposed as user for consistency with members list."
+            "description": "Role: Member+. Lists meal off requests with pagination and filters. Managers/super admins can list all requests in the mess. Members can list only their own requests. Query: page, limit (max 100), status=pending|approved|rejected|canceled, searchTerm, messMemberId/memberId, start/end or startDate/endDate. Date filters use range overlap logic. Response shape: { success, message, meta: { page, limit, total, totalPages }, data: [...] }. Each request item exposes id, not top-level _id. In each item, populated messMemberId includes user, messRole, and status; the populated user object is exposed as user for consistency with members list. Reviewed requests include reviewedBy and reviewedAt; legacy approvedBy rows are normalized to reviewedBy in the response."
           },
           "response": []
         },
@@ -3512,12 +3512,22 @@
           "response": []
         },
         {
-          "name": "Approve Meal Off Request (Manager)",
+          "name": "Update Meal Off Request Status (Manager)",
           "request": {
-            "method": "POST",
-            "header": [],
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/meal-off-requests/{{requestId}}/approve",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/meal-off-requests/{{requestId}}/status",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -3528,39 +3538,15 @@
                 "{{messId}}",
                 "meal-off-requests",
                 "{{requestId}}",
-                "approve"
+                "status"
               ]
             },
-            "description": "Role: Manager. Approves meal off request. Requires messId and requestId variables."
-          },
-          "response": []
-        },
-        {
-          "name": "Reject Meal Off Request (Manager)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/meal-off-requests/{{requestId}}/reject",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "meal-off-requests",
-                "{{requestId}}",
-                "reject"
-              ]
-            },
-            "description": "Role: Manager. Rejects meal off request. Requires messId and requestId variables."
+            "description": "Role: Manager. Reviews a meal off request. Body: { status: \"approved\" | \"rejected\" | \"canceled\" }. pending requests can become approved or rejected; approved requests can become canceled. Review audit is stored in reviewedBy and reviewedAt. Approving future dates creates/updates meal records with mealCount 0 and blocks meal logging for those member/date values. Canceling allows normal meal logging again; existing zero meal records can be overwritten by meal logging."
           },
           "response": []
         }
       ],
-      "description": "Meal off request management. Members create requests, managers approve/reject."
+      "description": "Meal off request management. Members create requests, managers approve/reject/cancel through a single status update endpoint."
     },
     {
       "name": "Utility Bills",

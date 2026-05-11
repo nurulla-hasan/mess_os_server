@@ -124,14 +124,13 @@ Endpoints:
 
 - `GET /api/v1/messes/:messId/meal-off-requests`
 - `POST /api/v1/messes/:messId/meal-off-requests`
-- `POST /api/v1/messes/:messId/meal-off-requests/:requestId/approve`
-- `POST /api/v1/messes/:messId/meal-off-requests/:requestId/reject`
+- `PATCH /api/v1/messes/:messId/meal-off-requests/:requestId/status`
 
 List query params:
 
 - `page`
 - `limit` max 100
-- `status=pending|approved|rejected`
+- `status=pending|approved|rejected|canceled`
 - `messMemberId` or `memberId`
 - `searchTerm` for manager/super admin, searches mess member id or member name/email/phone
 - `start`/`end`
@@ -142,8 +141,15 @@ Rules:
 - Managers can list all meal off requests.
 - Members can list only their own meal off requests.
 - Date filters return requests whose off range overlaps the selected range.
+- Request list items expose top-level `id` without duplicate `_id`.
 - Populated `messMemberId` includes user details under `user`, matching the members list response shape.
 - Response includes pagination `meta`.
+- Review body accepts `status=approved|rejected|canceled`.
+- Reviewed requests store audit data in `reviewedBy` and `reviewedAt`.
+- Legacy `approvedBy` data is normalized to `reviewedBy` in list responses.
+- Review transitions: pending requests can become `approved` or `rejected`; approved requests can become `canceled`.
+- Approved meal off dates block single and bulk meal logging for the member/date.
+- Canceling an approved request allows meal logging again. Existing zero meal records can be overwritten by normal meal logging.
 
 ## Admin Mess Management
 

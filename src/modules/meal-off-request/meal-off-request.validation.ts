@@ -9,7 +9,7 @@ const positiveIntegerString = z.string().regex(/^\d+$/).refine((value) => Number
 const limitString = positiveIntegerString.refine((value) => Number(value) <= 100, {
   message: 'Limit cannot be greater than 100',
 });
-const mealOffStatus = z.enum(['pending', 'approved', 'rejected']);
+const mealOffStatus = z.enum(['pending', 'approved', 'rejected', 'canceled']);
 
 export const createMealOffSchema = z.object({
   body: z.object({
@@ -32,5 +32,11 @@ export const listMealOffRequestsSchema = z.object({
     end: z.preprocess(emptyToUndefined, z.string().optional()),
     startDate: z.preprocess(emptyToUndefined, z.string().optional()),
     endDate: z.preprocess(emptyToUndefined, z.string().optional()),
+  }).strict()
+});
+
+export const reviewMealOffRequestSchema = z.object({
+  body: z.object({
+    status: z.enum(['approved', 'rejected', 'canceled']),
   }).strict()
 });

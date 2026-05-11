@@ -6,7 +6,7 @@ import { AppError } from '../../shared/utils/apiError';
 import { normalizeMealDate, getDhakaNow, generateDateRange } from '../../shared/utils/dateUtils';
 import mongoose, { isValidObjectId } from 'mongoose';
 
-export type MealOffRequestStatus = 'pending' | 'approved' | 'rejected';
+export type MealOffRequestStatus = 'pending' | 'approved' | 'rejected' | 'canceled';
 
 export type ListMealOffRequestsOptions = {
   page?: number;
@@ -119,7 +119,7 @@ export const listRequests = async (messId: string, options: ListMealOffRequestsO
         select: 'userId messRole status',
         populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
       })
-      .populate('approvedBy', 'fullName email phone avatarUrl')
+      .populate('reviewedBy', 'fullName email phone avatarUrl')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
@@ -127,20 +127,37 @@ export const listRequests = async (messId: string, options: ListMealOffRequestsO
     MealOffRequest.countDocuments(query),
   ]);
 
+  const legacyReviewerIds = items
+    .filter((item: any) => !item.reviewedBy && item.approvedBy)
+    .map((item: any) => item.approvedBy);
+  const legacyReviewers = legacyReviewerIds.length
+    ? await User.find({ _id: { $in: legacyReviewerIds } }).select('fullName email phone avatarUrl').lean()
+    : [];
+  const legacyReviewerById = new Map(legacyReviewers.map((user) => [String(user._id), user]));
+
   return {
     items: items.map((item) => {
+      const { _id, ...request } = item;
+      const legacyApprovedBy = (request as any).approvedBy;
+      delete (request as any).approvedBy;
+
+      if (!request.reviewedBy && legacyApprovedBy) {
+        request.reviewedBy = legacyReviewerById.get(String(legacyApprovedBy)) ?? legacyApprovedBy;
+        request.reviewedAt = (request as any).updatedAt;
+      }
+
       const populatedMember = item.messMemberId as any;
       if (!populatedMember || !populatedMember.userId) {
         return {
-          ...item,
-          id: item._id,
+          ...request,
+          id: _id,
         };
       }
 
       const { userId, ...member } = populatedMember;
       return {
-        ...item,
-        id: item._id,
+        ...request,
+        id: _id,
         messMemberId: {
           ...member,
           user: userId,
@@ -156,7 +173,7 @@ export const listRequests = async (messId: string, options: ListMealOffRequestsO
   };
 };
 
-export const approveRequest = async (messId: string, requestId: string, managerUserId: string) => {
+const approveRequest = async (messId: string, requestId: string, managerUserId: string) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -165,7 +182,8 @@ export const approveRequest = async (messId: string, requestId: string, managerU
     if (!req) throw new AppError(404, 'Pending request not found');
 
     req.status = 'approved';
-    req.approvedBy = new mongoose.Types.ObjectId(managerUserId);
+    req.reviewedBy = new mongoose.Types.ObjectId(managerUserId);
+    req.reviewedAt = new Date();
 
     // Business Rule: Future dates managed automatically. Past dates ignored requiring explicit human review.
     const todayNormalized = normalizeMealDate(getDhakaNow());
@@ -194,12 +212,34 @@ export const approveRequest = async (messId: string, requestId: string, managerU
   }
 };
 
-export const rejectRequest = async (messId: string, requestId: string, managerUserId: string) => {
+const rejectRequest = async (messId: string, requestId: string, managerUserId: string) => {
   const req = await MealOffRequest.findOneAndUpdate(
     { _id: requestId, messId, status: 'pending' },
-    { status: 'rejected', approvedBy: new mongoose.Types.ObjectId(managerUserId) },
+    { status: 'rejected', reviewedBy: new mongoose.Types.ObjectId(managerUserId), reviewedAt: new Date() },
     { new: true, runValidators: true }
   );
   if (!req) throw new AppError(404, 'Pending request not found');
   return req;
+};
+
+const cancelRequest = async (messId: string, requestId: string, managerUserId: string) => {
+  const req = await MealOffRequest.findOneAndUpdate(
+    { _id: requestId, messId, status: 'approved' },
+    { status: 'canceled', reviewedBy: new mongoose.Types.ObjectId(managerUserId), reviewedAt: new Date() },
+    { new: true, runValidators: true }
+  );
+  if (!req) throw new AppError(404, 'Approved request not found');
+  return req;
+};
+
+export const reviewRequest = async (
+  messId: string,
+  requestId: string,
+  managerUserId: string,
+  status: MealOffRequestStatus
+) => {
+  if (status === 'approved') return approveRequest(messId, requestId, managerUserId);
+  if (status === 'rejected') return rejectRequest(messId, requestId, managerUserId);
+  if (status === 'canceled') return cancelRequest(messId, requestId, managerUserId);
+  throw new AppError(400, 'Invalid status. Must be approved, rejected, or canceled');
 };

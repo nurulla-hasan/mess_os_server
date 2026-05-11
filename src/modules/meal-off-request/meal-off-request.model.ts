@@ -5,9 +5,10 @@ export interface IMealOffRequest extends Document {
   messMemberId: Types.ObjectId;
   startDate: Date;
   endDate: Date;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'canceled';
   reason?: string;
-  approvedBy?: Types.ObjectId;
+  reviewedBy?: Types.ObjectId;
+  reviewedAt?: Date;
 }
 
 const mealOffRequestSchema = new Schema<IMealOffRequest>({
@@ -15,9 +16,10 @@ const mealOffRequestSchema = new Schema<IMealOffRequest>({
   messMemberId: { type: Schema.Types.ObjectId, ref: 'MessMember', required: true },
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
-  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'approved', 'rejected', 'canceled'], default: 'pending' },
   reason: { type: String },
-  approvedBy: { type: Schema.Types.ObjectId, ref: 'User' } // Audit constraint
+  reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+  reviewedAt: { type: Date }
 }, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
 
 export const MealOffRequest = model<IMealOffRequest>('MealOffRequest', mealOffRequestSchema);

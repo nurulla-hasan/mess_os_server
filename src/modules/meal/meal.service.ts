@@ -7,6 +7,7 @@ import { AppError } from '../../shared/utils/apiError';
 import { User } from '../user/user.model';
 import { isValidObjectId } from 'mongoose';
 import { Mess } from '../mess/mess.model';
+import { MealOffRequest } from '../meal-off-request/meal-off-request.model';
 
 export type ListMealsOptions = {
   page?: number;
@@ -49,6 +50,35 @@ const assertBillingCycleEditable = async (messId: string, mealDate: Date) => {
 const assertActiveMemberInMess = async (messId: string, messMemberId: string) => {
   const member = await MessMember.findOne({ _id: messMemberId, messId, status: 'active' }).select('_id').lean();
   if (!member) throw new AppError(400, 'Active mess member not found for this mess');
+};
+
+const assertNoApprovedMealOff = async (messId: string, messMemberId: string, mealDate: Date) => {
+  const mealOffRequest = await MealOffRequest.findOne({
+    messId,
+    messMemberId,
+    status: 'approved',
+    startDate: { $lte: mealDate },
+    endDate: { $gte: mealDate },
+  }).select('_id').lean();
+
+  if (mealOffRequest) {
+    throw new AppError(400, 'Meal cannot be logged because this member has an approved meal off request for this date. Cancel the meal off request first.');
+  }
+};
+
+const assertNoApprovedMealOffForBulk = async (messId: string, messMemberIds: string[], mealDate: Date) => {
+  const mealOffRequests = await MealOffRequest.find({
+    messId,
+    messMemberId: { $in: messMemberIds },
+    status: 'approved',
+    startDate: { $lte: mealDate },
+    endDate: { $gte: mealDate },
+  }).select('messMemberId').lean();
+
+  if (mealOffRequests.length) {
+    const blockedMemberIds = mealOffRequests.map((request) => String(request.messMemberId));
+    throw new AppError(400, `Meal cannot be logged because approved meal off requests exist for these members on this date: ${blockedMemberIds.join(', ')}. Cancel meal off requests first.`);
+  }
 };
 
 const getAllowedMealCategories = async (messId: string) => {
@@ -196,6 +226,7 @@ export const createOrUpdateMeal = async (
   const targetDate = normalizeMealDate(dateStr);
   await assertBillingCycleEditable(messId, targetDate);
   await assertActiveMemberInMess(messId, messMemberId);
+  await assertNoApprovedMealOff(messId, messMemberId, targetDate);
   const normalizedPayload = await normalizeMealPayload(messId, mealCount, meals);
 
   return await Meal.findOneAndUpdate(
@@ -232,6 +263,8 @@ export const bulkCreateOrUpdateMeals = async (
   if (activeMembers.length !== uniqueMemberIds.length) {
     throw new AppError(400, 'All meal entries must target active members of this mess');
   }
+
+  await assertNoApprovedMealOffForBulk(messId, uniqueMemberIds, targetDate);
 
   const normalizedEntries = await normalizeMealPayloads(messId, entries);
 

@@ -32,12 +32,12 @@ export const listRequests = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const approveRequest = catchAsync(async (req: Request, res: Response) => {
-  const result = await morService.approveRequest(req.messId!, String(req.params.requestId), req.user!.userId);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Request approved', data: result });
-});
-
-export const rejectRequest = catchAsync(async (req: Request, res: Response) => {
-  const result = await morService.rejectRequest(req.messId!, String(req.params.requestId), req.user!.userId);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Request rejected', data: result });
+export const reviewRequest = catchAsync(async (req: Request, res: Response) => {
+  const result = await morService.reviewRequest(req.messId!, String(req.params.requestId), req.user!.userId, req.body.status);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: req.body.status === 'approved' ? 'Request approved' : 'Request rejected',
+    data: result,
+  });
 });
