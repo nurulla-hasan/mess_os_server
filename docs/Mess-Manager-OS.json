@@ -2822,12 +2822,22 @@
           "response": []
         },
         {
-          "name": "Approve Payment (Manager)",
+          "name": "Update Payment Status (Member+)",
           "request": {
-            "method": "POST",
-            "header": [],
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/payments/{{paymentId}}/approve",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/payments/{{paymentId}}/status",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -2838,63 +2848,15 @@
                 "{{messId}}",
                 "payments",
                 "{{paymentId}}",
-                "approve"
+                "status"
               ]
             },
-            "description": "Role: Manager. Approves pending payment. Requires messId and paymentId variables."
-          },
-          "response": []
-        },
-        {
-          "name": "Reject Payment (Manager)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/payments/{{paymentId}}/reject",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "payments",
-                "{{paymentId}}",
-                "reject"
-              ]
-            },
-            "description": "Role: Manager. Rejects pending payment. Requires messId and paymentId variables."
-          },
-          "response": []
-        },
-        {
-          "name": "Cancel Payment (Member+)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/payments/{{paymentId}}/cancel",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "payments",
-                "{{paymentId}}",
-                "cancel"
-              ]
-            },
-            "description": "Role: Member+. Cancels own payment. Requires messId and paymentId variables."
+            "description": "Role: Member+. Updates pending payment status through one endpoint. Body: { status: \"approved\" | \"rejected\" | \"canceled\" }. Only managers can approve/reject. Members can cancel their own pending payment; managers can cancel any pending payment."
           },
           "response": []
         }
       ],
-      "description": "Payment management. Members can create payments, managers can approve/reject."
+      "description": "Payment management. Members can create payments; status changes use one PATCH /payments/:paymentId/status endpoint."
     },
     {
       "name": "Expenses",
@@ -2997,12 +2959,22 @@
           "response": []
         },
         {
-          "name": "Approve Expense (Manager)",
+          "name": "Update Expense Status (Member+)",
           "request": {
-            "method": "POST",
-            "header": [],
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses/{{expenseId}}/approve",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses/{{expenseId}}/status",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -3013,34 +2985,10 @@
                 "{{messId}}",
                 "expenses",
                 "{{expenseId}}",
-                "approve"
+                "status"
               ]
             },
-            "description": "Role: Manager. Approves expense. Requires messId and expenseId variables."
-          },
-          "response": []
-        },
-        {
-          "name": "Reject Expense (Manager)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses/{{expenseId}}/reject",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "expenses",
-                "{{expenseId}}",
-                "reject"
-              ]
-            },
-            "description": "Role: Manager. Rejects expense. Requires messId and expenseId variables."
+            "description": "Role: Member+. Updates pending expense status through one endpoint. Body: { status: \"approved\" | \"rejected\" | \"canceled\" }. Only managers can approve/reject. Members can cancel their own pending expense; managers can cancel any pending expense."
           },
           "response": []
         },
@@ -3067,32 +3015,9 @@
             "description": "Role: Manager. Marks expense as reimbursed. Requires messId and expenseId variables."
           },
           "response": []
-        },
-        {
-          "name": "Cancel Expense (Member+)",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses/{{expenseId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "expenses",
-                "{{expenseId}}"
-              ]
-            },
-            "description": "Role: Member+. Deletes/cancels own expense. Requires messId and expenseId variables."
-          },
-          "response": []
         }
       ],
-      "description": "Expense tracking. Members can create expenses, managers approve/reject/reimburse."
+      "description": "Expense tracking. Members can create expenses; approve/reject/cancel status changes use one PATCH /expenses/:expenseId/status endpoint. Reimbursement remains separate."
     },
     {
       "name": "Billing",
@@ -3641,7 +3566,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules?page=1&limit=20&status=",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -3651,6 +3576,23 @@
                 "messes",
                 "{{messId}}",
                 "market-schedules"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Optional. Positive integer page number. Defaults to 1."
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Optional. Positive integer page size. Maximum 100. Defaults to 20."
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Optional. Allowed values: pending, completed, void."
+                }
               ]
             },
             "description": "Role: Member+. Lists market schedules. Requires messId variable."
@@ -3663,7 +3605,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules/my-duties",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules/my-duties?page=1&limit=20&status=",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -3674,6 +3616,23 @@
                 "{{messId}}",
                 "market-schedules",
                 "my-duties"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Optional. Positive integer page number. Defaults to 1."
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Optional. Positive integer page size. Maximum 100. Defaults to 20."
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Optional. Allowed values: pending, completed, void."
+                }
               ]
             },
             "description": "Role: Member+. Lists current user's market duties. Requires messId variable."
@@ -3746,9 +3705,9 @@
           "response": []
         },
         {
-          "name": "Reassign Market Duty (Manager)",
+          "name": "Update Market Schedule Status (Member+)",
           "request": {
-            "method": "POST",
+            "method": "PATCH",
             "header": [
               {
                 "key": "Content-Type",
@@ -3758,10 +3717,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"assignedTo\": [\"{{memberId}}\"]\n}"
+              "raw": "{\n  \"status\": \"completed\",\n  \"actualSpent\": 1200,\n  \"actorMessMemberId\": \"{{memberId}}\",\n  \"fundSource\": \"personal_cash\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules/{{scheduleId}}/reassign",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules/{{scheduleId}}/status",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -3772,10 +3731,10 @@
                 "{{messId}}",
                 "market-schedules",
                 "{{scheduleId}}",
-                "reassign"
+                "status"
               ]
             },
-            "description": "Role: Manager. Reassigns schedule to different member(s). Body: { assignedTo (ObjectId[], min 1, required) }. Requires messId and scheduleId variables."
+            "description": "Role: Member+. Updates schedule status through one endpoint. Body status: completed or void. For completed, actualSpent, actorMessMemberId, and fundSource are required; assigned members or managers can complete. Only managers can void. Reassignment is handled by PATCH /market-schedules/:scheduleId with assignedTo."
           },
           "response": []
         },
@@ -3812,67 +3771,9 @@
             "description": "Role: Member+. Updates actual amount spent. Body: { actualSpent (number >=0, required) }. Requires messId and scheduleId variables."
           },
           "response": []
-        },
-        {
-          "name": "Complete Market Duty (Member+)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"actualSpent\": 1800,\n  \"actorMessMemberId\": \"{{memberId}}\",\n  \"fundSource\": \"mess_cash\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules/{{scheduleId}}/complete",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "market-schedules",
-                "{{scheduleId}}",
-                "complete"
-              ]
-            },
-            "description": "Role: Member+. Completes market schedule and creates expense. Body: { actualSpent (number, positive, required), actorMessMemberId (ObjectId, required), fundSource ('mess_cash'|'personal_cash', required) }"
-          },
-          "response": []
-        },
-        {
-          "name": "Void Market Schedule (Manager)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules/{{scheduleId}}/void",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "market-schedules",
-                "{{scheduleId}}",
-                "void"
-              ]
-            },
-            "description": "Role: Manager. Voids/cancels market schedule. Requires messId and scheduleId variables."
-          },
-          "response": []
         }
       ],
-      "description": "Market duty scheduling. Managers create schedules, assigned members complete them."
+      "description": "Market schedule management. Lists support page, limit, status. Managers create/update/reassign by editing assignedTo. Completion/void use one status endpoint."
     },
     {
       "name": "Menu Plans",
@@ -4071,7 +3972,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/ai-shopping",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/ai-shopping?page=1&limit=20&status=",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -4081,6 +3982,23 @@
                 "messes",
                 "{{messId}}",
                 "ai-shopping"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Optional. Positive integer page number. Defaults to 1."
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Optional. Positive integer page size. Maximum 100. Defaults to 20."
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Optional. Allowed values: draft, approved, rejected, converted."
+                }
               ]
             },
             "description": "Role: Member+. Lists AI shopping lists. Requires messId variable."
@@ -4144,12 +4062,22 @@
           "response": []
         },
         {
-          "name": "Approve AI Shopping List (Manager)",
+          "name": "Update AI Shopping List Status (Manager)",
           "request": {
-            "method": "POST",
-            "header": [],
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/ai-shopping/{{listId}}/approve",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/ai-shopping/{{listId}}/status",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -4160,34 +4088,10 @@
                 "{{messId}}",
                 "ai-shopping",
                 "{{listId}}",
-                "approve"
+                "status"
               ]
             },
-            "description": "Role: Manager. Approves AI shopping list. Requires messId and listId variables."
-          },
-          "response": []
-        },
-        {
-          "name": "Reject AI Shopping List (Manager)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/ai-shopping/{{listId}}/reject",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "ai-shopping",
-                "{{listId}}",
-                "reject"
-              ]
-            },
-            "description": "Role: Manager. Rejects AI shopping list. Requires messId and listId variables."
+            "description": "Role: Manager. Updates draft AI shopping list status through one endpoint. Body: { status: \"approved\" | \"rejected\" }."
           },
           "response": []
         },
@@ -4226,7 +4130,7 @@
           "response": []
         }
       ],
-      "description": "AI-generated shopping lists from menu plans."
+      "description": "AI shopping list workflow. Lists support page, limit, status. Approve/reject use one status endpoint; convert remains separate because it creates a market schedule."
     },
     {
       "name": "Notices",
@@ -4530,9 +4434,9 @@
           "response": []
         },
         {
-          "name": "Resolve Complaint (Manager)",
+          "name": "Update Complaint Status (Manager)",
           "request": {
-            "method": "POST",
+            "method": "PATCH",
             "header": [
               {
                 "key": "Content-Type",
@@ -4542,10 +4446,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"resolvedNote\": \"Issue resolved, cook will be more careful\"\n}"
+              "raw": "{\n  \"status\": \"resolved\",\n  \"resolvedNote\": \"Issue handled.\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/complaints/{{complaintId}}/resolve",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/complaints/{{complaintId}}/status",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -4556,49 +4460,15 @@
                 "{{messId}}",
                 "complaints",
                 "{{complaintId}}",
-                "resolve"
+                "status"
               ]
             },
-            "description": "Role: Manager. Resolves complaint. Body: { resolvedNote (string, optional) }"
-          },
-          "response": []
-        },
-        {
-          "name": "Reject Complaint (Manager)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"resolvedNote\": \"Not valid complaint\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/complaints/{{complaintId}}/reject",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "complaints",
-                "{{complaintId}}",
-                "reject"
-              ]
-            },
-            "description": "Role: Manager. Rejects complaint. Body: { resolvedNote (string, optional) }"
+            "description": "Role: Manager. Updates complaint status through one endpoint. Body: { status: \"in_progress\" | \"resolved\" | \"rejected\", resolvedNote?: string }. resolved/rejected stores resolvedBy/resolvedAt."
           },
           "response": []
         }
       ],
-      "description": "Complaint management. Members create complaints, managers update status/resolve/reject."
+      "description": "Complaint management. Lists support page, limit, status. Managers update in_progress/resolved/rejected through one status endpoint."
     },
     {
       "name": "Reports",

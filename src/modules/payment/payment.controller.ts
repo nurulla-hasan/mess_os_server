@@ -9,12 +9,14 @@ export const createPayment = catchAsync(async (req: Request, res: Response) => {
   const body = req.body;
   const actor = req.messMember!;
 
-  if (body.messMemberId && body.messMemberId !== actor.id.toString()) {
+  const actorMemberId = actor._id.toString();
+
+  if (body.messMemberId && body.messMemberId !== actorMemberId) {
     if (actor.messRole !== 'manager') {
       throw new AppError(403, 'Unauthorized to create payments for other members directly');
     }
   } else {
-    body.messMemberId = actor.id.toString();
+    body.messMemberId = actorMemberId;
   }
 
   const result = await paymentService.createPayment(messId, body);
@@ -31,7 +33,7 @@ export const getPaymentById = catchAsync(async (req: Request, res: Response) => 
   
   // Safety check: Manager or Owner only
   const actor = req.messMember!;
-  if (actor.messRole !== 'manager' && result.messMemberId.toString() !== actor.id.toString()) {
+  if (actor.messRole !== 'manager' && result.messMemberId.toString() !== actor._id.toString()) {
      throw new AppError(403, 'Unauthorized to view this specific payment record');
   }
 
@@ -39,22 +41,24 @@ export const getPaymentById = catchAsync(async (req: Request, res: Response) => 
 });
 
 export const getMyPayments = catchAsync(async (req: Request, res: Response) => {
-  const result = await paymentService.getPayments(req.messId!, { ...req.query, messMemberId: req.messMember!.id.toString() });
+  const result = await paymentService.getPayments(req.messId!, { ...req.query, messMemberId: req.messMember!._id.toString() });
   sendResponse(res, { statusCode: 200, success: true, message: 'Your payment history extracted', meta: result.meta, data: result.data });
 });
 
-export const approvePayment = catchAsync(async (req: Request, res: Response) => {
-  const result = await paymentService.approvePayment(req.messId!, String(req.params.paymentId), req.user!.userId);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Payment approved and ledgered correctly', data: result });
-});
-
-export const rejectPayment = catchAsync(async (req: Request, res: Response) => {
-  const result = await paymentService.rejectPayment(req.messId!, String(req.params.paymentId), req.user!.userId);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Payment record rejected by manager', data: result });
-});
-
-export const cancelPayment = catchAsync(async (req: Request, res: Response) => {
+export const updatePaymentStatus = catchAsync(async (req: Request, res: Response) => {
   const actor = req.messMember!;
-  const result = await paymentService.cancelPayment(req.messId!, String(req.params.paymentId), actor.id.toString(), actor.messRole);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Pending payment record canceled successfully', data: result });
+  const result = await paymentService.updatePaymentStatus(
+    req.messId!,
+    String(req.params.paymentId),
+    req.body.status,
+    req.user!.userId,
+    actor._id.toString(),
+    actor.messRole
+  );
+  const messages: Record<string, string> = {
+    approved: 'Payment approved and ledgered correctly',
+    rejected: 'Payment record rejected by manager',
+    canceled: 'Pending payment record canceled successfully',
+  };
+  sendResponse(res, { statusCode: 200, success: true, message: messages[req.body.status], data: result });
 });

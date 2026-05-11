@@ -151,6 +151,44 @@ Rules:
 - Approved meal off dates block single and bulk meal logging for the member/date.
 - Canceling an approved request allows meal logging again. Existing zero meal records can be overwritten by normal meal logging.
 
+## Unified Status Endpoints
+
+Status/action endpoints are compressed so the same resource uses one status route instead of separate approve/reject/complete/void routes.
+
+Payments:
+
+- `PATCH /api/v1/messes/:messId/payments/:paymentId/status`
+- Body `status=approved|rejected|canceled`
+- Only managers can approve/reject; members can cancel their own pending payment.
+
+Expenses:
+
+- `PATCH /api/v1/messes/:messId/expenses/:expenseId/status`
+- Body `status=approved|rejected|canceled`
+- Only managers can approve/reject; members can cancel their own pending expense.
+- Reimbursement stays separate because it is a cash movement after approval.
+
+Market schedules:
+
+- `PATCH /api/v1/messes/:messId/market-schedules/:scheduleId/status`
+- Body `status=completed|void`
+- Completing requires `actualSpent`, `actorMessMemberId`, and `fundSource`.
+- Reassignment uses `PATCH /api/v1/messes/:messId/market-schedules/:scheduleId` with `assignedTo`.
+- List and my-duties support `page`, `limit`, and `status`.
+
+AI shopping:
+
+- `PATCH /api/v1/messes/:messId/ai-shopping/:listId/status`
+- Body `status=approved|rejected`
+- Conversion stays separate because it creates a market schedule.
+- List supports `page`, `limit`, and `status`.
+
+Complaints:
+
+- `PATCH /api/v1/messes/:messId/complaints/:complaintId/status`
+- Body `status=in_progress|resolved|rejected`, optional `resolvedNote`
+- List and my complaints support `page`, `limit`, and `status`.
+
 ## Admin Mess Management
 
 Admin mess list:

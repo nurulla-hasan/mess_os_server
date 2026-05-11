@@ -38,7 +38,7 @@ export const getExpenseById = async (messId: string, expenseId: string) => {
   return exp;
 };
 
-export const approveExpense = async (messId: string, expenseId: string, managerId: string) => {
+const approveExpense = async (messId: string, expenseId: string, managerId: string) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -83,7 +83,7 @@ export const approveExpense = async (messId: string, expenseId: string, managerI
   }
 };
 
-export const rejectExpense = async (messId: string, expenseId: string, managerId: string) => {
+const rejectExpense = async (messId: string, expenseId: string, managerId: string) => {
   const exp = await Expense.findOneAndUpdate(
     { _id: new Types.ObjectId(expenseId), messId: new Types.ObjectId(messId), status: 'pending' },
     { status: 'rejected', approvedBy: new Types.ObjectId(managerId), approvedAt: new Date() },
@@ -109,6 +109,26 @@ export const cancelExpense = async (messId: string, expenseId: string, actorMemb
 
   exp.status = 'canceled';
   return await exp.save();
+};
+
+export const updateExpenseStatus = async (
+  messId: string,
+  expenseId: string,
+  status: 'approved' | 'rejected' | 'canceled',
+  managerUserId: string,
+  actorMemberId: string,
+  actorRole: string
+) => {
+  if (status === 'approved') {
+    if (actorRole !== 'manager') throw new AppError(403, 'Only managers can approve expenses');
+    return approveExpense(messId, expenseId, managerUserId);
+  }
+  if (status === 'rejected') {
+    if (actorRole !== 'manager') throw new AppError(403, 'Only managers can reject expenses');
+    return rejectExpense(messId, expenseId, managerUserId);
+  }
+  if (status === 'canceled') return cancelExpense(messId, expenseId, actorMemberId, actorRole);
+  throw new AppError(400, 'Invalid expense status');
 };
 
 export const reimburseExpense = async (messId: string, expenseId: string, managerId: string) => {

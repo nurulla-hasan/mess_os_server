@@ -9,12 +9,14 @@ export const createExpense = catchAsync(async (req: Request, res: Response) => {
   const body = req.body;
   const actor = req.messMember!;
 
-  if (body.paidBy && body.paidBy !== actor.id.toString()) {
+  const actorMemberId = actor._id.toString();
+
+  if (body.paidBy && body.paidBy !== actorMemberId) {
     if (actor.messRole !== 'manager') {
       throw new AppError(403, 'Unauthorized to submit expenses for other members directly');
     }
   } else {
-    body.paidBy = actor.id.toString();
+    body.paidBy = actorMemberId;
   }
 
   const result = await expenseService.createExpense(messId, body);
@@ -31,21 +33,29 @@ export const getExpenseById = catchAsync(async (req: Request, res: Response) => 
   
   // Safety check: Manager or Owner only
   const actor = req.messMember!;
-  if (actor.messRole !== 'manager' && result.paidBy.toString() !== actor.id.toString()) {
+  if (actor.messRole !== 'manager' && result.paidBy.toString() !== actor._id.toString()) {
      throw new AppError(403, 'Unauthorized to view this specific expense record');
   }
 
   sendResponse(res, { statusCode: 200, success: true, message: 'Expense record fetched successfully', data: result });
 });
 
-export const approveExpense = catchAsync(async (req: Request, res: Response) => {
-  const result = await expenseService.approveExpense(req.messId!, String(req.params.expenseId), req.user!.userId);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Expense approved and ledgered correctly', data: result });
-});
-
-export const rejectExpense = catchAsync(async (req: Request, res: Response) => {
-  const result = await expenseService.rejectExpense(req.messId!, String(req.params.expenseId), req.user!.userId);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Expense record rejected by manager', data: result });
+export const updateExpenseStatus = catchAsync(async (req: Request, res: Response) => {
+  const actor = req.messMember!;
+  const result = await expenseService.updateExpenseStatus(
+    req.messId!,
+    String(req.params.expenseId),
+    req.body.status,
+    req.user!.userId,
+    actor._id.toString(),
+    actor.messRole
+  );
+  const messages: Record<string, string> = {
+    approved: 'Expense approved and ledgered correctly',
+    rejected: 'Expense record rejected by manager',
+    canceled: 'Pending expense record canceled successfully',
+  };
+  sendResponse(res, { statusCode: 200, success: true, message: messages[req.body.status], data: result });
 });
 
 export const reimburseExpense = catchAsync(async (req: Request, res: Response) => {
@@ -55,6 +65,6 @@ export const reimburseExpense = catchAsync(async (req: Request, res: Response) =
 
 export const cancelExpense = catchAsync(async (req: Request, res: Response) => {
   const actor = req.messMember!;
-  const result = await expenseService.cancelExpense(req.messId!, String(req.params.expenseId), actor.id.toString(), actor.messRole);
+  const result = await expenseService.cancelExpense(req.messId!, String(req.params.expenseId), actor._id.toString(), actor.messRole);
   sendResponse(res, { statusCode: 200, success: true, message: 'Pending expense record canceled successfully', data: result });
 });

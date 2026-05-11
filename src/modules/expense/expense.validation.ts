@@ -27,5 +27,12 @@ export const listExpensesSchema = z.object({
 });
 
 export const expenseIdParamSchema = z.object({
-  params: z.object({ expenseId: oId }).strict()
+  params: z.object({ messId: oId, expenseId: oId }).strict()
+});
+
+export const updateExpenseStatusSchema = z.object({
+  params: z.object({ messId: oId, expenseId: oId }).strict(),
+  body: z.object({
+    status: z.enum(['approved', 'rejected', 'canceled']),
+  }).strict()
 });

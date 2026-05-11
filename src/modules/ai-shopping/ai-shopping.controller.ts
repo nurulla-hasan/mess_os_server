@@ -8,19 +8,21 @@ export const generateList = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getLists = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Lists fetched', data: await aiService.getShoppingLists(req.messId!) });
+  const result = await aiService.getShoppingLists(req.messId!, req.query);
+  sendResponse(res, { statusCode: 200, success: true, message: 'Lists fetched', meta: result.meta, data: result.data });
 });
 
 export const getListById = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, { statusCode: 200, success: true, message: 'List fetched', data: await aiService.getShoppingListById(req.messId!, String(req.params.listId)) });
 });
 
-export const approveList = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Shopping list approved', data: await aiService.approveShoppingList(req.messId!, String(req.params.listId)) });
-});
-
-export const rejectList = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Shopping list rejected', data: await aiService.rejectShoppingList(req.messId!, String(req.params.listId)) });
+export const updateListStatus = catchAsync(async (req: Request, res: Response) => {
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: req.body.status === 'approved' ? 'Shopping list approved' : 'Shopping list rejected',
+    data: await aiService.updateShoppingListStatus(req.messId!, String(req.params.listId), req.body.status)
+  });
 });
 
 export const convertList = catchAsync(async (req: Request, res: Response) => {

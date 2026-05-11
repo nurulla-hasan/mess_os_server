@@ -7,16 +7,13 @@ import { MESS_ROLES } from '../../constants/roles';
 
 const router = Router({ mergeParams: true });
 
-router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.getSchedules);
-router.get('/my-duties', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.getMyDuties);
+router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.listMarketScheduleSchema), ctl.getSchedules);
+router.get('/my-duties', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.listMarketScheduleSchema), ctl.getMyDuties);
 
 router.post('/', authorize(MESS_ROLES.MANAGER), validateRequest(val.createMarketScheduleSchema), ctl.createSchedule);
 
 router.patch('/:scheduleId', authorize(MESS_ROLES.MANAGER), validateRequest(val.updateMarketScheduleSchema), ctl.updateSchedule);
-router.post('/:scheduleId/reassign', authorize(MESS_ROLES.MANAGER), validateRequest(val.reassignScheduleSchema), ctl.reassignSchedule);
 router.patch('/:scheduleId/spent', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.updateActualSpentSchema), ctl.updateActualSpent);
-
-router.post('/:scheduleId/complete', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.completeMarketScheduleSchema), ctl.completeSchedule);
-router.post('/:scheduleId/void', authorize(MESS_ROLES.MANAGER), ctl.voidSchedule);
+router.patch('/:scheduleId/status', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.updateMarketScheduleStatusSchema), ctl.updateScheduleStatus);
 
 export const marketScheduleRoutes = router;

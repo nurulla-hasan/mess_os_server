@@ -14,12 +14,26 @@ export const createSchedule = async (messId: string, payload: any, userId: strin
   });
 };
 
-export const getSchedules = async (messId: string) => {
-  return await MarketSchedule.find({ messId }).sort({ targetDate: -1 });
+const listSchedules = async (query: Record<string, unknown>, options: any = {}) => {
+  const page = Number(options.page) || 1;
+  const limit = Number(options.limit) || 20;
+  const [data, total] = await Promise.all([
+    MarketSchedule.find(query).sort({ targetDate: -1 }).skip((page - 1) * limit).limit(limit),
+    MarketSchedule.countDocuments(query),
+  ]);
+  return { meta: { page, limit, total, totalPages: Math.ceil(total / limit) }, data };
 };
 
-export const getMyDuties = async (messId: string, myMemberId: string) => {
-  return await MarketSchedule.find({ messId, assignedTo: new mongoose.Types.ObjectId(myMemberId) }).sort({ targetDate: -1 });
+export const getSchedules = async (messId: string, options: any = {}) => {
+  const query: Record<string, unknown> = { messId };
+  if (options.status) query.status = options.status;
+  return listSchedules(query, options);
+};
+
+export const getMyDuties = async (messId: string, myMemberId: string, options: any = {}) => {
+  const query: Record<string, unknown> = { messId, assignedTo: new mongoose.Types.ObjectId(myMemberId) };
+  if (options.status) query.status = options.status;
+  return listSchedules(query, options);
 };
 
 export const updateSchedule = async (messId: string, scheduleId: string, payload: any) => {
@@ -29,16 +43,6 @@ export const updateSchedule = async (messId: string, scheduleId: string, payload
     { new: true, runValidators: true }
   );
   if (!schedule) throw new AppError(404, 'Schedule not found or not mutable');
-  return schedule;
-};
-
-export const reassignSchedule = async (messId: string, scheduleId: string, assignedTo: string[]) => {
-  const schedule = await MarketSchedule.findOneAndUpdate(
-    { _id: scheduleId, messId, status: 'pending' },
-    { assignedTo: assignedTo.map((id: string) => new mongoose.Types.ObjectId(id)) },
-    { new: true, runValidators: true }
-  );
-  if (!schedule) throw new AppError(404, 'Schedule not mutable');
   return schedule;
 };
 
@@ -55,7 +59,7 @@ export const updateActualSpent = async (messId: string, scheduleId: string, actu
   return schedule;
 };
 
-export const voidSchedule = async (messId: string, scheduleId: string) => {
+const voidSchedule = async (messId: string, scheduleId: string) => {
   const schedule = await MarketSchedule.findOneAndUpdate(
     { _id: scheduleId, messId, status: 'pending' },
     { status: 'void' },
@@ -65,7 +69,7 @@ export const voidSchedule = async (messId: string, scheduleId: string) => {
   return schedule;
 };
 
-export const completeSchedule = async (messId: string, scheduleId: string, payload: any, myMemberId: string, actorUserId: string, isManager: boolean) => {
+const completeSchedule = async (messId: string, scheduleId: string, payload: any, myMemberId: string, actorUserId: string, isManager: boolean) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -107,4 +111,13 @@ export const completeSchedule = async (messId: string, scheduleId: string, paylo
   } finally {
     session.endSession();
   }
+};
+
+export const updateScheduleStatus = async (messId: string, scheduleId: string, payload: any, myMemberId: string, actorUserId: string, isManager: boolean) => {
+  if (payload.status === 'completed') return completeSchedule(messId, scheduleId, payload, myMemberId, actorUserId, isManager);
+  if (payload.status === 'void') {
+    if (!isManager) throw new AppError(403, 'Only managers can void market schedules');
+    return voidSchedule(messId, scheduleId);
+  }
+  throw new AppError(400, 'Invalid schedule status');
 };

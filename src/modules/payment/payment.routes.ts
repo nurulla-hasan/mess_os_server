@@ -12,9 +12,7 @@ router.post('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateReque
 
 router.get('/me', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.listPaymentsSchema), ctl.getMyPayments);
 
-router.get('/:paymentId', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.updatePaymentStatusSchema), ctl.getPaymentById);
-router.post('/:paymentId/approve', authorize(MESS_ROLES.MANAGER), validateRequest(val.updatePaymentStatusSchema), ctl.approvePayment);
-router.post('/:paymentId/reject', authorize(MESS_ROLES.MANAGER), validateRequest(val.updatePaymentStatusSchema), ctl.rejectPayment);
-router.post('/:paymentId/cancel', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.updatePaymentStatusSchema), ctl.cancelPayment);
+router.get('/:paymentId', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.paymentIdParamSchema), ctl.getPaymentById);
+router.patch('/:paymentId/status', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.updatePaymentStatusSchema), ctl.updatePaymentStatus);
 
 export const paymentRoutes = router;

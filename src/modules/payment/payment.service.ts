@@ -37,7 +37,7 @@ export const getPaymentById = async (messId: string, paymentId: string) => {
   return pay;
 };
 
-export const approvePayment = async (messId: string, paymentId: string, managerId: string) => {
+const approvePayment = async (messId: string, paymentId: string, managerId: string) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -79,7 +79,7 @@ export const approvePayment = async (messId: string, paymentId: string, managerI
   }
 };
 
-export const rejectPayment = async (messId: string, paymentId: string, managerId: string) => {
+const rejectPayment = async (messId: string, paymentId: string, managerId: string) => {
   const pay = await Payment.findOneAndUpdate(
     { _id: new Types.ObjectId(paymentId), messId: new Types.ObjectId(messId), status: 'pending' },
     { status: 'rejected', approvedBy: new Types.ObjectId(managerId) },
@@ -89,7 +89,7 @@ export const rejectPayment = async (messId: string, paymentId: string, managerId
   return pay;
 };
 
-export const cancelPayment = async (messId: string, paymentId: string, actorMemberId: string, actorRole: string) => {
+const cancelPayment = async (messId: string, paymentId: string, actorMemberId: string, actorRole: string) => {
   const pay = await Payment.findOne({ _id: new Types.ObjectId(paymentId), messId: new Types.ObjectId(messId) });
   if (!pay) throw new AppError(404, 'Payment not found');
   
@@ -105,4 +105,24 @@ export const cancelPayment = async (messId: string, paymentId: string, actorMemb
 
   pay.status = 'canceled';
   return await pay.save();
+};
+
+export const updatePaymentStatus = async (
+  messId: string,
+  paymentId: string,
+  status: 'approved' | 'rejected' | 'canceled',
+  managerUserId: string,
+  actorMemberId: string,
+  actorRole: string
+) => {
+  if (status === 'approved') {
+    if (actorRole !== 'manager') throw new AppError(403, 'Only managers can approve payments');
+    return approvePayment(messId, paymentId, managerUserId);
+  }
+  if (status === 'rejected') {
+    if (actorRole !== 'manager') throw new AppError(403, 'Only managers can reject payments');
+    return rejectPayment(messId, paymentId, managerUserId);
+  }
+  if (status === 'canceled') return cancelPayment(messId, paymentId, actorMemberId, actorRole);
+  throw new AppError(400, 'Invalid payment status');
 };

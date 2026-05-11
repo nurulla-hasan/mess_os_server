@@ -17,7 +17,7 @@ export const getMonthlyFinancials = catchAsync(async (req: Request, res: Respons
 
 export const getMemberStatement = catchAsync(async (req: Request, res: Response) => {
   const isManager = req.messRole === 'manager';
-  const callerMemberId = req.messMember!.id.toString();
+  const callerMemberId = req.messMember!._id.toString();
   const targetMemberId = String(req.params.memberId);
   
   if (!isManager && targetMemberId !== callerMemberId) {

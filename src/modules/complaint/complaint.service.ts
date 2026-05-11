@@ -7,12 +7,28 @@ export const createComplaint = async (messId: string, payload: CreateComplaintPa
   return await Complaint.create({ messId, messMemberId: new mongoose.Types.ObjectId(myMemberId), ...payload });
 };
 
-export const getComplaints = async (messId: string) => {
-  return await Complaint.find({ messId }).sort({ createdAt: -1 });
+const paginate = async (query: Record<string, unknown>, page: number, limit: number) => {
+  const [data, total] = await Promise.all([
+    Complaint.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+    Complaint.countDocuments(query),
+  ]);
+  return { meta: { page, limit, total, totalPages: Math.ceil(total / limit) }, data };
 };
 
-export const getMyComplaints = async (messId: string, messMemberId: string) => {
-  return await Complaint.find({ messId, messMemberId }).sort({ createdAt: -1 });
+export const getComplaints = async (messId: string, options: any = {}) => {
+  const page = Number(options.page) || 1;
+  const limit = Number(options.limit) || 20;
+  const query: Record<string, unknown> = { messId };
+  if (options.status) query.status = options.status;
+  return paginate(query, page, limit);
+};
+
+export const getMyComplaints = async (messId: string, messMemberId: string, options: any = {}) => {
+  const page = Number(options.page) || 1;
+  const limit = Number(options.limit) || 20;
+  const query: Record<string, unknown> = { messId, messMemberId };
+  if (options.status) query.status = options.status;
+  return paginate(query, page, limit);
 };
 
 export const getComplaintById = async (messId: string, complaintId: string, myMemberId: string, isManager: boolean) => {
@@ -26,32 +42,19 @@ export const getComplaintById = async (messId: string, complaintId: string, myMe
   return comp;
 };
 
-export const updateComplaintStatus = async (messId: string, complaintId: string, status: string) => {
+export const updateComplaintStatus = async (messId: string, complaintId: string, status: string, resolvedNote: string, managerId: string) => {
+  const update: Record<string, unknown> = { status };
+  if (status === 'resolved' || status === 'rejected') {
+    update.resolvedNote = resolvedNote;
+    update.resolvedAt = new Date();
+    update.resolvedBy = new mongoose.Types.ObjectId(managerId);
+  }
+
   const comp = await Complaint.findOneAndUpdate(
     { _id: complaintId, messId },
-    { status },
+    update,
     { new: true, runValidators: true }
   );
   if (!comp) throw new AppError(404, 'Complaint bounds check failed');
-  return comp;
-};
-
-export const resolveComplaint = async (messId: string, complaintId: string, resolvedNote: string, managerId: string) => {
-  const comp = await Complaint.findOneAndUpdate(
-    { _id: complaintId, messId },
-    { status: 'resolved', resolvedNote, resolvedAt: new Date(), resolvedBy: new mongoose.Types.ObjectId(managerId) },
-    { new: true }
-  );
-  if (!comp) throw new AppError(404, 'Complaint not found');
-  return comp;
-};
-
-export const rejectComplaint = async (messId: string, complaintId: string, resolvedNote: string, managerId: string) => {
-  const comp = await Complaint.findOneAndUpdate(
-    { _id: complaintId, messId },
-    { status: 'rejected', resolvedNote, resolvedAt: new Date(), resolvedBy: new mongoose.Types.ObjectId(managerId) },
-    { new: true }
-  );
-  if (!comp) throw new AppError(404, 'Complaint not found');
   return comp;
 };

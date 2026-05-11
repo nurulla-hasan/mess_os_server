@@ -23,7 +23,13 @@ export const listPaymentsSchema = z.object({
   }).strict()
 });
 
-// Approvals only need params validation realistically.
 export const updatePaymentStatusSchema = z.object({
-  params: z.object({ paymentId: oId }).strict()
+  params: z.object({ messId: oId, paymentId: oId }).strict(),
+  body: z.object({
+    status: z.enum(['approved', 'rejected', 'canceled']),
+  }).strict()
+});
+
+export const paymentIdParamSchema = z.object({
+  params: z.object({ messId: oId, paymentId: oId }).strict()
 });

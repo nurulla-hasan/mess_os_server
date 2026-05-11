@@ -11,9 +11,7 @@ router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateReques
 router.post('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.createExpenseSchema), ctl.createExpense);
 
 router.get('/:expenseId', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.expenseIdParamSchema), ctl.getExpenseById);
-router.post('/:expenseId/approve', authorize(MESS_ROLES.MANAGER), validateRequest(val.expenseIdParamSchema), ctl.approveExpense);
-router.post('/:expenseId/reject', authorize(MESS_ROLES.MANAGER), validateRequest(val.expenseIdParamSchema), ctl.rejectExpense);
+router.patch('/:expenseId/status', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.updateExpenseStatusSchema), ctl.updateExpenseStatus);
 router.post('/:expenseId/reimburse', authorize(MESS_ROLES.MANAGER), validateRequest(val.expenseIdParamSchema), ctl.reimburseExpense);
-router.delete('/:expenseId', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.expenseIdParamSchema), ctl.cancelExpense);
 
 export const expenseRoutes = router;

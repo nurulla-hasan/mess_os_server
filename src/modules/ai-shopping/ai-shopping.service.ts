@@ -22,8 +22,18 @@ export const generateShoppingList = async (messId: string, payload: GenerateList
   });
 };
 
-export const getShoppingLists = async (messId: string) => {
-  return await AiShoppingList.find({ messId }).sort({ targetDate: -1 });
+export const getShoppingLists = async (messId: string, options: any = {}) => {
+  const page = Number(options.page) || 1;
+  const limit = Number(options.limit) || 20;
+  const query: Record<string, unknown> = { messId };
+  if (options.status) query.status = options.status;
+
+  const [data, total] = await Promise.all([
+    AiShoppingList.find(query).sort({ targetDate: -1 }).skip((page - 1) * limit).limit(limit),
+    AiShoppingList.countDocuments(query),
+  ]);
+
+  return { meta: { page, limit, total, totalPages: Math.ceil(total / limit) }, data };
 };
 
 export const getShoppingListById = async (messId: string, listId: string) => {
@@ -32,7 +42,7 @@ export const getShoppingListById = async (messId: string, listId: string) => {
   return list;
 };
 
-export const approveShoppingList = async (messId: string, listId: string) => {
+const approveShoppingList = async (messId: string, listId: string) => {
   const list = await AiShoppingList.findOneAndUpdate(
     { _id: listId, messId, status: 'draft' },
     { status: 'approved' },
@@ -42,7 +52,7 @@ export const approveShoppingList = async (messId: string, listId: string) => {
   return list;
 };
 
-export const rejectShoppingList = async (messId: string, listId: string) => {
+const rejectShoppingList = async (messId: string, listId: string) => {
   const list = await AiShoppingList.findOneAndUpdate(
     { _id: listId, messId, status: 'draft' },
     { status: 'rejected' },
@@ -50,6 +60,12 @@ export const rejectShoppingList = async (messId: string, listId: string) => {
   );
   if (!list) throw new AppError(404, 'List not eligible for rejection');
   return list;
+};
+
+export const updateShoppingListStatus = async (messId: string, listId: string, status: 'approved' | 'rejected') => {
+  if (status === 'approved') return approveShoppingList(messId, listId);
+  if (status === 'rejected') return rejectShoppingList(messId, listId);
+  throw new AppError(400, 'Invalid shopping list status');
 };
 
 export const convertToMarketSchedule = async (messId: string, listId: string, userId: string, payload: ConvertListPayload) => {
