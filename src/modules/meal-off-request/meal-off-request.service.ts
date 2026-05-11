@@ -137,7 +137,7 @@ export const listRequests = async (messId: string, options: ListMealOffRequestsO
 
   return {
     items: items.map((item) => {
-      const { _id, ...request } = item;
+      const request = { ...item };
       const legacyApprovedBy = (request as any).approvedBy;
       delete (request as any).approvedBy;
 
@@ -148,16 +148,12 @@ export const listRequests = async (messId: string, options: ListMealOffRequestsO
 
       const populatedMember = item.messMemberId as any;
       if (!populatedMember || !populatedMember.userId) {
-        return {
-          ...request,
-          id: _id,
-        };
+        return request;
       }
 
       const { userId, ...member } = populatedMember;
       return {
         ...request,
-        id: _id,
         messMemberId: {
           ...member,
           user: userId,

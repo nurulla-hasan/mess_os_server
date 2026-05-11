@@ -17,8 +17,7 @@ const reqSchema = new Schema<IMessMember>({
   joinedAt: { type: Date },
   leftAt: { type: Date }
 }, {
-  timestamps: true, versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } }
+  timestamps: true, versionKey: false
 });
 
 export const MessMember = model<IMessMember>('MessMember', reqSchema);

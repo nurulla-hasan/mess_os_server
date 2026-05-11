@@ -23,7 +23,7 @@ const memberLedgerSchema = new Schema<IMemberLedger>({
   description: { type: String, required: true },
   date: { type: Date, required: true },
   isVoided: { type: Boolean, default: false }
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
+}, { timestamps: true, versionKey: false });
 
 memberLedgerSchema.index({ messId: 1, messMemberId: 1, date: -1 });
 

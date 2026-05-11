@@ -36,7 +36,7 @@ const memberBillSchema = new Schema<IMemberBill>({
   },
   status: { type: String, enum: ['unpaid', 'paid', 'settled'], default: 'unpaid' },
   isArchived: { type: Boolean, default: false }
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
+}, { timestamps: true, versionKey: false });
 
 memberBillSchema.index({ billingCycleId: 1, messMemberId: 1 });
 

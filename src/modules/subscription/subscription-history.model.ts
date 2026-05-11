@@ -17,8 +17,7 @@ const subHistorySchema = new Schema<ISubscriptionHistory>({
   note: { type: String }
 }, {
   timestamps: { createdAt: true, updatedAt: false },
-  versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } }
+  versionKey: false
 });
 
 export const SubscriptionHistory = model<ISubscriptionHistory>('SubscriptionHistory', subHistorySchema);

@@ -100,7 +100,6 @@ export const getAllMesses = async (page: number, limit: number, searchTerm?: str
   return {
     items: messes.map((mess) => ({
       ...mess,
-      id: mess._id,
       manager: managerByMessId.get(String(mess._id)) ?? null,
       memberCount: memberCountByMessId.get(String(mess._id)) ?? 0,
     })),
@@ -222,11 +221,8 @@ export const getAllSubscriptions = async (
     items: subscriptions.map((subscription) => {
       const mess = messById.get(String(subscription.messId));
       return {
-        subscription: {
-          ...subscription,
-          id: subscription._id,
-        },
-        mess: mess ? { ...mess, id: mess._id } : null,
+        subscription,
+        mess: mess ?? null,
         manager: managerByMessId.get(String(subscription.messId)) ?? null,
         plan: planByCode.get(subscription.planId) ?? null,
       };

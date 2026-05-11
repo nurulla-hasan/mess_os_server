@@ -162,7 +162,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n    \"success\": true,\n    \"message\": \"User registered. Please check email for OTP.\",\n    \"data\": {\n        \"fullName\": \"Nurulla Hasan\",\n        \"email\": \"nurullahasan.dev@gmail.com\",\n        \"phone\": \"01700000000\",\n        \"isEmailVerified\": false,\n        \"isPhoneVerified\": false,\n        \"status\": \"active\",\n        \"globalRole\": \"user\",\n        \"verificationOtpExpiresAt\": \"2026-04-04T04:48:52.258Z\",\n        \"lastOtpSentAt\": \"2026-04-04T04:38:52.258Z\",\n        \"createdAt\": \"2026-04-04T04:38:52.264Z\",\n        \"updatedAt\": \"2026-04-04T04:38:52.264Z\",\n        \"id\": \"69d095dcc68e4c2c26877d3d\"\n    }\n}"
+              "body": "{\n    \"success\": true,\n    \"message\": \"User registered. Please check email for OTP.\",\n    \"data\": {\n        \"fullName\": \"Nurulla Hasan\",\n        \"email\": \"nurullahasan.dev@gmail.com\",\n        \"phone\": \"01700000000\",\n        \"isEmailVerified\": false,\n        \"isPhoneVerified\": false,\n        \"status\": \"active\",\n        \"globalRole\": \"user\",\n        \"verificationOtpExpiresAt\": \"2026-04-04T04:48:52.258Z\",\n        \"lastOtpSentAt\": \"2026-04-04T04:38:52.258Z\",\n        \"createdAt\": \"2026-04-04T04:38:52.264Z\",\n        \"updatedAt\": \"2026-04-04T04:38:52.264Z\",\n        \"_id\": \"69d095dcc68e4c2c26877d3d\"\n    }\n}"
             }
           ]
         },
@@ -522,7 +522,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n    \"success\": true,\n    \"message\": \"Email verified successfully\",\n    \"data\": {\n        \"fullName\": \"Nurulla Hasan\",\n        \"email\": \"nurullahasan.dev@gmail.com\",\n        \"phone\": \"01700000000\",\n        \"isEmailVerified\": true,\n        \"isPhoneVerified\": false,\n        \"status\": \"active\",\n        \"globalRole\": \"user\",\n        \"lastOtpSentAt\": \"2026-04-04T04:38:52.258Z\",\n        \"createdAt\": \"2026-04-04T04:38:52.264Z\",\n        \"updatedAt\": \"2026-04-04T04:39:28.016Z\",\n        \"id\": \"69d095dcc68e4c2c26877d3d\"\n    }\n}"
+              "body": "{\n    \"success\": true,\n    \"message\": \"Email verified successfully\",\n    \"data\": {\n        \"fullName\": \"Nurulla Hasan\",\n        \"email\": \"nurullahasan.dev@gmail.com\",\n        \"phone\": \"01700000000\",\n        \"isEmailVerified\": true,\n        \"isPhoneVerified\": false,\n        \"status\": \"active\",\n        \"globalRole\": \"user\",\n        \"lastOtpSentAt\": \"2026-04-04T04:38:52.258Z\",\n        \"createdAt\": \"2026-04-04T04:38:52.264Z\",\n        \"updatedAt\": \"2026-04-04T04:39:28.016Z\",\n        \"_id\": \"69d095dcc68e4c2c26877d3d\"\n    }\n}"
             }
           ]
         },
@@ -1536,7 +1536,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n    \"success\": true,\n    \"message\": \"Me extracted securely correctly validated consistently\",\n    \"data\": {\n        \"fullName\": \"Updated Name\",\n        \"email\": \"nurullahasan.dev@gmail.com\",\n        \"phone\": \"01800000000\",\n        \"isEmailVerified\": true,\n        \"isPhoneVerified\": false,\n        \"status\": \"active\",\n        \"globalRole\": \"manager\",\n        \"lastOtpSentAt\": \"2026-04-04T04:47:33.296Z\",\n        \"createdAt\": \"2026-04-04T04:38:52.264Z\",\n        \"updatedAt\": \"2026-04-22T08:37:27.484Z\",\n        \"address\": \"Dhaka, Bangladesh\",\n        \"bio\": \"Software developer and mess enthusiast \",\n        \"id\": \"69d095dcc68e4c2c26877d3d\",\n        \"avatar\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1776846854/avatars/aqretw7jetjgaeroatcg.jpg\"\n    }\n}"
+              "body": "{\n    \"success\": true,\n    \"message\": \"Me extracted securely correctly validated consistently\",\n    \"data\": {\n        \"fullName\": \"Updated Name\",\n        \"email\": \"nurullahasan.dev@gmail.com\",\n        \"phone\": \"01800000000\",\n        \"isEmailVerified\": true,\n        \"isPhoneVerified\": false,\n        \"status\": \"active\",\n        \"globalRole\": \"manager\",\n        \"lastOtpSentAt\": \"2026-04-04T04:47:33.296Z\",\n        \"createdAt\": \"2026-04-04T04:38:52.264Z\",\n        \"updatedAt\": \"2026-04-22T08:37:27.484Z\",\n        \"address\": \"Dhaka, Bangladesh\",\n        \"bio\": \"Software developer and mess enthusiast \",\n        \"_id\": \"69d095dcc68e4c2c26877d3d\",\n        \"avatar\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1776846854/avatars/aqretw7jetjgaeroatcg.jpg\"\n    }\n}"
             }
           ]
         },
@@ -1688,7 +1688,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n    \"success\": true,\n    \"message\": \"Me accurately updated robustly internally modified correctly\",\n    \"data\": {\n        \"fullName\": \"Updated Name\",\n        \"email\": \"nurullahasan.dev@gmail.com\",\n        \"phone\": \"01800000000\",\n        \"isEmailVerified\": true,\n        \"isPhoneVerified\": false,\n        \"status\": \"active\",\n        \"globalRole\": \"manager\",\n        \"lastOtpSentAt\": \"2026-04-04T04:47:33.296Z\",\n        \"createdAt\": \"2026-04-04T04:38:52.264Z\",\n        \"updatedAt\": \"2026-04-22T08:37:27.484Z\",\n        \"address\": \"Dhaka, Bangladesh\",\n        \"bio\": \"Software developer and mess enthusiast \",\n        \"id\": \"69d095dcc68e4c2c26877d3d\",\n        \"avatar\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1776846854/avatars/aqretw7jetjgaeroatcg.jpg\"\n    }\n}"
+              "body": "{\n    \"success\": true,\n    \"message\": \"Me accurately updated robustly internally modified correctly\",\n    \"data\": {\n        \"fullName\": \"Updated Name\",\n        \"email\": \"nurullahasan.dev@gmail.com\",\n        \"phone\": \"01800000000\",\n        \"isEmailVerified\": true,\n        \"isPhoneVerified\": false,\n        \"status\": \"active\",\n        \"globalRole\": \"manager\",\n        \"lastOtpSentAt\": \"2026-04-04T04:47:33.296Z\",\n        \"createdAt\": \"2026-04-04T04:38:52.264Z\",\n        \"updatedAt\": \"2026-04-22T08:37:27.484Z\",\n        \"address\": \"Dhaka, Bangladesh\",\n        \"bio\": \"Software developer and mess enthusiast \",\n        \"_id\": \"69d095dcc68e4c2c26877d3d\",\n        \"avatar\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1776846854/avatars/aqretw7jetjgaeroatcg.jpg\"\n    }\n}"
             }
           ]
         },
@@ -1842,7 +1842,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n    \"success\": true,\n    \"message\": \"Avatar accurately updated robustly internally modified correctly\",\n    \"data\": {\n        \"fullName\": \"Updated Name\",\n        \"email\": \"nurullahasan.dev@gmail.com\",\n        \"phone\": \"01800000000\",\n        \"isEmailVerified\": true,\n        \"isPhoneVerified\": false,\n        \"status\": \"active\",\n        \"globalRole\": \"manager\",\n        \"lastOtpSentAt\": \"2026-04-04T04:47:33.296Z\",\n        \"createdAt\": \"2026-04-04T04:38:52.264Z\",\n        \"updatedAt\": \"2026-04-22T08:38:14.043Z\",\n        \"address\": \"Dhaka, Bangladesh\",\n        \"bio\": \"Software developer and mess enthusiast \",\n        \"id\": \"69d095dcc68e4c2c26877d3d\",\n        \"avatar\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1776847093/avatars/ueamhwga7ilxt1lyzcfy.jpg\"\n    }\n}"
+              "body": "{\n    \"success\": true,\n    \"message\": \"Avatar accurately updated robustly internally modified correctly\",\n    \"data\": {\n        \"fullName\": \"Updated Name\",\n        \"email\": \"nurullahasan.dev@gmail.com\",\n        \"phone\": \"01800000000\",\n        \"isEmailVerified\": true,\n        \"isPhoneVerified\": false,\n        \"status\": \"active\",\n        \"globalRole\": \"manager\",\n        \"lastOtpSentAt\": \"2026-04-04T04:47:33.296Z\",\n        \"createdAt\": \"2026-04-04T04:38:52.264Z\",\n        \"updatedAt\": \"2026-04-22T08:38:14.043Z\",\n        \"address\": \"Dhaka, Bangladesh\",\n        \"bio\": \"Software developer and mess enthusiast \",\n        \"_id\": \"69d095dcc68e4c2c26877d3d\",\n        \"avatar\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1776847093/avatars/ueamhwga7ilxt1lyzcfy.jpg\"\n    }\n}"
             }
           ]
         },
@@ -2057,7 +2057,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n    \"success\": true,\n    \"message\": \"Mess created successfully\",\n    \"data\": {\n        \"name\": \"Nurulla Mess\",\n        \"address\": \"Dhaka\",\n        \"inviteCode\": \"F8379A7F\",\n        \"status\": \"active\",\n        \"createdAt\": \"2026-04-22T08:44:38.523Z\",\n        \"updatedAt\": \"2026-04-22T08:44:38.523Z\",\n        \"id\": \"69e88a764f79d717bf2d29a3\"\n    }\n}"
+              "body": "{\n    \"success\": true,\n    \"message\": \"Mess created successfully\",\n    \"data\": {\n        \"name\": \"Nurulla Mess\",\n        \"address\": \"Dhaka\",\n        \"inviteCode\": \"F8379A7F\",\n        \"status\": \"active\",\n        \"createdAt\": \"2026-04-22T08:44:38.523Z\",\n        \"updatedAt\": \"2026-04-22T08:44:38.523Z\",\n        \"_id\": \"69e88a764f79d717bf2d29a3\"\n    }\n}"
             }
           ]
         },
@@ -2341,7 +2341,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n    \"success\": true,\n    \"message\": \"Mess fetched successfully\",\n    \"data\": {\n        \"name\": \"Nurulla Mess\",\n        \"address\": \"Dhaka\",\n        \"inviteCode\": \"F8379A7F\",\n        \"status\": \"active\",\n        \"createdAt\": \"2026-04-22T08:44:38.523Z\",\n        \"updatedAt\": \"2026-04-22T08:44:38.523Z\",\n        \"id\": \"69e88a764f79d717bf2d29a3\"\n    }\n}"
+              "body": "{\n    \"success\": true,\n    \"message\": \"Mess fetched successfully\",\n    \"data\": {\n        \"name\": \"Nurulla Mess\",\n        \"address\": \"Dhaka\",\n        \"inviteCode\": \"F8379A7F\",\n        \"status\": \"active\",\n        \"createdAt\": \"2026-04-22T08:44:38.523Z\",\n        \"updatedAt\": \"2026-04-22T08:44:38.523Z\",\n        \"_id\": \"69e88a764f79d717bf2d29a3\"\n    }\n}"
             }
           ]
         },
@@ -2614,7 +2614,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n    \"success\": true,\n    \"message\": \"Members fetched successfully\",\n    \"data\": [\n        {\n            \"id\": \"69e88a764f79d717bf2d29a5\",\n            \"messId\": \"69e88a764f79d717bf2d29a3\",\n            \"messRole\": \"manager\",\n            \"status\": \"active\",\n            \"joinedAt\": \"2026-04-22T08:44:38.574Z\",\n            \"user\": {\n                \"_id\": \"69d095dcc68e4c2c26877d3d\",\n                \"fullName\": \"Updated Name\",\n                \"email\": \"nurullahasan.dev@gmail.com\",\n                \"phone\": \"01800000000\",\n                \"avatarUrl\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1776847093/avatars/ueamhwga7ilxt1lyzcfy.jpg\"\n            }\n        }\n    ]\n}"
+              "body": "{\n    \"success\": true,\n    \"message\": \"Members fetched successfully\",\n    \"data\": [\n        {\n            \"_id\": \"69e88a764f79d717bf2d29a5\",\n            \"messId\": \"69e88a764f79d717bf2d29a3\",\n            \"messRole\": \"manager\",\n            \"status\": \"active\",\n            \"joinedAt\": \"2026-04-22T08:44:38.574Z\",\n            \"user\": {\n                \"_id\": \"69d095dcc68e4c2c26877d3d\",\n                \"fullName\": \"Updated Name\",\n                \"email\": \"nurullahasan.dev@gmail.com\",\n                \"phone\": \"01800000000\",\n                \"avatarUrl\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1776847093/avatars/ueamhwga7ilxt1lyzcfy.jpg\"\n            }\n        }\n    ]\n}"
             }
           ]
         },
@@ -3475,7 +3475,7 @@
                 }
               ]
             },
-            "description": "Role: Member+. Lists meal off requests with pagination and filters. Managers/super admins can list all requests in the mess. Members can list only their own requests. Query: page, limit (max 100), status=pending|approved|rejected|canceled, searchTerm, messMemberId/memberId, start/end or startDate/endDate. Date filters use range overlap logic. Response shape: { success, message, meta: { page, limit, total, totalPages }, data: [...] }. Each request item exposes id, not top-level _id. In each item, populated messMemberId includes user, messRole, and status; the populated user object is exposed as user for consistency with members list. Reviewed requests include reviewedBy and reviewedAt; legacy approvedBy rows are normalized to reviewedBy in the response."
+            "description": "Role: Member+. Lists meal off requests with pagination and filters. Managers/super admins can list all requests in the mess. Members can list only their own requests. Query: page, limit (max 100), status=pending|approved|rejected|canceled, searchTerm, messMemberId/memberId, start/end or startDate/endDate. Date filters use range overlap logic. Response shape: { success, message, meta: { page, limit, total, totalPages }, data: [...] }. Each request item exposes _id and does not include id. In each item, populated messMemberId includes user, messRole, and status; the populated user object is exposed as user for consistency with members list. Reviewed requests include reviewedBy and reviewedAt; legacy approvedBy rows are normalized to reviewedBy in the response."
           },
           "response": []
         },

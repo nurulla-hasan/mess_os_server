@@ -141,7 +141,7 @@ Rules:
 - Managers can list all meal off requests.
 - Members can list only their own meal off requests.
 - Date filters return requests whose off range overlaps the selected range.
-- Request list items expose top-level `id` without duplicate `_id`.
+- API responses standardize on MongoDB `_id`; duplicate `id` aliases should not be returned.
 - Populated `messMemberId` includes user details under `user`, matching the members list response shape.
 - Response includes pagination `meta`.
 - Review body accepts `status=approved|rejected|canceled`.

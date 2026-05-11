@@ -18,8 +18,7 @@ const subSchema = new Schema<ISubscription>({
   cancelAtPeriodEnd: { type: Boolean, default: false },
 }, {
   timestamps: true,
-  versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } }
+  versionKey: false
 });
 
 export const Subscription = model<ISubscription>('Subscription', subSchema);

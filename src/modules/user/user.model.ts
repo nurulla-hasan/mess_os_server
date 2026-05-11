@@ -47,9 +47,7 @@ const userSchema = new Schema<IUser>({
   versionKey: false,
   toJSON: { 
     transform: (_, ret) => { 
-      ret.id = ret._id; 
       (ret as any).avatar = ret.avatarUrl || "";
-      delete (ret as any)._id; 
       delete (ret as any).passwordHash; 
       delete (ret as any).avatarUrl;
       delete (ret as any).avatarPublicId;

@@ -16,7 +16,7 @@ const mealSchema = new Schema<IMeal>({
   mealCount: { type: Number, required: true },
   meals: { type: Map, of: Number, default: {} },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true } // Audit constraint
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
+}, { timestamps: true, versionKey: false });
 
 mealSchema.index({ messId: 1, messMemberId: 1, date: 1 }, { unique: true });
 

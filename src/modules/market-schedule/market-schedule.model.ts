@@ -28,8 +28,7 @@ const scheduleSchema = new Schema<IMarketSchedule>({
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true }
 }, {
   timestamps: true,
-  versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } }
+  versionKey: false
 });
 
 scheduleSchema.index({ messId: 1, targetDate: 1 });

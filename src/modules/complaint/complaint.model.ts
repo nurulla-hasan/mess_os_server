@@ -22,8 +22,7 @@ const complaintSchema = new Schema<IComplaint>({
   resolvedBy: { type: Schema.Types.ObjectId, ref: 'User' }
 }, {
   timestamps: true,
-  versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } }
+  versionKey: false
 });
 
 complaintSchema.index({ messId: 1, status: 1 });

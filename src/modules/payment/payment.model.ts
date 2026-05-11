@@ -20,6 +20,6 @@ const paymentSchema = new Schema<IPayment>({
   status: { type: String, enum: ['pending', 'approved', 'rejected', 'canceled'], default: 'pending' },
   approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   receivedDate: { type: Date }
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
+}, { timestamps: true, versionKey: false });
 
 export const Payment = model<IPayment>('Payment', paymentSchema);

@@ -52,7 +52,6 @@ const subscriptionPlanSchema = new Schema<ISubscriptionPlan>({
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } },
 });
 
 export const SubscriptionPlan = model<ISubscriptionPlan>('SubscriptionPlan', subscriptionPlanSchema);

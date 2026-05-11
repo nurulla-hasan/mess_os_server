@@ -20,6 +20,6 @@ const mealOffRequestSchema = new Schema<IMealOffRequest>({
   reason: { type: String },
   reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   reviewedAt: { type: Date }
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
+}, { timestamps: true, versionKey: false });
 
 export const MealOffRequest = model<IMealOffRequest>('MealOffRequest', mealOffRequestSchema);

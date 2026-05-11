@@ -24,8 +24,7 @@ const aiShoppingSchema = new Schema<IAiShoppingList>({
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true }
 }, {
   timestamps: true,
-  versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } }
+  versionKey: false
 });
 
 aiShoppingSchema.index({ messId: 1, menuPlanId: 1 });

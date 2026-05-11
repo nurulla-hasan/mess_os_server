@@ -93,7 +93,7 @@ export const getMembers = async (messId: string, options: GetMembersOptions = {}
 
   return {
     items: members.map((m) => ({
-      id: m._id,
+      _id: m._id,
       messId: m.messId,
       messRole: m.messRole,
       status: m.status,

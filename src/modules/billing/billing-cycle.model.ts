@@ -32,7 +32,7 @@ const billingCycleSchema = new Schema<IBillingCycle>({
   },
   finalizedAt: { type: Date },
   finalizedBy: { type: Schema.Types.ObjectId, ref: 'User' }
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
+}, { timestamps: true, versionKey: false });
 
 billingCycleSchema.index({ messId: 1, month: 1, year: 1 }, { unique: true });
 

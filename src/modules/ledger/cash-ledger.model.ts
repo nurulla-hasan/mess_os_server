@@ -21,7 +21,7 @@ const cashLedgerSchema = new Schema<ICashLedger>({
   description: { type: String, required: true },
   date: { type: Date, required: true },
   isVoided: { type: Boolean, default: false }
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
+}, { timestamps: true, versionKey: false });
 
 cashLedgerSchema.index({ messId: 1, date: -1 });
 

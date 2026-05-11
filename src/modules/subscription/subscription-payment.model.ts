@@ -37,7 +37,6 @@ const subscriptionPaymentSchema = new Schema<ISubscriptionPayment>({
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } },
 });
 
 export const SubscriptionPayment = model<ISubscriptionPayment>('SubscriptionPayment', subscriptionPaymentSchema);

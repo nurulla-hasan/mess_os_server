@@ -18,6 +18,6 @@ const utilityBillSchema = new Schema<IUtilityBill>({
   year: { type: Number, required: true },
   dueDate: { type: Date },
   status: { type: String, enum: ['unpaid', 'paid'], default: 'unpaid' }
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
+}, { timestamps: true, versionKey: false });
 
 export const UtilityBill = model<IUtilityBill>('UtilityBill', utilityBillSchema);

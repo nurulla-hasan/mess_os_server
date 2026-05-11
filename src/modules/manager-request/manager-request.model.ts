@@ -19,7 +19,6 @@ const managerRequestSchema = new Schema<IManagerRequest>({
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } },
 });
 
 export const ManagerRequest = model<IManagerRequest>('ManagerRequest', managerRequestSchema);

@@ -26,8 +26,7 @@ const menuPlanSchema = new Schema<IMenuPlan>({
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true }
 }, {
   timestamps: true,
-  versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } }
+  versionKey: false
 });
 
 menuPlanSchema.index({ messId: 1, date: 1 });

@@ -29,6 +29,6 @@ const expenseSchema = new Schema<IExpense>({
   receiptPublicId: { type: String },
   approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   approvedAt: { type: Date }
-}, { timestamps: true, versionKey: false, toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } } });
+}, { timestamps: true, versionKey: false });
 
 export const Expense = model<IExpense>('Expense', expenseSchema);

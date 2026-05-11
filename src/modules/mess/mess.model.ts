@@ -24,8 +24,7 @@ const messSchema = new Schema<IMess>({
   suspendedAt: { type: Date },
   suspendedBy: { type: Schema.Types.ObjectId, ref: 'User' },
 }, {
-  timestamps: true, versionKey: false,
-  toJSON: { transform: (_, ret) => { ret.id = ret._id; delete (ret as any)._id; return ret; } }
+  timestamps: true, versionKey: false
 });
 
 export const Mess = model<IMess>('Mess', messSchema);
