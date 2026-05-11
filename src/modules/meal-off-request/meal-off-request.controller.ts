@@ -9,8 +9,27 @@ export const createRequest = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const listRequests = catchAsync(async (req: Request, res: Response) => {
-  const result = await morService.listRequests(req.messId!);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Meal off requests listed', data: result });
+  const start = req.query.start ? String(req.query.start) : req.query.startDate ? String(req.query.startDate) : undefined;
+  const end = req.query.end ? String(req.query.end) : req.query.endDate ? String(req.query.endDate) : undefined;
+  const result = await morService.listRequests(req.messId!, {
+    page: parseInt(String(req.query.page)) || 1,
+    limit: parseInt(String(req.query.limit)) || 20,
+    status: req.query.status ? String(req.query.status) as morService.MealOffRequestStatus : undefined,
+    messMemberId: req.query.messMemberId ? String(req.query.messMemberId) : req.query.memberId ? String(req.query.memberId) : undefined,
+    searchTerm: req.query.searchTerm ? String(req.query.searchTerm) : undefined,
+    start,
+    end,
+    requesterMemberId: req.messMember?._id.toString(),
+    requesterRole: req.messRole as 'manager' | 'member' | undefined,
+    isSuperAdmin: req.user?.globalRole === 'super_admin',
+  });
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Meal off requests listed',
+    meta: result.pagination,
+    data: result.items,
+  });
 });
 
 export const approveRequest = catchAsync(async (req: Request, res: Response) => {

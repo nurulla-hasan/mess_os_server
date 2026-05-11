@@ -3408,7 +3408,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/meal-off-requests",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/meal-off-requests?page=1&limit=20&status=pending&searchTerm=&startDate=&endDate=&messMemberId=",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -3418,9 +3418,64 @@
                 "messes",
                 "{{messId}}",
                 "meal-off-requests"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Optional. Positive integer page number. Defaults to 1."
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Optional. Positive integer page size. Maximum 100. Defaults to 20."
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "Optional. Allowed values: pending, approved, rejected."
+                },
+                {
+                  "key": "searchTerm",
+                  "value": "",
+                  "description": "Optional. Manager/super admin search by member name, email, phone, or mess member id."
+                },
+                {
+                  "key": "startDate",
+                  "value": "",
+                  "description": "Optional. Date range start alias. Returns requests whose off range overlaps the selected range."
+                },
+                {
+                  "key": "endDate",
+                  "value": "",
+                  "description": "Optional. Date range end alias. Returns requests whose off range overlaps the selected range."
+                },
+                {
+                  "key": "messMemberId",
+                  "value": "",
+                  "description": "Optional. Manager/super admin filter by mess member id. Alias: memberId."
+                },
+                {
+                  "key": "start",
+                  "value": "",
+                  "description": "Optional alias for startDate.",
+                  "disabled": true
+                },
+                {
+                  "key": "end",
+                  "value": "",
+                  "description": "Optional alias for endDate.",
+                  "disabled": true
+                },
+                {
+                  "key": "memberId",
+                  "value": "",
+                  "description": "Optional alias for messMemberId.",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Role: Member+. Lists meal off requests. Requires messId variable."
+            "description": "Role: Member+. Lists meal off requests with pagination and filters. Managers/super admins can list all requests in the mess. Members can list only their own requests. Query: page, limit (max 100), status=pending|approved|rejected, searchTerm, messMemberId/memberId, start/end or startDate/endDate. Date filters use range overlap logic. Response shape: { success, message, meta: { page, limit, total, totalPages }, data: [...] }. In each item, populated messMemberId includes user, messRole, and status; the populated user object is exposed as user for consistency with members list."
           },
           "response": []
         },

@@ -118,6 +118,33 @@ Rules:
 - Meal writes are blocked when the related monthly billing cycle is finalized; reopen billing first.
 - Bulk meal logging rejects duplicate `messMemberId` values and supports up to 200 entries.
 
+## Meal Off Request Flow
+
+Endpoints:
+
+- `GET /api/v1/messes/:messId/meal-off-requests`
+- `POST /api/v1/messes/:messId/meal-off-requests`
+- `POST /api/v1/messes/:messId/meal-off-requests/:requestId/approve`
+- `POST /api/v1/messes/:messId/meal-off-requests/:requestId/reject`
+
+List query params:
+
+- `page`
+- `limit` max 100
+- `status=pending|approved|rejected`
+- `messMemberId` or `memberId`
+- `searchTerm` for manager/super admin, searches mess member id or member name/email/phone
+- `start`/`end`
+- `startDate`/`endDate` aliases
+
+Rules:
+
+- Managers can list all meal off requests.
+- Members can list only their own meal off requests.
+- Date filters return requests whose off range overlaps the selected range.
+- Populated `messMemberId` includes user details under `user`, matching the members list response shape.
+- Response includes pagination `meta`.
+
 ## Admin Mess Management
 
 Admin mess list:
