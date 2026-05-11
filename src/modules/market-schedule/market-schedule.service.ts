@@ -4,24 +4,55 @@ import { Expense } from '../expense/expense.model';
 import { AppError } from '../../shared/utils/apiError';
 import { normalizeMealDate } from '../../shared/utils/dateUtils';
 
+const populateScheduleMembers = {
+  path: 'assignedTo',
+  select: 'userId messRole status',
+  populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
+};
+
+const normalizeAssignedMembers = (schedule: any): any => {
+  const normalizeMember = (member: any) => {
+    if (!member?.userId) return member;
+    const { userId, ...rest } = member;
+    return { ...rest, user: userId };
+  };
+
+  if (Array.isArray(schedule)) {
+    return schedule.map((item) => normalizeAssignedMembers(item));
+  }
+
+  if (!schedule?.assignedTo) return schedule;
+  return {
+    ...schedule,
+    assignedTo: schedule.assignedTo.map(normalizeMember),
+  };
+};
+
 export const createSchedule = async (messId: string, payload: any, userId: string) => {
-  return await MarketSchedule.create({
+  const schedule = await MarketSchedule.create({
     messId,
     ...payload,
     targetDate: normalizeMealDate(payload.targetDate),
     status: 'pending',
     createdBy: new mongoose.Types.ObjectId(userId)
   });
+  const populated = await MarketSchedule.findById(schedule._id).populate(populateScheduleMembers).lean();
+  return normalizeAssignedMembers(populated);
 };
 
 const listSchedules = async (query: Record<string, unknown>, options: any = {}) => {
   const page = Number(options.page) || 1;
   const limit = Number(options.limit) || 20;
   const [data, total] = await Promise.all([
-    MarketSchedule.find(query).sort({ targetDate: -1 }).skip((page - 1) * limit).limit(limit),
+    MarketSchedule.find(query)
+      .populate(populateScheduleMembers)
+      .sort({ targetDate: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
     MarketSchedule.countDocuments(query),
   ]);
-  return { meta: { page, limit, total, totalPages: Math.ceil(total / limit) }, data };
+  return { meta: { page, limit, total, totalPages: Math.ceil(total / limit) }, data: normalizeAssignedMembers(data) };
 };
 
 export const getSchedules = async (messId: string, options: any = {}) => {
@@ -41,9 +72,9 @@ export const updateSchedule = async (messId: string, scheduleId: string, payload
     { _id: scheduleId, messId, status: 'pending' },
     payload,
     { new: true, runValidators: true }
-  );
+  ).populate(populateScheduleMembers).lean();
   if (!schedule) throw new AppError(404, 'Schedule not found or not mutable');
-  return schedule;
+  return normalizeAssignedMembers(schedule);
 };
 
 export const updateActualSpent = async (messId: string, scheduleId: string, actualSpent: number, myMemberId: string, isManager: boolean) => {
@@ -56,7 +87,8 @@ export const updateActualSpent = async (messId: string, scheduleId: string, actu
 
   schedule.actualSpent = actualSpent;
   await schedule.save();
-  return schedule;
+  const populated = await MarketSchedule.findById(schedule._id).populate(populateScheduleMembers).lean();
+  return normalizeAssignedMembers(populated);
 };
 
 const voidSchedule = async (messId: string, scheduleId: string) => {
@@ -64,9 +96,9 @@ const voidSchedule = async (messId: string, scheduleId: string) => {
     { _id: scheduleId, messId, status: 'pending' },
     { status: 'void' },
     { new: true }
-  );
+  ).populate(populateScheduleMembers).lean();
   if (!schedule) throw new AppError(404, 'Schedule not mutable');
-  return schedule;
+  return normalizeAssignedMembers(schedule);
 };
 
 const completeSchedule = async (messId: string, scheduleId: string, payload: any, myMemberId: string, actorUserId: string, isManager: boolean) => {
@@ -104,7 +136,8 @@ const completeSchedule = async (messId: string, scheduleId: string, payload: any
 
     await schedule.save({ session });
     await session.commitTransaction();
-    return schedule;
+    const populated = await MarketSchedule.findById(schedule._id).populate(populateScheduleMembers).lean();
+    return normalizeAssignedMembers(populated);
   } catch (err) {
     await session.abortTransaction();
     throw err;

@@ -175,6 +175,7 @@ Market schedules:
 - Completing requires `actualSpent`, `actorMessMemberId`, and `fundSource`.
 - Reassignment uses `PATCH /api/v1/messes/:messId/market-schedules/:scheduleId` with `assignedTo`.
 - List and my-duties support `page`, `limit`, and `status`.
+- Market schedule responses populate `assignedTo` with mess member and nested `user` details.
 
 AI shopping:
 
