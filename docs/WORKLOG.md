@@ -142,6 +142,9 @@ Rules:
 - Menu plan meals use dynamic category keys from `mess.settings.mealCategories`.
 - Use the list endpoint with `startDate` and `endDate` set to the same date to fetch a specific day.
 - Category matching is case-insensitive, but response stores canonical category names from settings.
+- AI generation uses mess meal categories, optional `aiPreference`, optional `aiBudget`, and recent menu context.
+- AI create body can omit `meals` when `isAiGenerated=true`.
+- Optional AI fields: `aiPreference` (max 200 chars), `aiBudget`, `avoidRecentDays` from 0 to 30, defaulting to 7 in service behavior.
 - Create always starts as `draft`.
 - Status endpoint accepts `published` or `archived`.
 - Archived menu plans cannot be edited.
@@ -500,3 +503,11 @@ Recently cleaned:
 - made empty query filters safe for manager request and mess member list endpoints
 - payment and expense list endpoints support validated `page`, `limit`, and `status`
 - report date filters accept both `start`/`end` and `startDate`/`endDate`
+
+## Menu Plan AI Notes
+
+- `POST /api/v1/messes/:messId/menu-plans` can create manual or AI draft menu plans.
+- Manual mode sends `meals` with keys matching `mess.settings.mealCategories`.
+- AI mode sends `isAiGenerated: true` and may include `aiPreference`, `aiBudget`, and `avoidRecentDays`.
+- AI generation uses mess meal categories, preference/budget hints, and recent menu context to reduce repeated meals.
+- AI shopping list generation reads the menu plan meals and handles both stored Map data and plain object responses.

@@ -3975,7 +3975,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"date\": \"2026-05-13T00:00:00.000Z\",\n  \"meals\": {\n    \"Breakfast\": \"Ruti, dal, egg\",\n    \"Lunch\": \"Rice, chicken curry\",\n    \"Dinner\": \"Khichuri, beef\"\n  },\n  \"isAiGenerated\": false\n}"
+              "raw": "{\n  \"date\": \"2026-05-13T00:00:00.000Z\",\n  \"meals\": {\n    \"Breakfast\": \"Ruti, dal, egg\",\n    \"Lunch\": \"Rice, chicken curry\",\n    \"Dinner\": \"Khichuri, beef\"\n  },\n  \"isAiGenerated\": false,\n  \"aiPreference\": \"Bangla low cost\",\n  \"aiBudget\": 1200,\n  \"avoidRecentDays\": 7\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans",
@@ -3990,9 +3990,51 @@
                 "menu-plans"
               ]
             },
-            "description": "Role: Manager. Creates a draft menu plan. meals keys must match mess.settings.mealCategories case-insensitively; backend stores canonical category names from settings. If isAiGenerated=true, backend generates meals."
+            "description": "Role: Manager. Creates a draft menu plan. For manual creation, send meals with keys matching mess.settings.mealCategories. For AI generation, send isAiGenerated=true and omit meals. Optional AI fields: aiPreference (e.g. healthy, low cost, Bangla), aiBudget, avoidRecentDays (0-30, defaults to 7). Backend uses mess mealCategories and recent menu context to avoid repeated meals."
           },
-          "response": []
+          "response": [
+            {
+              "name": "Create AI Menu Plan (Manager) - Sample Body",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"date\": \"2026-05-13T00:00:00.000Z\",\n  \"meals\": {\n    \"Breakfast\": \"Ruti, dal, egg\",\n    \"Lunch\": \"Rice, chicken curry\",\n    \"Dinner\": \"Khichuri, beef\"\n  },\n  \"isAiGenerated\": false,\n  \"aiPreference\": \"Bangla low cost\",\n  \"aiBudget\": 1200,\n  \"avoidRecentDays\": 7\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "messes",
+                    "{{messId}}",
+                    "menu-plans"
+                  ]
+                },
+                "description": "Role: Manager. Creates a draft menu plan. For manual creation, send meals with keys matching mess.settings.mealCategories. For AI generation, send isAiGenerated=true and omit meals. Optional AI fields: aiPreference (e.g. healthy, low cost, Bangla), aiBudget, avoidRecentDays (0-30, defaults to 7). Backend uses mess mealCategories and recent menu context to avoid repeated meals."
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Menu drafted\",\n  \"data\": {\n    \"_id\": \"6a03011a41a5b86835d32e21\",\n    \"messId\": \"{{messId}}\",\n    \"date\": \"2026-05-12T18:00:00.000Z\",\n    \"meals\": {\n      \"Breakfast\": \"Ruti, dal, tea\",\n      \"Lunch\": \"Rice, chicken curry, dal, salad\",\n      \"Dinner\": \"Vegetable khichuri, salad\"\n    },\n    \"status\": \"draft\",\n    \"isAiGenerated\": true,\n    \"createdBy\": \"69fb36578a4ae7fa0a96649e\"\n  }\n}"
+            }
+          ]
         },
         {
           "name": "Update Menu Plan (Manager)",
@@ -4062,7 +4104,7 @@
           "response": []
         }
       ],
-      "description": "Menu planning for daily meals. Menu plans use dynamic meal category keys from mess.settings.mealCategories, support pagination/status/date-range filters, and use one status endpoint for publishing/archiving. Use the list endpoint with date filters instead of separate by-date/by-id fetches."
+      "description": "Menu planning for daily meals. Menu plans use dynamic meal category keys from mess.settings.mealCategories, support pagination/status/date-range filters, and use one status endpoint for publishing/archiving. AI generation can use meal categories, preference, budget, and recent menu context to produce draft suggestions. Menu plans do not affect meal counts or billing directly; AI shopping can generate market lists from menu plans."
     },
     {
       "name": "AI Shopping",
@@ -4158,7 +4200,7 @@
                 "generate"
               ]
             },
-            "description": "Role: Manager. Generates shopping list from menu plan. Body: { menuPlanId (ObjectId, required), targetDate (ISO datetime, required) }"
+            "description": "Role: Manager. Generates shopping list from menu plan meals. Backend reads the menu plan meals and produces bazar items from the menu text. Body: { menuPlanId (ObjectId, required), targetDate (ISO datetime, required) }"
           },
           "response": []
         },

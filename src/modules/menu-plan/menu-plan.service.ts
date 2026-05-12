@@ -27,6 +27,22 @@ const getAllowedMealCategories = async (messId: string) => {
   return mess.settings?.mealCategories ?? [];
 };
 
+const getRecentMenuContext = async (messId: string, targetDate: Date, days: number) => {
+  if (!days) return [];
+
+  const start = new Date(targetDate.getTime() - days * 24 * 60 * 60 * 1000);
+  const plans = await MenuPlan.find({
+    messId,
+    date: { $gte: start, $lt: targetDate },
+    status: { $ne: 'archived' },
+  }).select('date meals').sort({ date: -1 }).lean();
+
+  return plans.map((plan) => ({
+    date: plan.date,
+    meals: mapMealsToObject(plan).meals ?? {},
+  }));
+};
+
 const normalizeMenuMeals = async (messId: string, meals?: Record<string, string>) => {
   if (!meals) return meals;
 
@@ -50,9 +66,17 @@ const normalizeMenuMeals = async (messId: string, meals?: Record<string, string>
 export const createMenuPlan = async (messId: string, payload: any, userId: string) => {
   const targetDate = normalizeMealDate(payload.date);
   let meals = payload.meals;
+  const mealCategories = await getAllowedMealCategories(messId);
   
   if (payload.isAiGenerated) {
-    meals = await aiService.generateMenuPlanContent(targetDate);
+    const recentMeals = await getRecentMenuContext(messId, targetDate, payload.avoidRecentDays ?? 7);
+    meals = await aiService.generateMenuPlanContent({
+      date: targetDate,
+      mealCategories,
+      preference: payload.aiPreference,
+      budget: payload.aiBudget,
+      recentMeals,
+    });
   }
 
   meals = await normalizeMenuMeals(messId, meals);
