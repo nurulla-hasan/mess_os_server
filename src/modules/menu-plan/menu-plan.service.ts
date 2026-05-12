@@ -3,6 +3,49 @@ import { MenuPlan } from './menu-plan.model';
 import { normalizeMealDate } from '../../shared/utils/dateUtils';
 import { aiService } from '../../shared/services/aiService';
 import { AppError } from '../../shared/utils/apiError';
+import { Mess } from '../mess/mess.model';
+
+export type MenuPlanStatus = 'draft' | 'published' | 'archived';
+
+type ListMenuPlanOptions = {
+  page?: number;
+  limit?: number;
+  status?: MenuPlanStatus;
+  start?: string;
+  end?: string;
+};
+
+const mapMealsToObject = (plan: any) => {
+  if (!plan?.meals) return plan;
+  const meals = plan.meals instanceof Map ? Object.fromEntries(plan.meals) : plan.meals;
+  return { ...plan, meals };
+};
+
+const getAllowedMealCategories = async (messId: string) => {
+  const mess = await Mess.findById(messId).select('settings.mealCategories').lean();
+  if (!mess) throw new AppError(404, 'Mess not found');
+  return mess.settings?.mealCategories ?? [];
+};
+
+const normalizeMenuMeals = async (messId: string, meals?: Record<string, string>) => {
+  if (!meals) return meals;
+
+  const allowedCategories = await getAllowedMealCategories(messId);
+  const categoryByLowercase = new Map(allowedCategories.map((category) => [category.toLowerCase(), category]));
+  const normalizedMeals: Record<string, string> = {};
+
+  for (const [category, menu] of Object.entries(meals)) {
+    const trimmedCategory = category.trim();
+    const trimmedMenu = menu.trim();
+    const canonicalCategory = categoryByLowercase.get(trimmedCategory.toLowerCase());
+    if (!canonicalCategory) {
+      throw new AppError(400, `Invalid meal category: ${trimmedCategory}. Allowed categories: ${allowedCategories.join(', ')}`);
+    }
+    normalizedMeals[canonicalCategory] = trimmedMenu;
+  }
+
+  return normalizedMeals;
+};
 
 export const createMenuPlan = async (messId: string, payload: any, userId: string) => {
   const targetDate = normalizeMealDate(payload.date);
@@ -11,8 +54,10 @@ export const createMenuPlan = async (messId: string, payload: any, userId: strin
   if (payload.isAiGenerated) {
     meals = await aiService.generateMenuPlanContent(targetDate);
   }
+
+  meals = await normalizeMenuMeals(messId, meals);
   
-  return await MenuPlan.create({
+  const plan = await MenuPlan.create({
     messId,
     date: targetDate,
     meals,
@@ -20,50 +65,58 @@ export const createMenuPlan = async (messId: string, payload: any, userId: strin
     isAiGenerated: payload.isAiGenerated,
     createdBy: new mongoose.Types.ObjectId(userId)
   });
+  return mapMealsToObject(plan.toObject());
 };
 
-export const getMenuPlans = async (messId: string) => {
-  return await MenuPlan.find({ messId }).sort({ date: -1 });
-};
+export const getMenuPlans = async (messId: string, options: ListMenuPlanOptions = {}) => {
+  const page = options.page || 1;
+  const limit = options.limit || 20;
+  const query: Record<string, unknown> = { messId: new mongoose.Types.ObjectId(messId) };
 
-export const getMenuPlanById = async (messId: string, planId: string) => {
-  const plan = await MenuPlan.findOne({ _id: planId, messId });
-  if (!plan) throw new AppError(404, 'Menu plan not found');
-  return plan;
-};
+  if (options.status) query.status = options.status;
 
-export const getMenuPlanByDate = async (messId: string, dateStr: string) => {
-  const plan = await MenuPlan.findOne({ messId, date: normalizeMealDate(dateStr) });
-  if (!plan) throw new AppError(404, 'Menu plan not found for date');
-  return plan;
+  const start = options.start ? normalizeMealDate(options.start) : undefined;
+  const end = options.end ? normalizeMealDate(options.end) : undefined;
+  if (start || end) {
+    query.date = {
+      ...(start ? { $gte: start } : {}),
+      ...(end ? { $lte: end } : {}),
+    };
+  }
+
+  const [items, total] = await Promise.all([
+    MenuPlan.find(query).sort({ date: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+    MenuPlan.countDocuments(query),
+  ]);
+
+  return {
+    items: items.map(mapMealsToObject),
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 export const updateMenuPlan = async (messId: string, planId: string, payload: any) => {
+  const meals = await normalizeMenuMeals(messId, payload.meals);
   const plan = await MenuPlan.findOneAndUpdate(
-    { _id: planId, messId },
-    { meals: payload.meals },
+    { _id: planId, messId, status: { $ne: 'archived' } },
+    { meals },
     { new: true, runValidators: true }
-  );
-  if (!plan) throw new AppError(404, 'Menu plan not found');
-  return plan;
+  ).lean();
+  if (!plan) throw new AppError(404, 'Menu plan not found or archived');
+  return mapMealsToObject(plan);
 };
 
-export const publishMenuPlan = async (messId: string, planId: string) => {
+export const updateMenuPlanStatus = async (messId: string, planId: string, status: 'published' | 'archived') => {
   const plan = await MenuPlan.findOneAndUpdate(
     { _id: planId, messId },
-    { status: 'published' },
+    { status },
     { new: true, runValidators: true }
-  );
+  ).lean();
   if (!plan) throw new AppError(404, 'Menu plan not found');
-  return plan;
-};
-
-export const archiveMenuPlan = async (messId: string, planId: string) => {
-  const plan = await MenuPlan.findOneAndUpdate(
-    { _id: planId, messId },
-    { status: 'archived' },
-    { new: true, runValidators: true }
-  );
-  if (!plan) throw new AppError(404, 'Menu plan not found');
-  return plan;
+  return mapMealsToObject(plan);
 };

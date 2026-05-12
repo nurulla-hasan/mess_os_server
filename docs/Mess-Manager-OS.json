@@ -2346,6 +2346,59 @@
           ]
         },
         {
+          "name": "Get Manager Dashboard (Manager)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "messes",
+                "{{messId}}",
+                "dashboard"
+              ]
+            },
+            "description": "Role: Manager. Aggregated dashboard summary for the manager dashboard. Use this single API for dashboard cards/header/recent notices. Module detail pages should still use their dedicated APIs."
+          },
+          "response": [
+            {
+              "name": "Get Manager Dashboard (Manager) - Sample",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/dashboard",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "messes",
+                    "{{messId}}",
+                    "dashboard"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Manager dashboard loaded\",\n  \"data\": {\n    \"mess\": {\n      \"_id\": \"{{messId}}\",\n      \"name\": \"Sunrise Mess\",\n      \"address\": \"Aqua tower\",\n      \"inviteCode\": \"85A97F1F\",\n      \"status\": \"active\",\n      \"settings\": {\n        \"mealCategories\": [\n          \"Breakfast\",\n          \"Lunch\",\n          \"Dinner\"\n        ],\n        \"equalShareCategories\": [\n          \"rent\",\n          \"wifi\",\n          \"electricity\",\n          \"water\",\n          \"gas\",\n          \"bua\"\n        ]\n      }\n    },\n    \"subscription\": {\n      \"_id\": \"69feb0e228a418779866bf5b\",\n      \"planId\": \"max\",\n      \"status\": \"active\",\n      \"currentPeriodStart\": \"2026-05-09T03:58:25.722Z\",\n      \"currentPeriodEnd\": \"2026-06-08T03:58:25.722Z\",\n      \"plan\": {\n        \"name\": \"Max\",\n        \"code\": \"max\",\n        \"price\": 999,\n        \"currency\": \"BDT\",\n        \"billingCycle\": \"monthly\",\n        \"maxMembers\": 100\n      }\n    },\n    \"summary\": {\n      \"activeMembers\": 18,\n      \"pendingJoinRequests\": 3,\n      \"todayMeals\": 24,\n      \"todayMealRecords\": 8,\n      \"pendingPaymentsAmount\": 4500,\n      \"pendingPaymentsCount\": 5,\n      \"monthlyExpensesAmount\": 12850,\n      \"monthlyExpensesCount\": 9,\n      \"pendingExpensesAmount\": 1200,\n      \"pendingExpensesCount\": 3,\n      \"unpaidUtilities\": 2,\n      \"openComplaints\": 1,\n      \"pendingMarketDuties\": 2,\n      \"totalMessFund\": 42500,\n      \"totalDeposits\": 55000,\n      \"totalCashOut\": 12500\n    },\n    \"today\": {\n      \"date\": \"2026-05-11T18:00:00.000Z\",\n      \"mealBreakdown\": {\n        \"Breakfast\": 8,\n        \"Lunch\": 16\n      }\n    },\n    \"recent\": {\n      \"notices\": [\n        {\n          \"_id\": \"69ff00000000000000000001\",\n          \"title\": \"Monthly bazar budget update\",\n          \"content\": \"Budget updated for this month.\",\n          \"isPinned\": true,\n          \"createdAt\": \"2026-05-10T09:00:00.000Z\"\n        }\n      ]\n    },\n    \"pendingActions\": {\n      \"joinRequests\": 3,\n      \"payments\": 5,\n      \"expenses\": 3,\n      \"utilities\": 2,\n      \"complaints\": 1,\n      \"marketDuties\": 2\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
           "name": "Update Mess (Manager)",
           "request": {
             "method": "PATCH",
@@ -2431,7 +2484,7 @@
           "response": []
         }
       ],
-      "description": "Mess management. Create, join, update mess. All routes require authentication. Routes under /:messId require mess membership (Manager or Member)."
+      "description": "Mess management. Create, join, update mess. Manager dashboard uses GET /:messId/dashboard as a single aggregate summary endpoint. All routes require authentication. Routes under /:messId require mess membership."
     },
     {
       "name": "Mess Members",
@@ -3854,7 +3907,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans?page=1&limit=20&status=published&startDate=&endDate=",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -3864,56 +3917,48 @@
                 "messes",
                 "{{messId}}",
                 "menu-plans"
-              ]
-            },
-            "description": "Role: Member+. Lists menu plans. Requires messId variable."
-          },
-          "response": []
-        },
-        {
-          "name": "Get Menu Plan By Date (Member+)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans/date/2025-01-01",
-              "host": [
-                "{{baseUrl}}"
               ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "menu-plans",
-                "date",
-                "2025-01-01"
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Optional. Positive integer page number. Defaults to 1."
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Optional. Positive integer page size. Maximum 100. Defaults to 20."
+                },
+                {
+                  "key": "status",
+                  "value": "published",
+                  "description": "Optional. Allowed values: draft, published, archived."
+                },
+                {
+                  "key": "startDate",
+                  "value": "",
+                  "description": "Optional date range start alias."
+                },
+                {
+                  "key": "endDate",
+                  "value": "",
+                  "description": "Optional date range end alias."
+                },
+                {
+                  "key": "start",
+                  "value": "",
+                  "description": "Optional alias for startDate.",
+                  "disabled": true
+                },
+                {
+                  "key": "end",
+                  "value": "",
+                  "description": "Optional alias for endDate.",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Role: Member+. Gets menu plan by date. Path param: date (YYYY-MM-DD). Requires messId variable."
-          },
-          "response": []
-        },
-        {
-          "name": "Get Menu Plan By Id (Member+)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans/{{planId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "menu-plans",
-                "{{planId}}"
-              ]
-            },
-            "description": "Role: Member+. Gets menu plan by ID. Requires messId and planId variables."
+            "description": "Role: Member+. Lists menu plans with pagination and filters. Query: page, limit(max 100), status=draft|published|archived, start/end or startDate/endDate. Use startDate and endDate with the same date to fetch a specific day."
           },
           "response": []
         },
@@ -3930,7 +3975,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"date\": \"2026-04-25T10:00:00.000Z\",\n  \"meals\": {\n    \"breakfast\": \"Bread, Egg\",\n    \"lunch\": \"Rice, Chicken, Dal\",\n    \"dinner\": \"Rice, Fish\"\n  },\n  \"isAiGenerated\": false\n}"
+              "raw": "{\n  \"date\": \"2026-05-13T00:00:00.000Z\",\n  \"meals\": {\n    \"Breakfast\": \"Ruti, dal, egg\",\n    \"Lunch\": \"Rice, chicken curry\",\n    \"Dinner\": \"Khichuri, beef\"\n  },\n  \"isAiGenerated\": false\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans",
@@ -3945,7 +3990,7 @@
                 "menu-plans"
               ]
             },
-            "description": "Role: Manager. Body: { date (ISO datetime, required), meals (object with breakfast/lunch/dinner strings, optional), isAiGenerated (boolean, default false, optional) }"
+            "description": "Role: Manager. Creates a draft menu plan. meals keys must match mess.settings.mealCategories case-insensitively; backend stores canonical category names from settings. If isAiGenerated=true, backend generates meals."
           },
           "response": []
         },
@@ -3962,7 +4007,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"meals\": {\n    \"lunch\": \"Rice and Chicken\"\n  }\n}"
+              "raw": "{\n  \"meals\": {\n    \"Breakfast\": \"Paratha, egg\",\n    \"Lunch\": \"Rice, fish curry\",\n    \"Dinner\": \"Rice, vegetables\"\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans/{{planId}}",
@@ -3978,17 +4023,27 @@
                 "{{planId}}"
               ]
             },
-            "description": "Role: Manager. Body: { meals (object with breakfast/lunch/dinner strings, optional) }. Requires messId and planId variables."
+            "description": "Role: Manager. Updates meals for a non-archived menu plan. meals keys must match mess.settings.mealCategories."
           },
           "response": []
         },
         {
-          "name": "Publish Menu Plan (Manager)",
+          "name": "Update Menu Plan Status (Manager)",
           "request": {
-            "method": "POST",
-            "header": [],
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"published\"\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans/{{planId}}/publish",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans/{{planId}}/status",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -3999,39 +4054,15 @@
                 "{{messId}}",
                 "menu-plans",
                 "{{planId}}",
-                "publish"
+                "status"
               ]
             },
-            "description": "Role: Manager. Publishes menu plan. Requires messId and planId variables."
-          },
-          "response": []
-        },
-        {
-          "name": "Archive Menu Plan (Manager)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans/{{planId}}/archive",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "menu-plans",
-                "{{planId}}",
-                "archive"
-              ]
-            },
-            "description": "Role: Manager. Archives menu plan. Requires messId and planId variables."
+            "description": "Role: Manager. Updates menu plan status through one endpoint. Body: { status: \"published\" | \"archived\" }."
           },
           "response": []
         }
       ],
-      "description": "Menu planning. Managers create/publish/archive meal plans."
+      "description": "Menu planning for daily meals. Menu plans use dynamic meal category keys from mess.settings.mealCategories, support pagination/status/date-range filters, and use one status endpoint for publishing/archiving. Use the list endpoint with date filters instead of separate by-date/by-id fetches."
     },
     {
       "name": "AI Shopping",

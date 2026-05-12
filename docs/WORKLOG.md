@@ -99,6 +99,55 @@ Removed members cannot rejoin automatically.
 
 Rejected members can submit join request again; existing record is set back to `pending`.
 
+## Manager Dashboard
+
+Dashboard aggregate endpoint:
+
+`GET /api/v1/messes/:messId/dashboard`
+
+Role:
+
+- mess manager only
+
+Includes:
+
+- mess header data with invite code and settings
+- current subscription and plan details
+- summary counters for active members, pending joins, today meals, pending payments, monthly approved expenses, pending expenses, unpaid utilities, open complaints, pending market duties, and cash fund totals
+- today meal category breakdown
+- recent active notices
+- pending action counts
+
+Use this endpoint for the manager dashboard main page. Use module-specific APIs for detail tables and actions.
+
+## Menu Plan Flow
+
+Endpoints:
+
+- `GET /api/v1/messes/:messId/menu-plans`
+- `POST /api/v1/messes/:messId/menu-plans`
+- `PATCH /api/v1/messes/:messId/menu-plans/:planId`
+- `PATCH /api/v1/messes/:messId/menu-plans/:planId/status`
+
+List query params:
+
+- `page`
+- `limit` max 100
+- `status=draft|published|archived`
+- `start`/`end`
+- `startDate`/`endDate` aliases
+
+Rules:
+
+- Menu plan meals use dynamic category keys from `mess.settings.mealCategories`.
+- Use the list endpoint with `startDate` and `endDate` set to the same date to fetch a specific day.
+- Category matching is case-insensitive, but response stores canonical category names from settings.
+- Create always starts as `draft`.
+- Status endpoint accepts `published` or `archived`.
+- Archived menu plans cannot be edited.
+- Menu plans do not affect meal count, meal rate, or billing directly.
+- AI shopping can generate shopping lists from a menu plan.
+
 ## Meals Flow
 
 Endpoints:
