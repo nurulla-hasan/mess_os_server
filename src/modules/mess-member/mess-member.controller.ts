@@ -14,7 +14,7 @@ export const getMembers = catchAsync(async (req: Request, res: Response) => {
   const status = req.query.status as MemberStatus | undefined;
   const searchTerm = req.query.searchTerm as string | undefined;
   const page = parseInt(String(req.query.page)) || 1;
-  const limit = parseInt(String(req.query.limit)) || 20;
+  const limit = parseInt(String(req.query.limit)) || 10;
   const canViewNonActiveMembers = req.messRole === 'manager' || req.user?.globalRole === 'super_admin';
 
   if ((!status || status !== 'active') && !canViewNonActiveMembers) {

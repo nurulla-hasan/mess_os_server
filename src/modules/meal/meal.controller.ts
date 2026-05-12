@@ -25,7 +25,7 @@ export const listMeals = catchAsync(async (req: Request, res: Response) => {
   const end = req.query.end ? String(req.query.end) : req.query.endDate ? String(req.query.endDate) : undefined;
   const result = await mealService.listMeals(req.messId!, {
     page: parseInt(String(req.query.page)) || 1,
-    limit: parseInt(String(req.query.limit)) || 20,
+    limit: parseInt(String(req.query.limit)) || 10,
     memberId: req.query.memberId ? String(req.query.memberId) : undefined,
     searchTerm: req.query.searchTerm ? String(req.query.searchTerm) : undefined,
     start,

@@ -5,7 +5,7 @@ import * as adminService from './admin.service';
 
 export const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const page = parseInt(String(req.query.page)) || 1;
-  const limit = parseInt(String(req.query.limit)) || 20;
+  const limit = parseInt(String(req.query.limit)) || 10;
   const searchTerm = req.query.searchTerm as string | undefined;
   const result = await adminService.getAllUsers(page, limit, searchTerm);
   sendResponse(res, { statusCode: 200, success: true, message: 'Platform users retrieved', meta: result.pagination, data: result.items });
@@ -13,7 +13,7 @@ export const getAllUsers = catchAsync(async (req: Request, res: Response) => {
 
 export const getAllMesses = catchAsync(async (req: Request, res: Response) => {
   const page = parseInt(String(req.query.page)) || 1;
-  const limit = parseInt(String(req.query.limit)) || 20;
+  const limit = parseInt(String(req.query.limit)) || 10;
   const searchTerm = req.query.searchTerm as string | undefined;
   const status = req.query.status as 'active' | 'suspended' | undefined;
   const result = await adminService.getAllMesses(page, limit, searchTerm, status);
@@ -30,7 +30,7 @@ export const getAnalytics = catchAsync(async (req: Request, res: Response) => {
 
 export const getAllSubscriptions = catchAsync(async (req: Request, res: Response) => {
   const page = parseInt(String(req.query.page)) || 1;
-  const limit = parseInt(String(req.query.limit)) || 20;
+  const limit = parseInt(String(req.query.limit)) || 10;
   const result = await adminService.getAllSubscriptions(page, limit, {
     searchTerm: req.query.searchTerm as string | undefined,
     status: req.query.status as 'active' | 'past_due' | 'canceled' | 'unpaid' | undefined,
