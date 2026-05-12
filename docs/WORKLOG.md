@@ -509,5 +509,9 @@ Recently cleaned:
 - `POST /api/v1/messes/:messId/menu-plans` can create manual or AI draft menu plans.
 - Manual mode sends `meals` with keys matching `mess.settings.mealCategories`.
 - AI mode sends `isAiGenerated: true` and may include `aiPreference`, `aiBudget`, and `avoidRecentDays`.
+- AI generation now uses the OpenAI Responses API when `AI_PROVIDER=openai`.
+- Required AI env for real generation: `AI_API_KEY`; optional `AI_MODEL` defaults to `gpt-5.4-mini`, `AI_MAX_TOKENS` defaults to `1200`.
+- If `AI_PROVIDER=openai` and the API key is missing/placeholder, generation fails instead of silently returning mock data.
+- `AI_PROVIDER=mock` keeps the old hardcoded local generator for intentional testing only.
 - AI generation uses mess meal categories, preference/budget hints, and recent menu context to reduce repeated meals.
 - AI shopping list generation reads the menu plan meals and handles both stored Map data and plain object responses.

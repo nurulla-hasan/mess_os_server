@@ -29,8 +29,10 @@ To run the Mess Manager OS backend locally or deploy it cleanly explicitly to pr
   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`: Map completely natively with cloud panel extraction keys safely.
 
 - **AI Layer Boundaries**
-  - `AI_PROVIDER`, `AI_MODEL`, `AI_MAX_TOKENS`: Safely bounded default structure strings spanning prompt execution bounds mapping externally natively.
-  - `AI_API_KEY`: Provide a secure canonical active key explicitly tracking boundaries spanning external proxy logic seamlessly securely.
+  - `AI_PROVIDER`: Use `openai` for real generation, or `mock` only when intentionally testing local hardcoded suggestions.
+  - `AI_API_KEY`: Required when `AI_PROVIDER=openai`. Store the OpenAI API key only in server-side environment variables.
+  - `AI_MODEL`: Defaults to `gpt-5.4-mini` for low-latency menu/shopping generation.
+  - `AI_MAX_TOKENS`: Maximum output token budget for AI JSON responses.
 
 - **External Integrations**
   - `STRIPE_SECRET_KEY`: Override organically checking exact Stripe webhook bounds accurately cleanly strictly mapping.
