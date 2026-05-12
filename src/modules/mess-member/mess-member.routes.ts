@@ -11,6 +11,7 @@ import * as val from './mess-member.validation';
 const router = Router({ mergeParams: true });
 
 // Any active member can view active members; managers can filter by status.
+router.get('/options', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.getActiveMemberOptions);
 router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.getMembersSchema), ctl.getMembers);
 
 // Only manager can approve/reject pending requests or remove active members.

@@ -111,6 +111,25 @@ export const getMembers = async (messId: string, options: GetMembersOptions = {}
   };
 };
 
+export const getActiveMemberOptions = async (messId: string) => {
+  const members = await MessMember.find({ messId, status: 'active' })
+    .populate('userId', 'fullName email phone avatarUrl')
+    .sort({ messRole: -1, createdAt: 1 })
+    .lean();
+
+  return members.map((member) => {
+    const user = member.userId as any;
+    return {
+      _id: member._id,
+      name: user?.fullName ?? '',
+      email: user?.email,
+      phone: user?.phone,
+      avatarUrl: user?.avatarUrl,
+      messRole: member.messRole,
+    };
+  });
+};
+
 export const updatePendingMemberStatus = async (
   messId: string,
   memberId: string,

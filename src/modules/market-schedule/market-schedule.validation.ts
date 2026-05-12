@@ -39,12 +39,10 @@ export const updateMarketScheduleStatusSchema = z.object({
   body: z.object({
     status: z.enum(['completed', 'void']),
     actualSpent: z.number().positive().optional(),
-    actorMessMemberId: oId.optional(),
     fundSource: z.enum([FUND_SOURCES.MESS_CASH, FUND_SOURCES.PERSONAL_CASH]).optional()
   }).strict().superRefine((value, ctx) => {
     if (value.status === 'completed') {
       if (value.actualSpent === undefined) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['actualSpent'], message: 'actualSpent is required when status is completed' });
-      if (!value.actorMessMemberId) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['actorMessMemberId'], message: 'actorMessMemberId is required when status is completed' });
       if (!value.fundSource) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['fundSource'], message: 'fundSource is required when status is completed' });
     }
   })

@@ -95,10 +95,6 @@ const completeSchedule = async (messId: string, scheduleId: string, payload: any
     const schedule = await MarketSchedule.findOne({ _id: scheduleId, messId, status: 'pending' }).session(session);
     if (!schedule) throw new AppError(404, 'Schedule not currently actionable');
 
-    if (!isManager && payload.actorMessMemberId !== myMemberId) {
-      throw new AppError(403, 'Permission denied, you can only claim expenses paid by yourself');
-    }
-
     if (!isManager && !schedule.assignedTo.some(id => id.toString() === myMemberId)) {
       throw new AppError(403, 'Permission denied, only assigned members or managers can complete tasks');
     }
@@ -113,7 +109,7 @@ const completeSchedule = async (messId: string, scheduleId: string, payload: any
       category: 'bazar',
       amount: payload.actualSpent,
       date: new Date(),
-      paidBy: new mongoose.Types.ObjectId(payload.actorMessMemberId),
+      paidBy: new mongoose.Types.ObjectId(myMemberId),
       fundSource: payload.fundSource,
       status: 'pending'
     }], { session });

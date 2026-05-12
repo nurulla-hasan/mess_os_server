@@ -31,6 +31,16 @@ export const getMembers = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+export const getActiveMemberOptions = catchAsync(async (req: Request, res: Response) => {
+  const result = await memberService.getActiveMemberOptions(req.messId!);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Active member options fetched successfully',
+    data: result,
+  });
+});
+
 export const updatePendingMemberStatus = catchAsync(async (req: Request, res: Response) => {
   const member = await memberService.updatePendingMemberStatus(
     req.messId!,

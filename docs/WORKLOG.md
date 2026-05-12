@@ -53,6 +53,19 @@ Members list:
 
 `GET /api/v1/messes/:messId/members`
 
+Lightweight active member options:
+
+`GET /api/v1/messes/:messId/members/options`
+
+Options response has no pagination and includes:
+
+- `_id` as mess member id
+- `name`
+- `email`
+- `phone`
+- `avatarUrl`
+- `messRole`
+
 Query params:
 
 - `page`
@@ -172,7 +185,8 @@ Market schedules:
 
 - `PATCH /api/v1/messes/:messId/market-schedules/:scheduleId/status`
 - Body `status=completed|void`
-- Completing requires `actualSpent`, `actorMessMemberId`, and `fundSource`.
+- Completing requires `actualSpent` and `fundSource`.
+- Backend uses authenticated `req.messMember._id` as the expense `paidBy`; frontend does not send `actorMessMemberId`.
 - Reassignment uses `PATCH /api/v1/messes/:messId/market-schedules/:scheduleId` with `assignedTo`.
 - Pending schedule update supports `assignedTo`, `shoppingItems`, and `estimatedBudget`.
 - `actualSpent` is submitted only when completing the schedule; the separate spent update endpoint was removed.

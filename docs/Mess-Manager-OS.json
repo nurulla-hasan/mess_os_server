@@ -2619,6 +2619,61 @@
           ]
         },
         {
+          "name": "Get Active Member Options (Member+)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/members/options",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "messes",
+                "{{messId}}",
+                "members",
+                "options"
+              ]
+            },
+            "description": "Role: Member+. Lightweight active member options for selectors/dropdowns such as meal logging. Returns all active members without pagination. Response fields: _id (messMemberId), name, email, phone, avatarUrl, messRole."
+          },
+          "response": [
+            {
+              "name": "Get Active Member Options (Member+) - Sample",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/members/options",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "messes",
+                    "{{messId}}",
+                    "members",
+                    "options"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Active member options fetched successfully\",\n  \"data\": [\n    {\n      \"_id\": \"{{memberId}}\",\n      \"name\": \"Golap Hasan\",\n      \"email\": \"golaphasan379@gmail.com\",\n      \"phone\": \"017123456789\",\n      \"avatarUrl\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1778230663/avatars/el1ms2tv7bsbai31qgct.jpg\",\n      \"messRole\": \"manager\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
           "name": "Update Pending Member Status (Manager)",
           "request": {
             "method": "PATCH",
@@ -2676,7 +2731,7 @@
           "response": []
         }
       ],
-      "description": "Member management within a mess. GET / returns all statuses for managers when status is omitted and supports ?status=active|pending|rejected|removed plus ?searchTerm= for name/email/phone search. Members can use status=active. PATCH /:memberId/status approves or rejects pending requests with body status=active|rejected. POST remove requires manager role. All routes protected by messContext middleware."
+      "description": "Member management within a mess. GET /options returns lightweight active member options without pagination for selectors. GET / returns all statuses for managers when status is omitted and supports ?status=active|pending|rejected|removed plus ?searchTerm= for name/email/phone search. Members can use status=active. PATCH /:memberId/status approves or rejects pending requests with body status=active|rejected. POST remove requires manager role. All routes protected by messContext middleware."
     },
     {
       "name": "Payments",
@@ -3766,7 +3821,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"completed\",\n  \"actualSpent\": 1200,\n  \"actorMessMemberId\": \"{{memberId}}\",\n  \"fundSource\": \"personal_cash\"\n}"
+              "raw": "{\n  \"status\": \"completed\",\n  \"actualSpent\": 1200,\n  \"fundSource\": \"personal_cash\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules/{{scheduleId}}/status",
@@ -3783,7 +3838,7 @@
                 "status"
               ]
             },
-            "description": "Role: Member+. Updates schedule status through one endpoint. Body status: completed or void. For completed, actualSpent, actorMessMemberId, and fundSource are required; assigned members or managers can complete. Only managers can void. Reassignment is handled by PATCH /market-schedules/:scheduleId with assignedTo. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details."
+            "description": "Role: Member+. Updates schedule status through one endpoint. Body status: completed or void. For completed, actualSpent and fundSource are required; backend uses the authenticated active mess membership as paidBy, so actorMessMemberId is not sent from frontend. Assigned members or managers can complete. Only managers can void. Reassignment is handled by PATCH /market-schedules/:scheduleId with assignedTo. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details."
           },
           "response": []
         }
