@@ -4,13 +4,35 @@ import { ledgerHelper } from '../../shared/helpers/ledgerHelper';
 import { AppError } from '../../shared/utils/apiError';
 import { REFERENCE_TYPES, FUND_SOURCES } from '../../constants/ledgerEntryTypes';
 import { CreateExpensePayload } from './expense.validation';
+import { MessMember } from '../mess-member/mess-member.model';
 
-export const createExpense = async (messId: string, payload: CreateExpensePayload) => { 
-  return await Expense.create({ 
+const expensePopulate = {
+  path: 'paidBy',
+  select: 'userId messRole status participation',
+  populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
+};
+
+const assertActiveMemberInMess = async (messId: string, messMemberId: string) => {
+  const member = await MessMember.findOne({
+    _id: new Types.ObjectId(messMemberId),
+    messId: new Types.ObjectId(messId),
+    status: 'active',
+  }).select('_id').lean();
+  if (!member) throw new AppError(400, 'Expense must target an active member of this mess');
+};
+
+export const createExpense = async (messId: string, payload: CreateExpensePayload) => {
+  if (!payload.paidBy) throw new AppError(400, 'paidBy is required');
+  await assertActiveMemberInMess(messId, payload.paidBy);
+
+  const expense = await Expense.create({
     ...payload,
-    messId: new Types.ObjectId(messId), 
-    status: 'pending' 
-  }); 
+    messId: new Types.ObjectId(messId),
+    paidBy: new Types.ObjectId(payload.paidBy),
+    status: 'pending'
+  });
+
+  return Expense.findById(expense._id).populate(expensePopulate);
 };
 
 export const getExpenses = async (messId: string, query: any = {}) => { 
@@ -23,7 +45,7 @@ export const getExpenses = async (messId: string, query: any = {}) => {
   const limit = Number(query.limit) || 20;
   const skip = (page - 1) * limit;
 
-  const data = await Expense.find(filter).sort({ date: -1 }).skip(skip).limit(limit);
+  const data = await Expense.find(filter).populate(expensePopulate).sort({ date: -1 }).skip(skip).limit(limit);
   const total = await Expense.countDocuments(filter);
 
   return {
@@ -33,7 +55,7 @@ export const getExpenses = async (messId: string, query: any = {}) => {
 };
 
 export const getExpenseById = async (messId: string, expenseId: string) => {
-  const exp = await Expense.findOne({ _id: new Types.ObjectId(expenseId), messId: new Types.ObjectId(messId) });
+  const exp = await Expense.findOne({ _id: new Types.ObjectId(expenseId), messId: new Types.ObjectId(messId) }).populate(expensePopulate);
   if (!exp) throw new AppError(404, 'Expense not found');
   return exp;
 };
@@ -74,7 +96,7 @@ const approveExpense = async (messId: string, expenseId: string, managerId: stri
     
     await exp.save({ session });
     await session.commitTransaction();
-    return exp;
+    return Expense.findById(exp._id).populate(expensePopulate);
   } catch (err) { 
     await session.abortTransaction(); 
     throw err; 
@@ -90,7 +112,7 @@ const rejectExpense = async (messId: string, expenseId: string, managerId: strin
     { new: true }
   );
   if (!exp) throw new AppError(404, 'Expense not found or not pending for rejection');
-  return exp;
+  return exp.populate(expensePopulate);
 };
 
 export const cancelExpense = async (messId: string, expenseId: string, actorMemberId: string, actorRole: string) => {
@@ -108,7 +130,8 @@ export const cancelExpense = async (messId: string, expenseId: string, actorMemb
   }
 
   exp.status = 'canceled';
-  return await exp.save();
+  await exp.save();
+  return exp.populate(expensePopulate);
 };
 
 export const updateExpenseStatus = async (
@@ -163,6 +186,6 @@ export const reimburseExpense = async (messId: string, expenseId: string, manage
 
     await exp.save({ session });
     await session.commitTransaction();
-    return exp;
+    return Expense.findById(exp._id).populate(expensePopulate);
   } catch (err) { await session.abortTransaction(); throw err; } finally { session.endSession(); }
 };

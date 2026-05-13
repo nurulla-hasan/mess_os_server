@@ -9,6 +9,13 @@ export const createSchedule = catchAsync(async (req: Request, res: Response) => 
 });
 
 export const getSchedules = catchAsync(async (req: Request, res: Response) => {
+  if (req.query.scope === 'my') {
+    if (!req.messMember) throw new AppError(403, 'Context missing mapping bounds');
+    const result = await msService.getMyDuties(req.messId!, req.messMember._id.toString(), req.query);
+    sendResponse(res, { statusCode: 200, success: true, message: 'Schedules loaded', meta: result.meta, data: result.data });
+    return;
+  }
+
   const result = await msService.getSchedules(req.messId!, req.query);
   sendResponse(res, { statusCode: 200, success: true, message: 'Schedules loaded', meta: result.meta, data: result.data });
 });

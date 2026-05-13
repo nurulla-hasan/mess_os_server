@@ -10,7 +10,7 @@ export const createExpenseSchema = z.object({
     category: z.string().min(1),
     amount: z.number().positive(),
     date: z.string().datetime(),
-    paidBy: oId,
+    paidBy: oId.optional(),
     fundSource: z.enum([FUND_SOURCES.MESS_CASH, FUND_SOURCES.PERSONAL_CASH]),
     receiptUrl: z.string().url().optional()
   }).strict()
@@ -22,6 +22,9 @@ export const listExpensesSchema = z.object({
   query: z.object({
     page: z.preprocess(emptyToUndefined, z.string().regex(/^\d+$/).optional()),
     limit: z.preprocess(emptyToUndefined, z.string().regex(/^\d+$/).optional()),
+    paidBy: z.preprocess(emptyToUndefined, oId.optional()),
+    scope: z.preprocess(emptyToUndefined, z.enum(['all', 'my']).optional()),
+    fundSource: z.preprocess(emptyToUndefined, z.enum([FUND_SOURCES.MESS_CASH, FUND_SOURCES.PERSONAL_CASH]).optional()),
     status: z.preprocess(emptyToUndefined, z.enum(['pending', 'approved', 'rejected', 'canceled']).optional()),
   }).strict()
 });

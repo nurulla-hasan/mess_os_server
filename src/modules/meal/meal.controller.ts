@@ -27,6 +27,7 @@ export const listMeals = catchAsync(async (req: Request, res: Response) => {
     page: parseInt(String(req.query.page)) || 1,
     limit: parseInt(String(req.query.limit)) || 10,
     memberId: req.query.memberId ? String(req.query.memberId) : undefined,
+    scope: req.query.scope === 'my' ? 'my' : req.query.scope === 'all' ? 'all' : undefined,
     searchTerm: req.query.searchTerm ? String(req.query.searchTerm) : undefined,
     start,
     end,

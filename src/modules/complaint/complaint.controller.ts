@@ -10,7 +10,12 @@ export const createComplaint = catchAsync(async (req: Request, res: Response) =>
 });
 
 export const getComplaints = catchAsync(async (req: Request, res: Response) => {
-  const result = await compService.getComplaints(req.messId!, req.query);
+  if (!req.messMember) throw new AppError(403, 'Mapped user required');
+  const isMyScope = req.query.scope === 'my';
+  const query = req.messMember.messRole === 'manager' && !isMyScope
+    ? req.query
+    : { ...req.query, messMemberId: req.messMember._id.toString() };
+  const result = await compService.getComplaints(req.messId!, query);
   sendResponse(res, { statusCode: 200, success: true, message: 'Complaints fully traversed', meta: result.meta, data: result.data });
 });
 

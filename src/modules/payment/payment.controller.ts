@@ -30,7 +30,8 @@ export const createPayment = catchAsync(async (req: Request, res: Response) => {
 
 export const getPayments = catchAsync(async (req: Request, res: Response) => {
   const actor = req.messMember!;
-  const query = actor.messRole === 'manager'
+  const isMyScope = req.query.scope === 'my';
+  const query = actor.messRole === 'manager' && !isMyScope
     ? req.query
     : { ...req.query, messMemberId: actor._id.toString() };
   const result = await paymentService.getPayments(req.messId!, query);

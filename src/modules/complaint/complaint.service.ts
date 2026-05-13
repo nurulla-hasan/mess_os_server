@@ -3,13 +3,25 @@ import { Complaint } from './complaint.model';
 import { AppError } from '../../shared/utils/apiError';
 import { CreateComplaintPayload } from './complaint.validation';
 
+const complaintPopulate = {
+  path: 'messMemberId',
+  select: 'userId messRole status participation',
+  populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
+};
+
+const getComplaintOwnerId = (complaint: any) => {
+  const member = complaint.messMemberId;
+  return typeof member === 'object' && member?._id ? member._id.toString() : member.toString();
+};
+
 export const createComplaint = async (messId: string, payload: CreateComplaintPayload, myMemberId: string) => {
-  return await Complaint.create({ messId, messMemberId: new mongoose.Types.ObjectId(myMemberId), ...payload });
+  const complaint = await Complaint.create({ messId, messMemberId: new mongoose.Types.ObjectId(myMemberId), ...payload });
+  return Complaint.findById(complaint._id).populate(complaintPopulate);
 };
 
 const paginate = async (query: Record<string, unknown>, page: number, limit: number) => {
   const [data, total] = await Promise.all([
-    Complaint.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+    Complaint.find(query).populate(complaintPopulate).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
     Complaint.countDocuments(query),
   ]);
   return { meta: { page, limit, total, totalPages: Math.ceil(total / limit) }, data };
@@ -19,6 +31,7 @@ export const getComplaints = async (messId: string, options: any = {}) => {
   const page = Number(options.page) || 1;
   const limit = Number(options.limit) || 20;
   const query: Record<string, unknown> = { messId };
+  if (options.messMemberId) query.messMemberId = new mongoose.Types.ObjectId(options.messMemberId);
   if (options.status) query.status = options.status;
   return paginate(query, page, limit);
 };
@@ -32,10 +45,10 @@ export const getMyComplaints = async (messId: string, messMemberId: string, opti
 };
 
 export const getComplaintById = async (messId: string, complaintId: string, myMemberId: string, isManager: boolean) => {
-  const comp = await Complaint.findOne({ _id: complaintId, messId });
+  const comp = await Complaint.findOne({ _id: complaintId, messId }).populate(complaintPopulate);
   if (!comp) throw new AppError(404, 'Complaint not found');
   
-  if (!isManager && comp.messMemberId.toString() !== myMemberId) {
+  if (!isManager && getComplaintOwnerId(comp) !== myMemberId) {
     throw new AppError(403, 'Permission denied, you cannot view this complaint');
   }
   
@@ -54,7 +67,7 @@ export const updateComplaintStatus = async (messId: string, complaintId: string,
     { _id: complaintId, messId },
     update,
     { new: true, runValidators: true }
-  );
+  ).populate(complaintPopulate);
   if (!comp) throw new AppError(404, 'Complaint bounds check failed');
   return comp;
 };

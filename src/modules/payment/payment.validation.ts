@@ -20,6 +20,7 @@ export const listPaymentsSchema = z.object({
     page: z.preprocess(emptyToUndefined, z.string().regex(/^\d+$/).optional()),
     limit: z.preprocess(emptyToUndefined, z.string().regex(/^\d+$/).optional()),
     messMemberId: z.preprocess(emptyToUndefined, oId.optional()),
+    scope: z.preprocess(emptyToUndefined, z.enum(['all', 'my']).optional()),
     status: z.preprocess(emptyToUndefined, z.enum(['pending', 'approved', 'rejected', 'canceled']).optional()),
   }).strict()
 });

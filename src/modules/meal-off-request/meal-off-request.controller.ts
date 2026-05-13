@@ -2,8 +2,20 @@ import { Request, Response } from 'express';
 import { catchAsync } from '../../shared/utils/asyncHandler';
 import { sendResponse } from '../../shared/utils/apiResponse';
 import * as morService from './meal-off-request.service';
+import { AppError } from '../../shared/utils/apiError';
 
 export const createRequest = catchAsync(async (req: Request, res: Response) => {
+  if (!req.messMember) throw new AppError(403, 'Active member context is required');
+
+  const actorMemberId = req.messMember._id.toString();
+  if (req.body.messMemberId && req.body.messMemberId !== actorMemberId) {
+    if (req.messMember.messRole !== 'manager') {
+      throw new AppError(403, 'Members can only create meal-off requests for themselves');
+    }
+  } else {
+    req.body.messMemberId = actorMemberId;
+  }
+
   const result = await morService.createRequest(req.messId!, req.body);
   sendResponse(res, { statusCode: 201, success: true, message: 'Meal off request submitted safely', data: result });
 });

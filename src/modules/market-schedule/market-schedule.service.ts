@@ -3,6 +3,7 @@ import { MarketSchedule } from './market-schedule.model';
 import { Expense } from '../expense/expense.model';
 import { AppError } from '../../shared/utils/apiError';
 import { normalizeMealDate } from '../../shared/utils/dateUtils';
+import { MessMember } from '../mess-member/mess-member.model';
 
 const populateScheduleMembers = {
   path: 'assignedTo',
@@ -28,7 +29,23 @@ const normalizeAssignedMembers = (schedule: any): any => {
   };
 };
 
+const assertActiveAssignedMembers = async (messId: string, assignedTo: string[]) => {
+  const uniqueMemberIds = Array.from(new Set(assignedTo.map(String)));
+  if (uniqueMemberIds.length !== assignedTo.length) throw new AppError(400, 'Duplicate assigned member found');
+
+  const activeCount = await MessMember.countDocuments({
+    _id: { $in: uniqueMemberIds.map((id) => new mongoose.Types.ObjectId(id)) },
+    messId,
+    status: 'active',
+  });
+
+  if (activeCount !== uniqueMemberIds.length) {
+    throw new AppError(400, 'Market schedule can only be assigned to active members of this mess');
+  }
+};
+
 export const createSchedule = async (messId: string, payload: any, userId: string) => {
+  await assertActiveAssignedMembers(messId, payload.assignedTo);
   const schedule = await MarketSchedule.create({
     messId,
     ...payload,
@@ -68,6 +85,7 @@ export const getMyDuties = async (messId: string, myMemberId: string, options: a
 };
 
 export const updateSchedule = async (messId: string, scheduleId: string, payload: any) => {
+  if (payload.assignedTo) await assertActiveAssignedMembers(messId, payload.assignedTo);
   const schedule = await MarketSchedule.findOneAndUpdate(
     { _id: scheduleId, messId, status: 'pending' },
     payload,

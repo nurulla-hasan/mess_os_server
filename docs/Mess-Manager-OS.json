@@ -2962,10 +2962,16 @@
                   "value": "",
                   "description": "Optional for managers. Filter payments by mess member id.",
                   "disabled": true
+                },
+                {
+                  "key": "scope",
+                  "value": "my",
+                  "description": "Optional. Use my to return only authenticated user records; omit or use all for manager all-records view.",
+                  "disabled": true
                 }
               ]
             },
-            "description": "Role: Member+. Managers list all payments; members list only their own payments. Optional query params: page, limit, status=pending|approved|rejected|canceled, messMemberId (manager only). Response populates messMemberId with member role/status/participation and nested user details. Requires messId variable."
+            "description": "Role: Member+. Managers list all payments; members list only their own payments. Optional query params: page, limit, status=pending|approved|rejected|canceled, messMemberId (manager only). Response populates messMemberId with member role/status/participation and nested user details. Requires messId variable. Payment list supports scope=my for authenticated user payments; /payments/me remains for compatibility."
           },
           "response": []
         },
@@ -3142,10 +3148,28 @@
                   "value": "",
                   "description": "Optional. pending, approved, rejected, or canceled.",
                   "disabled": true
+                },
+                {
+                  "key": "paidBy",
+                  "value": "{{memberId}}",
+                  "description": "Optional manager-only filter. Active mess member ObjectId. Members are forced to their own member id.",
+                  "disabled": true
+                },
+                {
+                  "key": "fundSource",
+                  "value": "",
+                  "description": "Optional. mess_cash or personal_cash.",
+                  "disabled": true
+                },
+                {
+                  "key": "scope",
+                  "value": "my",
+                  "description": "Optional. Use my to return only authenticated user records; omit or use all for manager all-records view.",
+                  "disabled": true
                 }
               ]
             },
-            "description": "Role: Member+. Lists all expenses. Optional query params: page, limit, status=pending|approved|rejected|canceled. Requires messId variable."
+            "description": "Role: Member+. Managers list all expenses; members list only their own expenses. Optional query params: page, limit, paidBy (manager only), fundSource=mess_cash|personal_cash, status=pending|approved|rejected|canceled. Responses populate paidBy with member/user details. Requires messId variable. Expense list supports scope=my for authenticated user expenses."
           },
           "response": []
         },
@@ -3162,7 +3186,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"category\": \"grocery\",\n  \"amount\": 1200,\n  \"date\": \"2025-01-01T00:00:00.000Z\",\n  \"paidBy\": \"{{memberId}}\",\n  \"fundSource\": \"mess_cash\",\n  \"receiptUrl\": \"https://example.com/receipt.png\"\n}"
+              "raw": "{\n  \"category\": \"grocery\",\n  \"amount\": 1200,\n  \"date\": \"2026-05-13T00:00:00.000Z\",\n  \"fundSource\": \"mess_cash\",\n  \"receiptUrl\": \"https://example.com/receipt.png\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses",
@@ -3177,7 +3201,7 @@
                 "expenses"
               ]
             },
-            "description": "Role: Member+. Body: { category (string, required), amount (number, positive, required), date (ISO datetime, required), paidBy (ObjectId, required), fundSource ('mess_cash'|'personal_cash', required), receiptUrl (URL, optional) }"
+            "description": "Role: Member+. Body: { category, amount, date, paidBy?, fundSource, receiptUrl? }. Members can omit paidBy and it defaults to their own active membership. Managers may pass paidBy for another active member of the same mess."
           },
           "response": []
         },
@@ -3200,7 +3224,7 @@
                 "{{expenseId}}"
               ]
             },
-            "description": "Role: Member+. Gets expense details. Requires messId and expenseId variables."
+            "description": "Role: Member+. Managers can view any expense in the mess; members can view only their own expense. Response populates paidBy with member/user details. Requires messId and expenseId variables."
           },
           "response": []
         },
@@ -3495,10 +3519,16 @@
                   "value": "",
                   "description": "Optional ISO datetime. endDate is also accepted.",
                   "disabled": true
+                },
+                {
+                  "key": "scope",
+                  "value": "my",
+                  "description": "Optional. Use my to return only authenticated user records; omit or use all for manager all-records view.",
+                  "disabled": true
                 }
               ]
             },
-            "description": "Role: Manager sees all meal records; Member sees only own meal records. Optional query params: page, limit(max 100), memberId(manager/super admin only), searchTerm(manager/super admin; mess member id/name/email/phone), start/end or startDate/endDate. Response includes pagination meta and summary totalMeals/totalRecords. Requires messId variable."
+            "description": "Role: Manager sees all meal records; Member sees only own meal records. Optional query params: page, limit(max 100), memberId(manager/super admin only), searchTerm(manager/super admin; mess member id/name/email/phone), start/end or startDate/endDate. Response includes pagination meta and summary totalMeals/totalRecords. Requires messId variable. Meal list supports scope=my for authenticated user records."
           },
           "response": []
         },
@@ -3663,7 +3693,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"messMemberId\": \"{{memberId}}\",\n  \"startDate\": \"2025-01-01\",\n  \"endDate\": \"2025-01-03\",\n  \"reason\": \"Travel\"\n}"
+              "raw": "{\n  \"startDate\": \"2026-05-13\",\n  \"endDate\": \"2026-05-15\",\n  \"reason\": \"Travel\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/meal-off-requests",
@@ -3678,7 +3708,7 @@
                 "meal-off-requests"
               ]
             },
-            "description": "Role: Member+. Creates meal off request. Body: { messMemberId (ObjectId, required), startDate (string, required), endDate (string, required), reason (string, optional) }"
+            "description": "Role: Member+. Body: { messMemberId?, startDate, endDate, reason? }. Members can omit messMemberId and it defaults to their own active membership. Managers may pass messMemberId for another active meal participant of the same mess. Members cannot create requests for another member."
           },
           "response": []
         },
@@ -3838,10 +3868,16 @@
                   "key": "status",
                   "value": "",
                   "description": "Optional. Allowed values: pending, completed, void."
+                },
+                {
+                  "key": "scope",
+                  "value": "my",
+                  "description": "Optional. Use my to return only authenticated user records; omit or use all for manager all-records view.",
+                  "disabled": true
                 }
               ]
             },
-            "description": "Role: Member+. Lists market schedules. Requires messId variable. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details."
+            "description": "Role: Member+. Lists market schedules. Requires messId variable. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details. Market schedule list supports scope=my for authenticated user duties; /my-duties remains for compatibility."
           },
           "response": [
             {
@@ -3962,7 +3998,7 @@
                 "market-schedules"
               ]
             },
-            "description": "Role: Manager. Body: { assignedTo (ObjectId[], min 1, required), targetDate (ISO datetime, required), shoppingItems (array of {name, quantity}, required), estimatedBudget (number, positive, required) } Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details."
+            "description": "Role: Manager. Body: { assignedTo (unique active same-mess member ObjectId[], min 1, required), targetDate (ISO datetime, required), shoppingItems (array of {name, quantity}, required), estimatedBudget (number, positive, required) }. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details."
           },
           "response": []
         },
@@ -3995,7 +4031,7 @@
                 "{{scheduleId}}"
               ]
             },
-            "description": "Role: Manager. Updates a pending market schedule. Body fields are optional: assignedTo (array of active mess member ids), shoppingItems (array of { name, quantity }), estimatedBudget (positive number). Use this endpoint to reassign duties by changing assignedTo. Does not update actualSpent; actualSpent is provided when completing the schedule via PATCH /market-schedules/:scheduleId/status."
+            "description": "Role: Manager. Updates a pending market schedule. Body fields are optional: assignedTo (unique active same-mess member ids), shoppingItems (array of { name, quantity }), estimatedBudget (positive number). Use this endpoint to reassign duties by changing assignedTo. Does not update actualSpent; actualSpent is provided when completing the schedule via PATCH /market-schedules/:scheduleId/status."
           },
           "response": []
         },
@@ -4596,9 +4632,17 @@
                 "messes",
                 "{{messId}}",
                 "complaints"
+              ],
+              "query": [
+                {
+                  "key": "scope",
+                  "value": "my",
+                  "description": "Optional. Use my to return only authenticated user records; omit or use all for manager all-records view.",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Role: Member+. Lists all complaints. Requires messId variable."
+            "description": "Role: Member+. Managers list all complaints; members list only their own complaints. Optional query params: page, limit, status=open|in_progress|resolved|rejected. Responses populate messMemberId with member/user details. Requires messId variable. Complaint list supports scope=my for authenticated user complaints; /complaints/my remains for compatibility."
           },
           "response": []
         },
@@ -4644,7 +4688,7 @@
                 "{{complaintId}}"
               ]
             },
-            "description": "Role: Member+. Gets complaint by ID. Requires messId and complaintId variables."
+            "description": "Role: Member+. Managers can view any complaint in the mess; members can view only their own complaint. Response populates messMemberId with member/user details. Requires messId and complaintId variables."
           },
           "response": []
         },

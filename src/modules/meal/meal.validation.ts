@@ -46,6 +46,7 @@ export const listMealsSchema = z.object({
     page: z.preprocess(emptyToUndefined, positiveIntegerString.optional()),
     limit: z.preprocess(emptyToUndefined, limitString.optional()),
     memberId: z.preprocess(emptyToUndefined, oId.optional()),
+    scope: z.preprocess(emptyToUndefined, z.enum(['all', 'my']).optional()),
     searchTerm: z.preprocess(emptyToUndefined, z.string().trim().max(100).optional()),
     start: z.preprocess(emptyToUndefined, z.string().datetime().optional()),
     end: z.preprocess(emptyToUndefined, z.string().datetime().optional()),

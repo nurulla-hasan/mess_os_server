@@ -13,7 +13,7 @@ const mealOffStatus = z.enum(['pending', 'approved', 'rejected', 'canceled']);
 
 export const createMealOffSchema = z.object({
   body: z.object({
-    messMemberId: oId,
+    messMemberId: oId.optional(),
     startDate: z.string(),
     endDate: z.string(),
     reason: z.string().optional()

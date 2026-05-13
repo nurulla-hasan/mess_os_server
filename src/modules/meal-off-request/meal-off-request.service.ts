@@ -24,8 +24,11 @@ export type ListMealOffRequestsOptions = {
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const assertActiveMemberInMess = async (messId: string, messMemberId: string) => {
-  const member = await MessMember.findOne({ _id: messMemberId, messId, status: 'active' }).select('_id').lean();
+  const member = await MessMember.findOne({ _id: messMemberId, messId, status: 'active' }).select('_id participation').lean();
   if (!member) throw new AppError(400, 'Active mess member not found for this mess');
+  if (member.participation?.meals === false) {
+    throw new AppError(400, 'Meal-off request is only available for meal participants');
+  }
 };
 
 const buildListQuery = (messId: string, options: ListMealOffRequestsOptions) => {
@@ -89,6 +92,7 @@ const applyMemberSearch = async (messId: string, query: Record<string, unknown>,
 };
 
 export const createRequest = async (messId: string, payload: { messMemberId: string, startDate: string, endDate: string, reason?: string }) => {
+  await assertActiveMemberInMess(messId, payload.messMemberId);
   const sDate = normalizeMealDate(payload.startDate);
   const eDate = normalizeMealDate(payload.endDate);
   

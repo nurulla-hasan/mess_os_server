@@ -13,6 +13,7 @@ export type ListMealsOptions = {
   page?: number;
   limit?: number;
   memberId?: string;
+  scope?: 'all' | 'my';
   searchTerm?: string;
   start?: string;
   end?: string;
@@ -162,8 +163,12 @@ const normalizeMealPayloads = async (messId: string, entries: MealEntryPayload[]
 
 const buildMealQuery = (messId: string, options: ListMealsOptions) => {
   const query: Record<string, unknown> = { messId: new mongoose.Types.ObjectId(messId) };
+  const isMyScope = options.scope === 'my';
 
-  if (options.requesterRole !== 'manager' && !options.isSuperAdmin) {
+  if (isMyScope) {
+    if (!options.requesterMemberId) throw new AppError(403, 'Active member context is required');
+    query.messMemberId = new mongoose.Types.ObjectId(options.requesterMemberId);
+  } else if (options.requesterRole !== 'manager' && !options.isSuperAdmin) {
     if (!options.requesterMemberId) throw new AppError(403, 'Active member context is required');
     if (options.memberId && options.memberId !== options.requesterMemberId) {
       throw new AppError(403, 'Members can only view their own meal records');

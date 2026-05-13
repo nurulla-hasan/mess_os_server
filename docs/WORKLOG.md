@@ -198,6 +198,7 @@ List query params:
 
 - `page`
 - `limit` max 100
+- `scope=my` returns the authenticated user's own meal records on the same list endpoint
 - `memberId` for manager/super admin only
 - `searchTerm` for manager/super admin, searches mess member id or member name/email/phone
 - `start`/`end`
@@ -227,6 +228,12 @@ Endpoints:
 - `GET /api/v1/messes/:messId/meal-off-requests`
 - `POST /api/v1/messes/:messId/meal-off-requests`
 - `PATCH /api/v1/messes/:messId/meal-off-requests/:requestId/status`
+
+Create rules:
+
+- `messMemberId` is optional; members default to their own active membership.
+- Managers may create a request for another active meal participant in the same mess.
+- Members cannot create requests for another member.
 
 List query params:
 
@@ -274,7 +281,8 @@ Payments:
 - Body `status=approved|rejected|canceled`
 - Only managers can approve/reject; members can cancel their own pending payment.
 - `GET /api/v1/messes/:messId/payments` returns all payments for managers and only the caller's payments for members.
-- `GET /api/v1/messes/:messId/payments/me` always returns the caller's payments.
+- `scope=my` returns the authenticated user's own payments on the same list endpoint.
+- `GET /api/v1/messes/:messId/payments/me` always returns the caller's payments and remains available for backward compatibility.
 - Payment list/detail responses populate `messMemberId` with member role/status/participation and nested user details.
 - `POST /api/v1/messes/:messId/payments` accepts optional `messMemberId`; members default to their own active membership, managers may create for another active member of the same mess.
 
@@ -283,6 +291,10 @@ Expenses:
 - `PATCH /api/v1/messes/:messId/expenses/:expenseId/status`
 - Body `status=approved|rejected|canceled`
 - Only managers can approve/reject; members can cancel their own pending expense.
+- `GET /api/v1/messes/:messId/expenses` returns all expenses for managers and only the caller's expenses for members.
+- `scope=my` returns the authenticated user's own expenses on the same list endpoint.
+- Expense list/detail responses populate `paidBy` with member role/status/participation and nested user details.
+- `POST /api/v1/messes/:messId/expenses` accepts optional `paidBy`; members default to their own active membership, managers may create for another active member of the same mess.
 - Reimbursement stays separate because it is a cash movement after approval.
 
 Market schedules:
@@ -292,9 +304,11 @@ Market schedules:
 - Completing requires `actualSpent` and `fundSource`.
 - Backend uses authenticated `req.messMember._id` as the expense `paidBy`; frontend does not send `actorMessMemberId`.
 - Reassignment uses `PATCH /api/v1/messes/:messId/market-schedules/:scheduleId` with `assignedTo`.
+- `assignedTo` values must be unique active members of the same mess.
 - Pending schedule update supports `assignedTo`, `shoppingItems`, and `estimatedBudget`.
 - `actualSpent` is submitted only when completing the schedule; the separate spent update endpoint was removed.
 - List and my-duties support `page`, `limit`, and `status`.
+- `scope=my` returns the authenticated user's own duties on the same list endpoint; `/my-duties` remains available for backward compatibility.
 - Market schedule responses populate `assignedTo` with mess member and nested `user` details.
 
 AI shopping:
@@ -308,7 +322,10 @@ Complaints:
 
 - `PATCH /api/v1/messes/:messId/complaints/:complaintId/status`
 - Body `status=in_progress|resolved|rejected`, optional `resolvedNote`
+- `GET /api/v1/messes/:messId/complaints` returns all complaints for managers and only the caller's complaints for members.
 - List and my complaints support `page`, `limit`, and `status`.
+- `scope=my` returns the authenticated user's own complaints on the same list endpoint; `/complaints/my` remains available for backward compatibility.
+- Complaint list/detail responses populate `messMemberId` with member role/status/participation and nested user details.
 
 ## Admin Mess Management
 

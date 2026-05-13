@@ -13,6 +13,7 @@ export const listMarketScheduleSchema = z.object({
   query: z.object({
     page: z.preprocess(emptyToUndefined, positiveIntegerString.optional()),
     limit: z.preprocess(emptyToUndefined, limitString.optional()),
+    scope: z.preprocess(emptyToUndefined, z.enum(['all', 'my']).optional()),
     status: z.preprocess(emptyToUndefined, z.enum(['pending', 'completed', 'void']).optional()),
   }).strict()
 });

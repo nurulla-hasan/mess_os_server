@@ -4,6 +4,11 @@ import { sendResponse } from '../../shared/utils/apiResponse';
 import { AppError } from '../../shared/utils/apiError';
 import * as expenseService from './expense.service';
 
+const getExpenseOwnerId = (expense: any) => {
+  const member = expense.paidBy;
+  return typeof member === 'object' && member?._id ? member._id.toString() : member.toString();
+};
+
 export const createExpense = catchAsync(async (req: Request, res: Response) => {
   const messId = req.messId!;
   const body = req.body;
@@ -24,7 +29,12 @@ export const createExpense = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getExpenses = catchAsync(async (req: Request, res: Response) => {
-  const result = await expenseService.getExpenses(req.messId!, req.query);
+  const actor = req.messMember!;
+  const isMyScope = req.query.scope === 'my';
+  const query = actor.messRole === 'manager' && !isMyScope
+    ? req.query
+    : { ...req.query, paidBy: actor._id.toString() };
+  const result = await expenseService.getExpenses(req.messId!, query);
   sendResponse(res, { statusCode: 200, success: true, message: 'Expenses fetched successfully', meta: result.meta, data: result.data });
 });
 
@@ -33,7 +43,7 @@ export const getExpenseById = catchAsync(async (req: Request, res: Response) => 
   
   // Safety check: Manager or Owner only
   const actor = req.messMember!;
-  if (actor.messRole !== 'manager' && result.paidBy.toString() !== actor._id.toString()) {
+  if (actor.messRole !== 'manager' && getExpenseOwnerId(result) !== actor._id.toString()) {
      throw new AppError(403, 'Unauthorized to view this specific expense record');
   }
 
