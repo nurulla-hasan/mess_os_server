@@ -2971,7 +2971,7 @@
                 }
               ]
             },
-            "description": "Role: Member+. Managers list all payments; members list only their own payments. Optional query params: page, limit, status=pending|approved|rejected|canceled, messMemberId (manager only). Response populates messMemberId with member role/status/participation and nested user details. Requires messId variable. Payment list supports scope=my for authenticated user payments; /payments/me remains for compatibility."
+            "description": "Role: Member+. Managers list all payments; members list only their own payments. Optional query params: page, limit, status=pending|approved|rejected|canceled, messMemberId (manager only). Response populates messMemberId with member role/status/participation and nested user details. Requires messId variable. Use scope=my on this endpoint for authenticated user payments."
           },
           "response": []
         },
@@ -3004,49 +3004,6 @@
               ]
             },
             "description": "Role: Member+. Creates pending payment record. Body: { messMemberId (ObjectId, optional), amount (number, positive, required), method (string, required), reference (string, optional) }. If messMemberId is omitted, backend uses the authenticated active mess membership. Managers may create for another active member of the same mess; normal members cannot create for others."
-          },
-          "response": []
-        },
-        {
-          "name": "Get My Payments (Member+)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/payments/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "payments",
-                "me"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1",
-                  "description": "Optional. Page number.",
-                  "disabled": true
-                },
-                {
-                  "key": "limit",
-                  "value": "20",
-                  "description": "Optional. Items per page.",
-                  "disabled": true
-                },
-                {
-                  "key": "status",
-                  "value": "",
-                  "description": "Optional. pending, approved, rejected, or canceled.",
-                  "disabled": true
-                }
-              ]
-            },
-            "description": "Role: Member+. Lists current user's payments. Optional query params: page, limit, status=pending|approved|rejected|canceled. Requires messId variable."
           },
           "response": []
         },
@@ -3673,10 +3630,16 @@
                   "value": "",
                   "description": "Optional alias for messMemberId.",
                   "disabled": true
+                },
+                {
+                  "key": "scope",
+                  "value": "my",
+                  "description": "Optional. Use my to return only authenticated user records; omit or use all for manager all-records view.",
+                  "disabled": true
                 }
               ]
             },
-            "description": "Role: Member+. Lists meal off requests with pagination and filters. Managers/super admins can list all requests in the mess. Members can list only their own requests. Query: page, limit (max 100), status=pending|approved|rejected|canceled, searchTerm, messMemberId/memberId, start/end or startDate/endDate. Date filters use range overlap logic. Response shape: { success, message, meta: { page, limit, total, totalPages }, data: [...] }. Each request item exposes _id and does not include id. In each item, populated messMemberId includes user, messRole, and status; the populated user object is exposed as user for consistency with members list. Reviewed requests include reviewedBy and reviewedAt; legacy approvedBy rows are normalized to reviewedBy in the response."
+            "description": "Role: Member+. Lists meal off requests with pagination and filters. Managers/super admins can list all requests in the mess. Members can list only their own requests. Query: page, limit (max 100), status=pending|approved|rejected|canceled, searchTerm, messMemberId/memberId, start/end or startDate/endDate. Date filters use range overlap logic. Response shape: { success, message, meta: { page, limit, total, totalPages }, data: [...] }. Each request item exposes _id and does not include id. In each item, populated messMemberId includes user, messRole, and status; the populated user object is exposed as user for consistency with members list. Reviewed requests include reviewedBy and reviewedAt; legacy approvedBy rows are normalized to reviewedBy in the response. Use scope=my on this endpoint for authenticated user meal-off requests."
           },
           "response": []
         },
@@ -3877,7 +3840,7 @@
                 }
               ]
             },
-            "description": "Role: Member+. Lists market schedules. Requires messId variable. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details. Market schedule list supports scope=my for authenticated user duties; /my-duties remains for compatibility."
+            "description": "Role: Member+. Lists market schedules. Requires messId variable. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details. Use scope=my on this endpoint for authenticated user duties."
           },
           "response": [
             {
@@ -3929,46 +3892,6 @@
               "body": "{\n  \"success\": true,\n  \"message\": \"Schedules loaded\",\n  \"meta\": {\n    \"page\": 1,\n    \"limit\": 20,\n    \"total\": 1,\n    \"totalPages\": 1\n  },\n  \"data\": [\n    {\n      \"_id\": \"6a01a52d0d48a680efd01cfd\",\n      \"messId\": \"{{messId}}\",\n      \"assignedTo\": [\n        {\n          \"_id\": \"{{memberId}}\",\n          \"messRole\": \"manager\",\n          \"status\": \"active\",\n          \"user\": {\n            \"_id\": \"69fb36578a4ae7fa0a96649e\",\n            \"fullName\": \"Golap Hasan\",\n            \"email\": \"golaphasan379@gmail.com\",\n            \"phone\": \"017123456789\",\n            \"avatarUrl\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1778230663/avatars/el1ms2tv7bsbai31qgct.jpg\"\n          }\n        }\n      ],\n      \"targetDate\": \"2026-05-24T18:00:00.000Z\",\n      \"shoppingItems\": [\n        {\n          \"_id\": \"6a01a52d0d48a680efd01cfe\",\n          \"name\": \"Rice\",\n          \"quantity\": \"5 kg\"\n        },\n        {\n          \"_id\": \"6a01a52d0d48a680efd01cff\",\n          \"name\": \"Egg\",\n          \"quantity\": \"30 pcs\"\n        },\n        {\n          \"_id\": \"6a01a52d0d48a680efd01d00\",\n          \"name\": \"Vegetables\",\n          \"quantity\": \"2 kg\"\n        }\n      ],\n      \"estimatedBudget\": 1800,\n      \"status\": \"pending\",\n      \"createdBy\": \"69fb36578a4ae7fa0a96649e\",\n      \"createdAt\": \"2026-05-11T09:45:17.197Z\",\n      \"updatedAt\": \"2026-05-11T09:45:17.197Z\"\n    }\n  ]\n}"
             }
           ]
-        },
-        {
-          "name": "Get My Market Duties (Member+)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules/my-duties?page=1&limit=20&status=",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "market-schedules",
-                "my-duties"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1",
-                  "description": "Optional. Positive integer page number. Defaults to 1."
-                },
-                {
-                  "key": "limit",
-                  "value": "20",
-                  "description": "Optional. Positive integer page size. Maximum 100. Defaults to 20."
-                },
-                {
-                  "key": "status",
-                  "value": "",
-                  "description": "Optional. Allowed values: pending, completed, void."
-                }
-              ]
-            },
-            "description": "Role: Member+. Lists current user's market duties. Requires messId variable. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details."
-          },
-          "response": []
         },
         {
           "name": "Create Market Schedule (Manager)",
@@ -4642,30 +4565,7 @@
                 }
               ]
             },
-            "description": "Role: Member+. Managers list all complaints; members list only their own complaints. Optional query params: page, limit, status=open|in_progress|resolved|rejected. Responses populate messMemberId with member/user details. Requires messId variable. Complaint list supports scope=my for authenticated user complaints; /complaints/my remains for compatibility."
-          },
-          "response": []
-        },
-        {
-          "name": "List My Complaints (Member+)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/complaints/my",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "messes",
-                "{{messId}}",
-                "complaints",
-                "my"
-              ]
-            },
-            "description": "Role: Member+. Lists current user's complaints. Requires messId variable."
+            "description": "Role: Member+. Managers list all complaints; members list only their own complaints. Optional query params: page, limit, status=open|in_progress|resolved|rejected. Responses populate messMemberId with member/user details. Requires messId variable. Use scope=my on this endpoint for authenticated user complaints."
           },
           "response": []
         },

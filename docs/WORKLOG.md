@@ -240,6 +240,7 @@ List query params:
 - `page`
 - `limit` max 100
 - `status=pending|approved|rejected|canceled`
+- `scope=my` returns the authenticated user's own meal-off requests on the same list endpoint
 - `messMemberId` or `memberId`
 - `searchTerm` for manager/super admin, searches mess member id or member name/email/phone
 - `start`/`end`
@@ -282,7 +283,6 @@ Payments:
 - Only managers can approve/reject; members can cancel their own pending payment.
 - `GET /api/v1/messes/:messId/payments` returns all payments for managers and only the caller's payments for members.
 - `scope=my` returns the authenticated user's own payments on the same list endpoint.
-- `GET /api/v1/messes/:messId/payments/me` always returns the caller's payments and remains available for backward compatibility.
 - Payment list/detail responses populate `messMemberId` with member role/status/participation and nested user details.
 - `POST /api/v1/messes/:messId/payments` accepts optional `messMemberId`; members default to their own active membership, managers may create for another active member of the same mess.
 
@@ -307,8 +307,8 @@ Market schedules:
 - `assignedTo` values must be unique active members of the same mess.
 - Pending schedule update supports `assignedTo`, `shoppingItems`, and `estimatedBudget`.
 - `actualSpent` is submitted only when completing the schedule; the separate spent update endpoint was removed.
-- List and my-duties support `page`, `limit`, and `status`.
-- `scope=my` returns the authenticated user's own duties on the same list endpoint; `/my-duties` remains available for backward compatibility.
+- List supports `page`, `limit`, `status`, and `scope`.
+- `scope=my` returns the authenticated user's own duties on the same list endpoint.
 - Market schedule responses populate `assignedTo` with mess member and nested `user` details.
 
 AI shopping:
@@ -324,7 +324,7 @@ Complaints:
 - Body `status=in_progress|resolved|rejected`, optional `resolvedNote`
 - `GET /api/v1/messes/:messId/complaints` returns all complaints for managers and only the caller's complaints for members.
 - List and my complaints support `page`, `limit`, and `status`.
-- `scope=my` returns the authenticated user's own complaints on the same list endpoint; `/complaints/my` remains available for backward compatibility.
+- `scope=my` returns the authenticated user's own complaints on the same list endpoint.
 - Complaint list/detail responses populate `messMemberId` with member role/status/participation and nested user details.
 
 ## Admin Mess Management

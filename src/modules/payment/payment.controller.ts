@@ -50,11 +50,6 @@ export const getPaymentById = catchAsync(async (req: Request, res: Response) => 
   sendResponse(res, { statusCode: 200, success: true, message: 'Payment record fetched successfully', data: result });
 });
 
-export const getMyPayments = catchAsync(async (req: Request, res: Response) => {
-  const result = await paymentService.getPayments(req.messId!, { ...req.query, messMemberId: req.messMember!._id.toString() });
-  sendResponse(res, { statusCode: 200, success: true, message: 'Your payment history extracted', meta: result.meta, data: result.data });
-});
-
 export const updatePaymentStatus = catchAsync(async (req: Request, res: Response) => {
   const actor = req.messMember!;
   const result = await paymentService.updatePaymentStatus(

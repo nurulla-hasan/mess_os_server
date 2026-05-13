@@ -25,6 +25,7 @@ export const listMealOffRequestsSchema = z.object({
     page: z.preprocess(emptyToUndefined, positiveIntegerString.optional()),
     limit: z.preprocess(emptyToUndefined, limitString.optional()),
     status: z.preprocess(emptyToUndefined, mealOffStatus.optional()),
+    scope: z.preprocess(emptyToUndefined, z.enum(['all', 'my']).optional()),
     messMemberId: z.preprocess(emptyToUndefined, oId.optional()),
     memberId: z.preprocess(emptyToUndefined, oId.optional()),
     searchTerm: z.preprocess(emptyToUndefined, z.string().trim().max(100).optional()),

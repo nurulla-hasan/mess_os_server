@@ -19,12 +19,6 @@ export const getComplaints = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, { statusCode: 200, success: true, message: 'Complaints fully traversed', meta: result.meta, data: result.data });
 });
 
-export const getMyComplaints = catchAsync(async (req: Request, res: Response) => {
-  if (!req.messMember) throw new AppError(403, 'Mapped user required');
-  const result = await compService.getMyComplaints(req.messId!, req.messMember._id.toString(), req.query);
-  sendResponse(res, { statusCode: 200, success: true, message: 'My complaints pulled', meta: result.meta, data: result.data });
-});
-
 export const getComplaintById = catchAsync(async (req: Request, res: Response) => {
   if (!req.messMember) throw new AppError(403, 'Context missing mapping bounds');
   const isManager = req.messMember.messRole === 'manager' || req.messRole === 'manager';

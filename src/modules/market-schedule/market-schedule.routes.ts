@@ -8,7 +8,6 @@ import { MESS_ROLES } from '../../constants/roles';
 const router = Router({ mergeParams: true });
 
 router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.listMarketScheduleSchema), ctl.getSchedules);
-router.get('/my-duties', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.listMarketScheduleSchema), ctl.getMyDuties);
 
 router.post('/', authorize(MESS_ROLES.MANAGER), validateRequest(val.createMarketScheduleSchema), ctl.createSchedule);
 

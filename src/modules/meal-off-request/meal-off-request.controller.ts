@@ -27,6 +27,7 @@ export const listRequests = catchAsync(async (req: Request, res: Response) => {
     page: parseInt(String(req.query.page)) || 1,
     limit: parseInt(String(req.query.limit)) || 10,
     status: req.query.status ? String(req.query.status) as morService.MealOffRequestStatus : undefined,
+    scope: req.query.scope === 'my' ? 'my' : req.query.scope === 'all' ? 'all' : undefined,
     messMemberId: req.query.messMemberId ? String(req.query.messMemberId) : req.query.memberId ? String(req.query.memberId) : undefined,
     searchTerm: req.query.searchTerm ? String(req.query.searchTerm) : undefined,
     start,

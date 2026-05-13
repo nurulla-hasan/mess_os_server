@@ -12,6 +12,7 @@ export type ListMealOffRequestsOptions = {
   page?: number;
   limit?: number;
   status?: MealOffRequestStatus;
+  scope?: 'all' | 'my';
   messMemberId?: string;
   searchTerm?: string;
   start?: string;
@@ -36,7 +37,10 @@ const buildListQuery = (messId: string, options: ListMealOffRequestsOptions) => 
 
   if (options.status) query.status = options.status;
 
-  if (options.requesterRole !== 'manager' && !options.isSuperAdmin) {
+  if (options.scope === 'my') {
+    if (!options.requesterMemberId) throw new AppError(403, 'Active member context is required');
+    query.messMemberId = new mongoose.Types.ObjectId(options.requesterMemberId);
+  } else if (options.requesterRole !== 'manager' && !options.isSuperAdmin) {
     if (!options.requesterMemberId) throw new AppError(403, 'Active member context is required');
     if (options.messMemberId && options.messMemberId !== options.requesterMemberId) {
       throw new AppError(403, 'Members can only view their own meal off requests');
