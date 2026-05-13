@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { Meal } from './meal.model';
-import { DHAKA_OFFSET_MS, normalizeMealDate } from '../../shared/utils/dateUtils';
+import { DHAKA_OFFSET_MS, isAfterTodayDhaka, normalizeMealDate } from '../../shared/utils/dateUtils';
 import { MessMember } from '../mess-member/mess-member.model';
 import { BillingCycle } from '../billing/billing-cycle.model';
 import { AppError } from '../../shared/utils/apiError';
@@ -237,6 +237,7 @@ export const createOrUpdateMeal = async (
   managerId: string
 ) => {
   const targetDate = normalizeMealDate(dateStr);
+  if (isAfterTodayDhaka(targetDate)) throw new AppError(400, 'Meal cannot be logged for a future date');
   await assertBillingCycleEditable(messId, targetDate);
   await assertMealParticipantInMess(messId, messMemberId);
   await assertNoApprovedMealOff(messId, messMemberId, targetDate);
@@ -260,6 +261,7 @@ export const bulkCreateOrUpdateMeals = async (
   managerId: string
 ) => {
   const targetDate = normalizeMealDate(dateStr);
+  if (isAfterTodayDhaka(targetDate)) throw new AppError(400, 'Meals cannot be logged for a future date');
   await assertBillingCycleEditable(messId, targetDate);
 
   const uniqueMemberIds = Array.from(new Set(entries.map((entry) => entry.messMemberId)));

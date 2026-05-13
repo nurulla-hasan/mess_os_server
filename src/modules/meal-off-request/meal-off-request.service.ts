@@ -3,7 +3,7 @@ import { Meal } from '../meal/meal.model';
 import { MessMember } from '../mess-member/mess-member.model';
 import { User } from '../user/user.model';
 import { AppError } from '../../shared/utils/apiError';
-import { normalizeMealDate, getDhakaNow, generateDateRange } from '../../shared/utils/dateUtils';
+import { generateDateRange, getTodayDhakaNormalized, normalizeMealDate } from '../../shared/utils/dateUtils';
 import mongoose, { isValidObjectId } from 'mongoose';
 
 export type MealOffRequestStatus = 'pending' | 'approved' | 'rejected' | 'canceled';
@@ -29,6 +29,32 @@ const assertActiveMemberInMess = async (messId: string, messMemberId: string) =>
   if (!member) throw new AppError(400, 'Active mess member not found for this mess');
   if (member.participation?.meals === false) {
     throw new AppError(400, 'Meal-off request is only available for meal participants');
+  }
+};
+
+const assertFutureOrTodayRange = (startDate: Date, endDate: Date) => {
+  const today = getTodayDhakaNormalized();
+  if (startDate < today) throw new AppError(400, 'Meal-off start date cannot be in the past');
+  if (endDate < today) throw new AppError(400, 'Meal-off end date cannot be in the past');
+  if (endDate < startDate) throw new AppError(400, 'End date must be after or same as start date');
+};
+
+const assertNoOverlappingActiveRequest = async (
+  messId: string,
+  messMemberId: string,
+  startDate: Date,
+  endDate: Date
+) => {
+  const existing = await MealOffRequest.findOne({
+    messId,
+    messMemberId,
+    status: { $in: ['pending', 'approved'] },
+    startDate: { $lte: endDate },
+    endDate: { $gte: startDate },
+  }).select('_id status startDate endDate').lean();
+
+  if (existing) {
+    throw new AppError(409, 'An active meal-off request already overlaps this date range');
   }
 };
 
@@ -99,8 +125,9 @@ export const createRequest = async (messId: string, payload: { messMemberId: str
   await assertActiveMemberInMess(messId, payload.messMemberId);
   const sDate = normalizeMealDate(payload.startDate);
   const eDate = normalizeMealDate(payload.endDate);
-  
-  if (eDate < sDate) throw new AppError(400, 'End date must be after or same as start date');
+
+  assertFutureOrTodayRange(sDate, eDate);
+  await assertNoOverlappingActiveRequest(messId, payload.messMemberId, sDate, eDate);
 
   return await MealOffRequest.create({ messId, messMemberId: payload.messMemberId, startDate: sDate, endDate: eDate, reason: payload.reason, status: 'pending' });
 };
@@ -189,19 +216,19 @@ const approveRequest = async (messId: string, requestId: string, managerUserId: 
     req.reviewedBy = new mongoose.Types.ObjectId(managerUserId);
     req.reviewedAt = new Date();
 
-    // Business Rule: Future dates managed automatically. Past dates ignored requiring explicit human review.
-    const todayNormalized = normalizeMealDate(getDhakaNow());
+    const todayNormalized = getTodayDhakaNormalized();
+    if (req.startDate < todayNormalized) {
+      throw new AppError(400, 'Cannot approve a meal-off request that starts in the past');
+    }
+
     const datesToLock = generateDateRange(req.startDate, req.endDate);
 
     const automatedMealPromises = datesToLock.map(d => {
-       if (d >= todayNormalized) {
-         return Meal.findOneAndUpdate(
-           { messId, messMemberId: req.messMemberId, date: d },
-           { mealCount: 0, createdBy: new mongoose.Types.ObjectId(managerUserId) },
-           { new: true, upsert: true, runValidators: true, session }
-         );
-       }
-       return Promise.resolve(null);
+       return Meal.findOneAndUpdate(
+         { messId, messMemberId: req.messMemberId, date: d },
+         { mealCount: 0, createdBy: new mongoose.Types.ObjectId(managerUserId) },
+         { new: true, upsert: true, runValidators: true, session }
+       );
     });
 
     await Promise.all(automatedMealPromises);

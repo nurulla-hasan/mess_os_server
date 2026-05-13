@@ -219,6 +219,7 @@ Rules:
 - Backward compatible `mealCount`-only writes are still accepted.
 - Meal writes are blocked when the related monthly billing cycle is finalized; reopen billing first.
 - Meal writes are blocked for members with `participation.meals=false`.
+- Meal writes cannot target a future date.
 - Bulk meal logging rejects duplicate `messMemberId` values and supports up to 200 entries.
 
 ## Meal Off Request Flow
@@ -234,6 +235,8 @@ Create rules:
 - `messMemberId` is optional; members default to their own active membership.
 - Managers may create a request for another active meal participant in the same mess.
 - Members cannot create requests for another member.
+- Start/end dates cannot be in the past.
+- Pending/approved meal-off requests cannot overlap for the same member.
 
 List query params:
 
@@ -295,6 +298,7 @@ Expenses:
 - `scope=my` returns the authenticated user's own expenses on the same list endpoint.
 - Expense list/detail responses populate `paidBy` with member role/status/participation and nested user details.
 - `POST /api/v1/messes/:messId/expenses` accepts optional `paidBy`; members default to their own active membership, managers may create for another active member of the same mess.
+- Expense date cannot be in the future.
 - Reimbursement stays separate because it is a cash movement after approval.
 
 Market schedules:
@@ -305,6 +309,8 @@ Market schedules:
 - Backend uses authenticated `req.messMember._id` as the expense `paidBy`; frontend does not send `actorMessMemberId`.
 - Reassignment uses `PATCH /api/v1/messes/:messId/market-schedules/:scheduleId` with `assignedTo`.
 - `assignedTo` values must be unique active members of the same mess.
+- Target date cannot be in the past.
+- Pending schedules cannot be completed before their target date.
 - Pending schedule update supports `assignedTo`, `shoppingItems`, and `estimatedBudget`.
 - `actualSpent` is submitted only when completing the schedule; the separate spent update endpoint was removed.
 - List supports `page`, `limit`, `status`, and `scope`.
@@ -317,6 +323,8 @@ AI shopping:
 - Body `status=approved|rejected`
 - Conversion stays separate because it creates a market schedule.
 - List supports `page`, `limit`, and `status`.
+- Generated shopping list target date cannot be in the past.
+- Conversion validates assigned members and rejects past target dates.
 
 Complaints:
 

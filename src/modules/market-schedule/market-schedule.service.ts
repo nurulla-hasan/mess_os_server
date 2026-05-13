@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { MarketSchedule } from './market-schedule.model';
 import { Expense } from '../expense/expense.model';
 import { AppError } from '../../shared/utils/apiError';
-import { normalizeMealDate } from '../../shared/utils/dateUtils';
+import { getTodayDhakaNormalized, isBeforeTodayDhaka, normalizeMealDate } from '../../shared/utils/dateUtils';
 import { MessMember } from '../mess-member/mess-member.model';
 
 const populateScheduleMembers = {
@@ -46,10 +46,13 @@ const assertActiveAssignedMembers = async (messId: string, assignedTo: string[])
 
 export const createSchedule = async (messId: string, payload: any, userId: string) => {
   await assertActiveAssignedMembers(messId, payload.assignedTo);
+  const targetDate = normalizeMealDate(payload.targetDate);
+  if (isBeforeTodayDhaka(targetDate)) throw new AppError(400, 'Market schedule date cannot be in the past');
+
   const schedule = await MarketSchedule.create({
     messId,
     ...payload,
-    targetDate: normalizeMealDate(payload.targetDate),
+    targetDate,
     status: 'pending',
     createdBy: new mongoose.Types.ObjectId(userId)
   });
@@ -112,6 +115,9 @@ const completeSchedule = async (messId: string, scheduleId: string, payload: any
   try {
     const schedule = await MarketSchedule.findOne({ _id: scheduleId, messId, status: 'pending' }).session(session);
     if (!schedule) throw new AppError(404, 'Schedule not currently actionable');
+    if (schedule.targetDate > getTodayDhakaNormalized()) {
+      throw new AppError(400, 'Cannot complete a market schedule before its target date');
+    }
 
     if (!isManager && !schedule.assignedTo.some(id => id.toString() === myMemberId)) {
       throw new AppError(403, 'Permission denied, only assigned members or managers can complete tasks');

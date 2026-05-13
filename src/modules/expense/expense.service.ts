@@ -5,6 +5,7 @@ import { AppError } from '../../shared/utils/apiError';
 import { REFERENCE_TYPES, FUND_SOURCES } from '../../constants/ledgerEntryTypes';
 import { CreateExpensePayload } from './expense.validation';
 import { MessMember } from '../mess-member/mess-member.model';
+import { isAfterTodayDhaka } from '../../shared/utils/dateUtils';
 
 const expensePopulate = {
   path: 'paidBy',
@@ -23,6 +24,7 @@ const assertActiveMemberInMess = async (messId: string, messMemberId: string) =>
 
 export const createExpense = async (messId: string, payload: CreateExpensePayload) => {
   if (!payload.paidBy) throw new AppError(400, 'paidBy is required');
+  if (isAfterTodayDhaka(payload.date)) throw new AppError(400, 'Expense date cannot be in the future');
   await assertActiveMemberInMess(messId, payload.paidBy);
 
   const expense = await Expense.create({

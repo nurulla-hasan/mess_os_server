@@ -33,6 +33,16 @@ export const normalizeMealDate = (inputDate: Date | string): Date => {
   return new Date(normalizedDhakaUtc.getTime() - DHAKA_OFFSET_MS);
 };
 
+export const getTodayDhakaNormalized = (): Date => normalizeMealDate(getDhakaNow());
+
+export const isBeforeTodayDhaka = (inputDate: Date | string): boolean => {
+  return normalizeMealDate(inputDate) < getTodayDhakaNormalized();
+};
+
+export const isAfterTodayDhaka = (inputDate: Date | string): boolean => {
+  return normalizeMealDate(inputDate) > getTodayDhakaNormalized();
+};
+
 export const generateDateRange = (start: Date, end: Date): Date[] => {
   const dates = [];
   let current = new Date(start);

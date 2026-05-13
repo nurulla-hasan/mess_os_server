@@ -2,20 +2,38 @@ import mongoose from 'mongoose';
 import { AiShoppingList } from './ai-shopping.model';
 import { MenuPlan } from '../menu-plan/menu-plan.model';
 import { MarketSchedule } from '../market-schedule/market-schedule.model';
+import { MessMember } from '../mess-member/mess-member.model';
 import { aiService } from '../../shared/services/aiService';
-import { normalizeMealDate } from '../../shared/utils/dateUtils';
+import { isBeforeTodayDhaka, normalizeMealDate } from '../../shared/utils/dateUtils';
 import { AppError } from '../../shared/utils/apiError';
 import { GenerateListPayload, ConvertListPayload } from './ai-shopping.validation';
+
+const assertActiveAssignedMembers = async (messId: string, assignedTo: string[]) => {
+  const uniqueMemberIds = Array.from(new Set(assignedTo.map(String)));
+  if (uniqueMemberIds.length !== assignedTo.length) throw new AppError(400, 'Duplicate assigned member found');
+
+  const activeCount = await MessMember.countDocuments({
+    _id: { $in: uniqueMemberIds.map((id) => new mongoose.Types.ObjectId(id)) },
+    messId,
+    status: 'active',
+  });
+
+  if (activeCount !== uniqueMemberIds.length) {
+    throw new AppError(400, 'Shopping list can only be assigned to active members of this mess');
+  }
+};
 
 export const generateShoppingList = async (messId: string, payload: GenerateListPayload, userId: string) => {
   const menu = await MenuPlan.findOne({ _id: payload.menuPlanId, messId });
   if (!menu) throw new AppError(404, 'Menu plan not found');
+  const targetDate = normalizeMealDate(payload.targetDate);
+  if (isBeforeTodayDhaka(targetDate)) throw new AppError(400, 'Shopping list target date cannot be in the past');
 
   const generatedItems = await aiService.generateShoppingListItems(menu.meals);
   return await AiShoppingList.create({
     messId,
     menuPlanId: menu._id,
-    targetDate: normalizeMealDate(payload.targetDate),
+    targetDate,
     items: generatedItems,
     status: 'draft',
     createdBy: new mongoose.Types.ObjectId(userId)
@@ -73,8 +91,10 @@ export const convertToMarketSchedule = async (messId: string, listId: string, us
   session.startTransaction();
 
   try {
+     await assertActiveAssignedMembers(messId, payload.assignedTo);
      const list = await AiShoppingList.findOne({ _id: listId, messId, status: 'approved' }).session(session);
      if (!list) throw new AppError(404, 'List must be approved to be converted');
+     if (isBeforeTodayDhaka(list.targetDate)) throw new AppError(400, 'Cannot convert a shopping list with a past target date');
      
      list.status = 'converted';
      

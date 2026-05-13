@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { MenuPlan } from './menu-plan.model';
-import { normalizeMealDate } from '../../shared/utils/dateUtils';
+import { isBeforeTodayDhaka, normalizeMealDate } from '../../shared/utils/dateUtils';
 import { aiService } from '../../shared/services/aiService';
 import { AppError } from '../../shared/utils/apiError';
 import { Mess } from '../mess/mess.model';
@@ -65,6 +65,8 @@ const normalizeMenuMeals = async (messId: string, meals?: Record<string, string>
 
 export const createMenuPlan = async (messId: string, payload: any, userId: string) => {
   const targetDate = normalizeMealDate(payload.date);
+  if (isBeforeTodayDhaka(targetDate)) throw new AppError(400, 'Menu plan date cannot be in the past');
+
   let meals = payload.meals;
   const mealCategories = await getAllowedMealCategories(messId);
   

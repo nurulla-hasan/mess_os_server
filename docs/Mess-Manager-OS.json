@@ -3158,7 +3158,7 @@
                 "expenses"
               ]
             },
-            "description": "Role: Member+. Body: { category, amount, date, paidBy?, fundSource, receiptUrl? }. Members can omit paidBy and it defaults to their own active membership. Managers may pass paidBy for another active member of the same mess."
+            "description": "Role: Member+. Body: { category, amount, date, paidBy?, fundSource, receiptUrl? }. Expense date cannot be in the future. Members can omit paidBy and it defaults to their own active membership. Managers may pass paidBy for another active member of the same mess."
           },
           "response": []
         },
@@ -3485,7 +3485,7 @@
                 }
               ]
             },
-            "description": "Role: Manager sees all meal records; Member sees only own meal records. Optional query params: page, limit(max 100), memberId(manager/super admin only), searchTerm(manager/super admin; mess member id/name/email/phone), start/end or startDate/endDate. Response includes pagination meta and summary totalMeals/totalRecords. Requires messId variable. Meal list supports scope=my for authenticated user records."
+            "description": "Role: Manager sees all meal records; Member sees only own meal records. Optional query params: page, limit(max 100), memberId(manager/super admin only), searchTerm(manager/super admin; mess member id/name/email/phone), start/end or startDate/endDate. Response includes pagination meta and summary totalMeals/totalRecords. Requires messId variable. Meal list supports scope=my for authenticated user records. Meal writes cannot target a future date."
           },
           "response": []
         },
@@ -3656,7 +3656,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"startDate\": \"2026-05-13\",\n  \"endDate\": \"2026-05-15\",\n  \"reason\": \"Travel\"\n}"
+              "raw": "{\n  \"startDate\": \"2026-05-20\",\n  \"endDate\": \"2026-05-22\",\n  \"reason\": \"Travel\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/meal-off-requests",
@@ -3671,7 +3671,7 @@
                 "meal-off-requests"
               ]
             },
-            "description": "Role: Member+. Body: { messMemberId?, startDate, endDate, reason? }. Members can omit messMemberId and it defaults to their own active membership. Managers may pass messMemberId for another active meal participant of the same mess. Members cannot create requests for another member."
+            "description": "Role: Member+. Creates meal off request. Start/end dates cannot be in the past, and pending/approved requests cannot overlap for the same member. Body supports optional messMemberId; members default to themselves and managers may create for another active meal participant."
           },
           "response": []
         },
@@ -3906,7 +3906,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"assignedTo\": [\n    \"65e4a8f9c1b2a3d4e5f60000\"\n  ],\n  \"targetDate\": \"2026-04-26T10:00:00.000Z\",\n  \"shoppingItems\": [\n    {\n      \"name\": \"Rice\",\n      \"quantity\": \"5 KG\"\n    },\n    {\n      \"name\": \"Oil\",\n      \"quantity\": \"2 L\"\n    }\n  ],\n  \"estimatedBudget\": 1500\n}"
+              "raw": "{\n  \"assignedTo\": [\n    \"{{memberId}}\"\n  ],\n  \"targetDate\": \"2026-05-20T10:00:00.000Z\",\n  \"shoppingItems\": [\n    {\n      \"name\": \"Rice\",\n      \"quantity\": \"5 KG\"\n    },\n    {\n      \"name\": \"Oil\",\n      \"quantity\": \"2 L\"\n    }\n  ],\n  \"estimatedBudget\": 1500\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules",
@@ -3921,7 +3921,7 @@
                 "market-schedules"
               ]
             },
-            "description": "Role: Manager. Body: { assignedTo (unique active same-mess member ObjectId[], min 1, required), targetDate (ISO datetime, required), shoppingItems (array of {name, quantity}, required), estimatedBudget (number, positive, required) }. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details."
+            "description": "Role: Manager. Body: { assignedTo (unique active same-mess member ObjectId[], min 1, required), targetDate (ISO datetime, required, cannot be past), shoppingItems (array of {name, quantity}, required), estimatedBudget (number, positive, required) }. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details."
           },
           "response": []
         },
@@ -3988,7 +3988,7 @@
                 "status"
               ]
             },
-            "description": "Role: Member+. Updates schedule status through one endpoint. Body status: completed or void. For completed, actualSpent and fundSource are required; backend uses the authenticated active mess membership as paidBy, so actorMessMemberId is not sent from frontend. Assigned members or managers can complete. Only managers can void. Reassignment is handled by PATCH /market-schedules/:scheduleId with assignedTo. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details."
+            "description": "Role: Member+. Completes assigned schedule if assigned; managers can complete/void. Body: { status: completed|void, actualSpent, fundSource }. Pending schedules cannot be completed before their target date."
           },
           "response": []
         }
@@ -4281,7 +4281,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"menuPlanId\": \"65e4a8f9c1b2a3d4e5f60001\",\n  \"targetDate\": \"2026-04-25T10:00:00.000Z\"\n}"
+              "raw": "{\n  \"menuPlanId\": \"{{menuPlanId}}\",\n  \"targetDate\": \"2026-05-20T10:00:00.000Z\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/ai-shopping/generate",
@@ -4297,7 +4297,7 @@
                 "generate"
               ]
             },
-            "description": "Role: Manager. Generates shopping list from menu plan meals. Backend reads the menu plan meals and produces bazar items from the menu text. Body: { menuPlanId (ObjectId, required), targetDate (ISO datetime, required) }"
+            "description": "Role: Manager. Generates shopping list from menu plan meals. Backend reads the menu plan meals and produces bazar items from the menu text. Body: { menuPlanId (ObjectId, required), targetDate (ISO datetime, required, cannot be past) }"
           },
           "response": []
         },
@@ -4365,7 +4365,7 @@
                 "convert"
               ]
             },
-            "description": "Role: Manager. Converts AI list to market schedule. Body: { assignedTo (ObjectId[], min 1, required), estimatedBudget (number, positive, required) }"
+            "description": "Role: Manager. Body: { assignedTo, estimatedBudget }. Converts approved list to market schedule. Assigned members must be unique active same-mess members and the list target date cannot be in the past."
           },
           "response": []
         }
