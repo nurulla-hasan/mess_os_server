@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { isValidObjectId } from 'mongoose';
+
+const oId = z.string().refine(isValidObjectId, 'Invalid MongoDB ID');
 
 export const updateMeSchema = z.object({
   body: z.object({
@@ -9,4 +12,11 @@ export const updateMeSchema = z.object({
   }).strict()
 });
 
+export const switchMessSchema = z.object({
+  body: z.object({
+    messId: oId,
+  }).strict(),
+});
+
 export type UpdateMePayload = z.infer<typeof updateMeSchema>['body'];
+export type SwitchMessPayload = z.infer<typeof switchMessSchema>['body'];

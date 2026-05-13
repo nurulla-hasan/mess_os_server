@@ -20,4 +20,6 @@ const reqSchema = new Schema<IMessMember>({
   timestamps: true, versionKey: false
 });
 
+reqSchema.index({ messId: 1, userId: 1 }, { unique: true });
+
 export const MessMember = model<IMessMember>('MessMember', reqSchema);

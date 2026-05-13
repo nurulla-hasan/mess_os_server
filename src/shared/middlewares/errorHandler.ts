@@ -12,8 +12,12 @@ export const globalErrorHandler = (err: any, req: Request, res: Response, next: 
 
   // Handle Mongoose Duplicate Key Error
   if (err.code === 11000) {
-    const value = err.errmsg ? err.errmsg.match(/(["'])(\\?.)*?\1/)[0] : 'Duplicate field value';
-    message = `Duplicate field value: ${value}. Please use another value!`;
+    if (err.keyPattern?.messId && err.keyPattern?.userId) {
+      message = 'This user already has a membership record in this mess';
+    } else {
+      const value = err.errmsg ? err.errmsg.match(/(["'])(\\?.)*?\1/)?.[0] : 'Duplicate field value';
+      message = `Duplicate field value: ${value}. Please use another value!`;
+    }
     statusCode = 400;
   }
 

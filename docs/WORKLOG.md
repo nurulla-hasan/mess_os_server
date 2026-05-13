@@ -28,6 +28,17 @@ User endpoints:
 
 - `POST /api/v1/users/me/manager-request`
 - `GET /api/v1/users/me/manager-request`
+- `POST /api/v1/users/me/switch-mess`
+
+Switch mess body:
+
+```json
+{
+  "messId": "..."
+}
+```
+
+Switch mess validates that the authenticated user has an active membership in the selected active mess. It returns `messId`, `messRole`, and `redirectTo` (`/manager` or `/dashboard`) so the frontend can safely set its `activeMessId` cookie after success.
 
 Admin endpoints:
 

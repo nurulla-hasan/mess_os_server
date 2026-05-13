@@ -12,6 +12,7 @@ router.get('/me', authenticateAllowBlocked, ctl.getMe);
 router.use(authenticate);
 router.patch('/me', validateRequest(val.updateMeSchema), ctl.updateMe);
 router.patch('/me/avatar', uploadAvatar, ctl.updateAvatar);
+router.post('/me/switch-mess', validateRequest(val.switchMessSchema), ctl.switchMess);
 router.get('/me/manager-request', managerRequestCtl.getMyManagerRequest);
 router.post('/me/manager-request', validateRequest(managerRequestVal.createManagerRequestSchema), managerRequestCtl.createManagerRequest);
 

@@ -38,3 +38,12 @@ export const updateAvatar = catchAsync(async (req: Request, res: Response) => {
 
   sendResponse(res, { statusCode: 200, success: true, message: 'Avatar accurately updated robustly internally modified correctly', data: updatedUser });
 });
+
+export const switchMess = catchAsync(async (req: Request, res: Response) => {
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Mess context selected successfully',
+    data: await userService.switchMess(req.user!.userId, req.body),
+  });
+});
