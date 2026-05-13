@@ -4,6 +4,11 @@ import { sendResponse } from '../../shared/utils/apiResponse';
 import { AppError } from '../../shared/utils/apiError';
 import * as paymentService from './payment.service';
 
+const getPaymentOwnerId = (payment: any) => {
+  const member = payment.messMemberId;
+  return typeof member === 'object' && member?._id ? member._id.toString() : member.toString();
+};
+
 export const createPayment = catchAsync(async (req: Request, res: Response) => {
   const messId = req.messId!;
   const body = req.body;
@@ -24,7 +29,11 @@ export const createPayment = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getPayments = catchAsync(async (req: Request, res: Response) => {
-  const result = await paymentService.getPayments(req.messId!, req.query);
+  const actor = req.messMember!;
+  const query = actor.messRole === 'manager'
+    ? req.query
+    : { ...req.query, messMemberId: actor._id.toString() };
+  const result = await paymentService.getPayments(req.messId!, query);
   sendResponse(res, { statusCode: 200, success: true, message: 'Payments retrieved', meta: result.meta, data: result.data });
 });
 
@@ -33,7 +42,7 @@ export const getPaymentById = catchAsync(async (req: Request, res: Response) => 
   
   // Safety check: Manager or Owner only
   const actor = req.messMember!;
-  if (actor.messRole !== 'manager' && result.messMemberId.toString() !== actor._id.toString()) {
+  if (actor.messRole !== 'manager' && getPaymentOwnerId(result) !== actor._id.toString()) {
      throw new AppError(403, 'Unauthorized to view this specific payment record');
   }
 

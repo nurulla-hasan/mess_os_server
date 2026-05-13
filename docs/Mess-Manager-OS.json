@@ -2956,10 +2956,16 @@
                   "value": "",
                   "description": "Optional. pending, approved, rejected, or canceled.",
                   "disabled": true
+                },
+                {
+                  "key": "messMemberId",
+                  "value": "",
+                  "description": "Optional for managers. Filter payments by mess member id.",
+                  "disabled": true
                 }
               ]
             },
-            "description": "Role: Member+. Lists all payments in mess. Optional query params: page, limit, status=pending|approved|rejected|canceled. Requires messId variable."
+            "description": "Role: Member+. Managers list all payments; members list only their own payments. Optional query params: page, limit, status=pending|approved|rejected|canceled, messMemberId (manager only). Response populates messMemberId with member role/status/participation and nested user details. Requires messId variable."
           },
           "response": []
         },
@@ -2976,7 +2982,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"messMemberId\": \"{{memberId}}\",\n  \"amount\": 5000,\n  \"method\": \"cash\",\n  \"reference\": \"January payment\"\n}"
+              "raw": "{\n  \"amount\": 5000,\n  \"method\": \"cash\",\n  \"reference\": \"January payment\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/payments",
@@ -2991,7 +2997,7 @@
                 "payments"
               ]
             },
-            "description": "Role: Member+. Creates payment record. Body: { messMemberId (ObjectId, required), amount (number, positive, required), method (string, required), reference (string, optional) }"
+            "description": "Role: Member+. Creates pending payment record. Body: { messMemberId (ObjectId, optional), amount (number, positive, required), method (string, required), reference (string, optional) }. If messMemberId is omitted, backend uses the authenticated active mess membership. Managers may create for another active member of the same mess; normal members cannot create for others."
           },
           "response": []
         },
@@ -3057,7 +3063,7 @@
                 "{{paymentId}}"
               ]
             },
-            "description": "Role: Member+. Gets payment details. Requires messId and paymentId variables."
+            "description": "Role: Member+. Gets payment details. Managers can view any payment in the mess; members can view only their own. Response populates messMemberId with member role/status/participation and nested user details. Requires messId and paymentId variables."
           },
           "response": []
         },
@@ -3096,7 +3102,7 @@
           "response": []
         }
       ],
-      "description": "Payment management. Members can create payments; status changes use one PATCH /payments/:paymentId/status endpoint."
+      "description": "Payment management. Members can create their own payments; managers can create for any active member. Managers list all payments; members list only their own. Status changes use one PATCH /payments/:paymentId/status endpoint. Only managers approve/reject; members can cancel their own pending payments."
     },
     {
       "name": "Expenses",

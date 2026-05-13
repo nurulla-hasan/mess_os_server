@@ -273,6 +273,10 @@ Payments:
 - `PATCH /api/v1/messes/:messId/payments/:paymentId/status`
 - Body `status=approved|rejected|canceled`
 - Only managers can approve/reject; members can cancel their own pending payment.
+- `GET /api/v1/messes/:messId/payments` returns all payments for managers and only the caller's payments for members.
+- `GET /api/v1/messes/:messId/payments/me` always returns the caller's payments.
+- Payment list/detail responses populate `messMemberId` with member role/status/participation and nested user details.
+- `POST /api/v1/messes/:messId/payments` accepts optional `messMemberId`; members default to their own active membership, managers may create for another active member of the same mess.
 
 Expenses:
 

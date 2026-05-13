@@ -4,13 +4,35 @@ import { ledgerHelper } from '../../shared/helpers/ledgerHelper';
 import { AppError } from '../../shared/utils/apiError';
 import { REFERENCE_TYPES } from '../../constants/ledgerEntryTypes';
 import { CreatePaymentPayload } from './payment.validation';
+import { MessMember } from '../mess-member/mess-member.model';
+
+const paymentPopulate = {
+  path: 'messMemberId',
+  select: 'userId messRole status participation',
+  populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
+};
+
+const assertActiveMemberInMess = async (messId: string, messMemberId: string) => {
+  const member = await MessMember.findOne({
+    _id: new Types.ObjectId(messMemberId),
+    messId: new Types.ObjectId(messId),
+    status: 'active',
+  }).select('_id').lean();
+  if (!member) throw new AppError(400, 'Payment must target an active member of this mess');
+};
 
 export const createPayment = async (messId: string, payload: CreatePaymentPayload) => {
-  return await Payment.create({
+  if (!payload.messMemberId) throw new AppError(400, 'messMemberId is required');
+  await assertActiveMemberInMess(messId, payload.messMemberId);
+
+  const payment = await Payment.create({
     ...payload,
     messId: new Types.ObjectId(messId),
+    messMemberId: new Types.ObjectId(payload.messMemberId),
     status: 'pending'
   });
+
+  return Payment.findById(payment._id).populate(paymentPopulate);
 };
 
 export const getPayments = async (messId: string, query: Record<string, unknown> = {}) => {
@@ -22,7 +44,11 @@ export const getPayments = async (messId: string, query: Record<string, unknown>
   const limit = Number(query.limit) || 20;
   const skip = (page - 1) * limit;
 
-  const data = await Payment.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit);
+  const data = await Payment.find(filter)
+    .populate(paymentPopulate)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
   const total = await Payment.countDocuments(filter);
 
   return {
@@ -32,7 +58,7 @@ export const getPayments = async (messId: string, query: Record<string, unknown>
 };
 
 export const getPaymentById = async (messId: string, paymentId: string) => {
-  const pay = await Payment.findOne({ _id: new Types.ObjectId(paymentId), messId: new Types.ObjectId(messId) });
+  const pay = await Payment.findOne({ _id: new Types.ObjectId(paymentId), messId: new Types.ObjectId(messId) }).populate(paymentPopulate);
   if (!pay) throw new AppError(404, 'Payment not found');
   return pay;
 };
@@ -70,7 +96,7 @@ const approvePayment = async (messId: string, paymentId: string, managerId: stri
     
     await pay.save({ session });
     await session.commitTransaction();
-    return pay;
+    return Payment.findById(pay._id).populate(paymentPopulate);
   } catch (err) { 
     await session.abortTransaction(); 
     throw err; 
@@ -86,7 +112,7 @@ const rejectPayment = async (messId: string, paymentId: string, managerId: strin
     { new: true }
   );
   if (!pay) throw new AppError(404, 'Payment not found or not pending for rejection');
-  return pay;
+  return pay.populate(paymentPopulate);
 };
 
 const cancelPayment = async (messId: string, paymentId: string, actorMemberId: string, actorRole: string) => {
@@ -104,7 +130,8 @@ const cancelPayment = async (messId: string, paymentId: string, actorMemberId: s
   }
 
   pay.status = 'canceled';
-  return await pay.save();
+  await pay.save();
+  return pay.populate(paymentPopulate);
 };
 
 export const updatePaymentStatus = async (
