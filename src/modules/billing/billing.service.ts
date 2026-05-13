@@ -52,8 +52,22 @@ const generateBillingPayload = async (messId: string, billingMonth: number, bill
       if (equalShareCategories.includes(b.category)) totalEqualShareExpense += b.amount;
     });
 
+    const membersQuery = MessMember.find({ messId, joinedAt: { $lte: end } });
+    const members = session ? await membersQuery.session(session) : await membersQuery;
+
+    const validMembersForBilling = members.filter(m => m.status === 'active' || (m.leftAt! && m.leftAt! >= start));
+    const mealParticipantIds = validMembersForBilling
+      .filter(m => m.participation?.meals !== false)
+      .map(m => m._id);
+
     const mealAggQuery = Meal.aggregate([
-      { $match: { messId: new mongoose.Types.ObjectId(messId), date: { $gte: start, $lte: end } } },
+      {
+        $match: {
+          messId: new mongoose.Types.ObjectId(messId),
+          date: { $gte: start, $lte: end },
+          ...(mealParticipantIds.length ? { messMemberId: { $in: mealParticipantIds } } : { messMemberId: { $in: [] } }),
+        },
+      },
       { $group: { _id: '$messMemberId', totalCount: { $sum: '$mealCount' } } }
     ]);
     const mealsAgg = session ? await mealAggQuery.session(session) : await mealAggQuery;
@@ -61,22 +75,19 @@ const generateBillingPayload = async (messId: string, billingMonth: number, bill
     const totalMeals = mealsAgg.reduce((sum, m) => sum + m.totalCount, 0);
     const mealRate = billingMathHelper.calculateMealRate(totalMealExpense, totalMeals);
 
-    const membersQuery = MessMember.find({ messId, joinedAt: { $lte: end } });
-    const members = session ? await membersQuery.session(session) : await membersQuery;
-
-    const validMembersForShare = members.filter(m => m.status === 'active' || (m.leftAt! && m.leftAt! >= start));
-
     const totalDaysInMonth = new Date(end.getTime() + DHAKA_OFFSET_MS).getUTCDate();
     let totalShareUnits = 0;
     
-    const memberShares = validMembersForShare.map(m => {
+    const memberShares = validMembersForBilling
+      .filter(m => m.participation?.sharedExpenses !== false)
+      .map(m => {
        const joined = m.joinedAt! > start ? m.joinedAt! : start;
        const left = m.leftAt! && m.leftAt! < end ? m.leftAt! : end;
        const activeDays = Math.max(0, (left.getTime() - joined.getTime()) / (1000 * 3600 * 24));
        const unit = Number(totalDaysInMonth > 0 ? (activeDays / totalDaysInMonth).toFixed(2) : 0);
        totalShareUnits += unit;
        return { memberId: m._id, unit };
-    });
+      });
 
     const equalizeMultiplier = totalShareUnits > 0 ? 1 / totalShareUnits : 0;
     
@@ -86,7 +97,7 @@ const generateBillingPayload = async (messId: string, billingMonth: number, bill
     const ledgersQuery = MemberLedger.find({ messId, isVoided: false, date: { $lte: end } });
     const ledgers = session ? await ledgersQuery.session(session) : await ledgersQuery;
 
-    for (const m of validMembersForShare) {
+    for (const m of validMembersForBilling) {
        const mIdStr = m._id.toString();
        
        let chargesBeforeStart = 0;
@@ -107,11 +118,14 @@ const generateBillingPayload = async (messId: string, billingMonth: number, bill
        const previousDue = chargesBeforeStart - creditsBeforeStart;
        const totalPaymentsAndCredits = creditsDuringMonth;
 
-       const mealData = mealsAgg.find(meal => meal._id.toString() === mIdStr);
+       const participatesInMeals = m.participation?.meals !== false;
+       const participatesInSharedExpenses = m.participation?.sharedExpenses !== false;
+
+       const mealData = participatesInMeals ? mealsAgg.find(meal => meal._id.toString() === mIdStr) : undefined;
        const personalMealCount = mealData ? mealData.totalCount : 0;
        const personalMealCharge = Number((personalMealCount * mealRate).toFixed(2));
 
-       const shareObj = memberShares.find(sh => sh.memberId.toString() === mIdStr);
+       const shareObj = participatesInSharedExpenses ? memberShares.find(sh => sh.memberId.toString() === mIdStr) : undefined;
        const personalEqualShare = Number((totalEqualShareExpense * (shareObj ? shareObj.unit * equalizeMultiplier : 0)).toFixed(2));
 
        const finalPayable = Number((personalMealCharge + personalEqualShare).toFixed(2));

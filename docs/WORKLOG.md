@@ -76,6 +76,7 @@ Options response has no pagination and includes:
 - `phone`
 - `avatarUrl`
 - `messRole`
+- `participation`
 
 Query params:
 
@@ -105,6 +106,29 @@ Allowed statuses: `active`, `rejected`.
 Remove member stays separate:
 
 `POST /api/v1/messes/:messId/members/:memberId/remove`
+
+Participation update:
+
+`PATCH /api/v1/messes/:messId/members/:memberId/participation`
+
+Body:
+
+```json
+{
+  "participation": {
+    "meals": false,
+    "sharedExpenses": true
+  }
+}
+```
+
+Participation rules:
+
+- `messRole` controls permission/access.
+- `participation.meals` controls whether meal entries can be logged and meal charges apply.
+- `participation.sharedExpenses` controls whether equal-share expenses/utilities apply.
+- New memberships default to `{ meals: true, sharedExpenses: true }`.
+- Manager-only users can be set to `{ meals: false, sharedExpenses: false }` while keeping manager access.
 
 Removed members cannot rejoin automatically.
 
@@ -185,6 +209,7 @@ Rules:
 - Members can list only their own meal records.
 - Meal writes require manager role.
 - `messMemberId` must be an active member of the same mess.
+- The target member must have `participation.meals=true`.
 - `mealCount` must be from `0` to `3` in `0.5` increments.
 - Preferred write body uses category breakdown from mess `settings.mealCategories`, plus special `Guest`, for example `meals: { Breakfast: 1, Lunch: 1, Dinner: 1, Guest: 2 }`.
 - Backend calculates and stores total `mealCount` from `meals`.
@@ -192,6 +217,7 @@ Rules:
 - Regular meal total cannot exceed `3`; total including `Guest` cannot exceed `50`.
 - Backward compatible `mealCount`-only writes are still accepted.
 - Meal writes are blocked when the related monthly billing cycle is finalized; reopen billing first.
+- Meal writes are blocked for members with `participation.meals=false`.
 - Bulk meal logging rejects duplicate `messMemberId` values and supports up to 200 entries.
 
 ## Meal Off Request Flow
@@ -228,6 +254,17 @@ Rules:
 - Canceling an approved request allows meal logging again. Existing zero meal records can be overwritten by normal meal logging.
 
 ## Unified Status Endpoints
+
+## Billing Participation
+
+Member participation separates access from billing responsibility:
+
+- `messRole` controls permission/access.
+- `participation.meals=true` includes the member in meal logging and meal charges.
+- `participation.sharedExpenses=true` includes the member in equal-share expenses and paid utilities.
+- Billing meal totals ignore meal records for members with `participation.meals=false`.
+- Billing equal-share units are calculated only for members with `participation.sharedExpenses=true`.
+- Manager-only users can keep `messRole=manager` with both participation flags set to `false`.
 
 Status/action endpoints are compressed so the same resource uses one status route instead of separate approve/reject/complete/void routes.
 

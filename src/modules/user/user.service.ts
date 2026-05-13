@@ -13,7 +13,16 @@ export const getUser = async (userId: string) => {
     .populate('messId', 'name address status suspensionNote suspendedAt suspendedBy')
     .lean();
   
-  return { ...user, memberships };
+  return {
+    ...user,
+    memberships: memberships.map((membership) => ({
+      ...membership,
+      participation: {
+        meals: membership.participation?.meals ?? true,
+        sharedExpenses: membership.participation?.sharedExpenses ?? true,
+      },
+    })),
+  };
 };
 
 export const updateUser = async (userId: string, payload: UpdateMePayload & { avatarUrl?: string, avatarPublicId?: string } | { avatarUrl?: string, avatarPublicId?: string }) => {
@@ -47,6 +56,10 @@ export const switchMess = async (userId: string, payload: SwitchMessPayload) => 
       _id: membership._id,
       status: membership.status,
       messRole: membership.messRole,
+      participation: {
+        meals: membership.participation?.meals ?? true,
+        sharedExpenses: membership.participation?.sharedExpenses ?? true,
+      },
     },
   };
 };

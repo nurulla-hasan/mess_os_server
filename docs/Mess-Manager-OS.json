@@ -1847,6 +1847,99 @@
           ]
         },
         {
+          "name": "Switch Active Mess (Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "try { const json = pm.response.json(); const messId = json?.data?.messId; if (messId) { pm.collectionVariables.set('messId', messId); console.log('Selected messId saved to collection variable'); } } catch (e) { console.error('Failed to parse switch mess response', e); }"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messId\": \"{{messId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me/switch-mess",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me",
+                "switch-mess"
+              ]
+            },
+            "description": "Role: Auth. Body: { messId (ObjectId, required) }. Validates that the authenticated user has an active membership in the selected active mess. Returns messId, messRole, redirectTo (/manager or /dashboard), mess, and membership. Frontend should set activeMessId cookie only after this request succeeds."
+          },
+          "response": [
+            {
+              "name": "Switch Active Mess (Auth)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"messId\": \"{{messId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me/switch-mess",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "me",
+                    "switch-mess"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Mess context selected successfully\",\n  \"data\": {\n    \"messId\": \"{{messId}}\",\n    \"messRole\": \"manager\",\n    \"redirectTo\": \"/manager\",\n    \"mess\": {\n      \"_id\": \"{{messId}}\",\n      \"name\": \"Updated Mess Name\",\n      \"status\": \"active\"\n    },\n    \"membership\": {\n      \"_id\": \"{{memberId}}\",\n      \"status\": \"active\",\n      \"messRole\": \"manager\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
           "name": "Get My Manager Request (Auth)",
           "request": {
             "method": "GET",
@@ -2690,7 +2783,7 @@
                 "options"
               ]
             },
-            "description": "Role: Member+. Lightweight active member options for selectors/dropdowns such as meal logging. Returns all active members without pagination. Response fields: _id (messMemberId), name, email, phone, avatarUrl, messRole."
+            "description": "Role: Member+. Lightweight active member options for selectors/dropdowns such as meal logging. Returns all active members without pagination. Response fields: _id (messMemberId), name, email, phone, avatarUrl, messRole, participation."
           },
           "response": [
             {
@@ -2722,7 +2815,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Active member options fetched successfully\",\n  \"data\": [\n    {\n      \"_id\": \"{{memberId}}\",\n      \"name\": \"Golap Hasan\",\n      \"email\": \"golaphasan379@gmail.com\",\n      \"phone\": \"017123456789\",\n      \"avatarUrl\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1778230663/avatars/el1ms2tv7bsbai31qgct.jpg\",\n      \"messRole\": \"manager\"\n    }\n  ]\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Active member options fetched successfully\",\n  \"data\": [\n    {\n      \"_id\": \"{{memberId}}\",\n      \"name\": \"Golap Hasan\",\n      \"email\": \"golaphasan379@gmail.com\",\n      \"phone\": \"017123456789\",\n      \"avatarUrl\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1778230663/avatars/el1ms2tv7bsbai31qgct.jpg\",\n      \"messRole\": \"manager\",\n      \"participation\": {\n        \"meals\": true,\n        \"sharedExpenses\": true\n      }\n    }\n  ]\n}"
             }
           ]
         },
@@ -2760,6 +2853,45 @@
           "response": []
         },
         {
+          "name": "Update Member Participation (Manager)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"participation\": {\n    \"meals\": false,\n    \"sharedExpenses\": false\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/members/{{memberId}}/participation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "messes",
+                "{{messId}}",
+                "members",
+                "{{memberId}}",
+                "participation"
+              ]
+            },
+            "description": "Role: Manager. Updates active member meal/billing participation. participation.meals controls whether meal entries can be logged and meal charges apply. participation.sharedExpenses controls whether equal-share expenses/utilities apply. At least one flag is required. Useful for manager-only users who manage a mess but do not eat or share expenses there."
+          },
+          "response": []
+        },
+        {
           "name": "Remove Member (Manager)",
           "request": {
             "method": "POST",
@@ -2784,7 +2916,7 @@
           "response": []
         }
       ],
-      "description": "Member management within a mess. GET /options returns lightweight active member options without pagination for selectors. GET / returns all statuses for managers when status is omitted and supports ?status=active|pending|rejected|removed plus ?searchTerm= for name/email/phone search. Members can use status=active. PATCH /:memberId/status approves or rejects pending requests with body status=active|rejected. POST remove requires manager role. All routes protected by messContext middleware."
+      "description": "Member management within a mess. GET /options returns lightweight active member options without pagination for selectors. GET / returns all statuses for managers when status is omitted and supports ?status=active|pending|rejected|removed plus ?searchTerm= for name/email/phone search. Members can use status=active. PATCH /:memberId/status approves or rejects pending requests with body status=active|rejected. PATCH /:memberId/participation updates participation.meals and participation.sharedExpenses for active members. POST remove requires manager role. All routes protected by messContext middleware."
     },
     {
       "name": "Payments",

@@ -16,6 +16,7 @@ router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateReques
 
 // Only manager can approve/reject pending requests or remove active members.
 router.patch('/:memberId/status', authorize(MESS_ROLES.MANAGER), validateRequest(val.updatePendingMemberStatusSchema), ctl.updatePendingMemberStatus);
+router.patch('/:memberId/participation', authorize(MESS_ROLES.MANAGER), validateRequest(val.updateMemberParticipationSchema), ctl.updateMemberParticipation);
 router.post('/:memberId/remove', authorize(MESS_ROLES.MANAGER), ctl.removeMember);
 
 export const messMemberRoutes = router;

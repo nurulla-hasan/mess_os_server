@@ -52,6 +52,14 @@ const assertActiveMemberInMess = async (messId: string, messMemberId: string) =>
   if (!member) throw new AppError(400, 'Active mess member not found for this mess');
 };
 
+const assertMealParticipantInMess = async (messId: string, messMemberId: string) => {
+  const member = await MessMember.findOne({ _id: messMemberId, messId, status: 'active' }).select('_id participation').lean();
+  if (!member) throw new AppError(400, 'Active mess member not found for this mess');
+  if (member.participation?.meals === false) {
+    throw new AppError(400, 'Meal cannot be logged because this member does not participate in mess meals');
+  }
+};
+
 const assertNoApprovedMealOff = async (messId: string, messMemberId: string, mealDate: Date) => {
   const mealOffRequest = await MealOffRequest.findOne({
     messId,
@@ -225,7 +233,7 @@ export const createOrUpdateMeal = async (
 ) => {
   const targetDate = normalizeMealDate(dateStr);
   await assertBillingCycleEditable(messId, targetDate);
-  await assertActiveMemberInMess(messId, messMemberId);
+  await assertMealParticipantInMess(messId, messMemberId);
   await assertNoApprovedMealOff(messId, messMemberId, targetDate);
   const normalizedPayload = await normalizeMealPayload(messId, mealCount, meals);
 
@@ -235,7 +243,7 @@ export const createOrUpdateMeal = async (
     { new: true, upsert: true, runValidators: true }
   ).populate({
     path: 'messMemberId',
-    select: 'userId messRole status',
+    select: 'userId messRole status participation',
     populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
   });
 };
@@ -258,10 +266,18 @@ export const bulkCreateOrUpdateMeals = async (
     _id: { $in: uniqueMemberIds },
     messId,
     status: 'active',
-  }).select('_id').lean();
+  }).select('_id participation').lean();
 
   if (activeMembers.length !== uniqueMemberIds.length) {
     throw new AppError(400, 'All meal entries must target active members of this mess');
+  }
+
+  const nonMealParticipantIds = activeMembers
+    .filter((member) => member.participation?.meals === false)
+    .map((member) => String(member._id));
+
+  if (nonMealParticipantIds.length) {
+    throw new AppError(400, `Meal cannot be logged because these members do not participate in mess meals: ${nonMealParticipantIds.join(', ')}`);
   }
 
   await assertNoApprovedMealOffForBulk(messId, uniqueMemberIds, targetDate);
@@ -279,7 +295,7 @@ export const bulkCreateOrUpdateMeals = async (
   return await Meal.find({ messId, messMemberId: { $in: uniqueMemberIds }, date: targetDate })
     .populate({
       path: 'messMemberId',
-      select: 'userId messRole status',
+      select: 'userId messRole status participation',
       populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
     })
     .sort({ createdAt: -1 });
@@ -305,7 +321,7 @@ export const listMeals = async (messId: string, options: ListMealsOptions = {}) 
     Meal.find(query)
       .populate({
         path: 'messMemberId',
-        select: 'userId messRole status',
+        select: 'userId messRole status participation',
         populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
       })
       .sort({ date: -1, createdAt: -1 })

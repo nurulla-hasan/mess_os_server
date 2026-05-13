@@ -22,3 +22,17 @@ export const updatePendingMemberStatusSchema = z.object({
     status: z.enum(['active', 'rejected']),
   }).strict(),
 });
+
+export const updateMemberParticipationSchema = z.object({
+  body: z.object({
+    participation: z.object({
+      meals: z.boolean().optional(),
+      sharedExpenses: z.boolean().optional(),
+    }).strict().refine(
+      (value) => value.meals !== undefined || value.sharedExpenses !== undefined,
+      'At least one participation flag is required'
+    ),
+  }).strict(),
+});
+
+export type UpdateMemberParticipationPayload = z.infer<typeof updateMemberParticipationSchema>['body'];

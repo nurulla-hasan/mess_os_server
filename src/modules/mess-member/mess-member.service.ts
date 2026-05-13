@@ -2,6 +2,7 @@ import { Mess } from '../mess/mess.model';
 import { User } from '../user/user.model';
 import { MessMember } from './mess-member.model';
 import { AppError } from '../../shared/utils/apiError';
+import { UpdateMemberParticipationPayload } from './mess-member.validation';
 
 // Reusable helper to find a member by query or throw an AppError
 const findMemberOrThrow = async (query: object, errorMsg: string, statusCode = 404) => {
@@ -97,6 +98,10 @@ export const getMembers = async (messId: string, options: GetMembersOptions = {}
       messId: m.messId,
       messRole: m.messRole,
       status: m.status,
+      participation: {
+        meals: m.participation?.meals ?? true,
+        sharedExpenses: m.participation?.sharedExpenses ?? true,
+      },
       joinedAt: m.joinedAt,
       leftAt: m.leftAt,
       createdAt: (m as any).createdAt,
@@ -126,6 +131,10 @@ export const getActiveMemberOptions = async (messId: string) => {
       phone: user?.phone,
       avatarUrl: user?.avatarUrl,
       messRole: member.messRole,
+      participation: {
+        meals: member.participation?.meals ?? true,
+        sharedExpenses: member.participation?.sharedExpenses ?? true,
+      },
     };
   });
 };
@@ -148,6 +157,29 @@ export const updatePendingMemberStatus = async (
   if (status === 'active') member.joinedAt = new Date();
   await member.save();
 
+  return member;
+};
+
+export const updateMemberParticipation = async (
+  messId: string,
+  memberId: string,
+  payload: UpdateMemberParticipationPayload
+) => {
+  const member = await findMemberOrThrow(
+    {
+      $or: [{ _id: memberId }, { userId: memberId }],
+      messId,
+      status: 'active',
+    },
+    'Active member not found'
+  );
+
+  member.participation = {
+    meals: payload.participation.meals ?? member.participation?.meals ?? true,
+    sharedExpenses: payload.participation.sharedExpenses ?? member.participation?.sharedExpenses ?? true,
+  };
+
+  await member.save();
   return member;
 };
 

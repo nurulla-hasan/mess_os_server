@@ -51,6 +51,15 @@ export const updatePendingMemberStatus = catchAsync(async (req: Request, res: Re
   sendResponse(res, { statusCode: 200, success: true, message: `Member ${action} successfully`, data: member });
 });
 
+export const updateMemberParticipation = catchAsync(async (req: Request, res: Response) => {
+  const member = await memberService.updateMemberParticipation(
+    req.messId!,
+    req.params.memberId as string,
+    req.body
+  );
+  sendResponse(res, { statusCode: 200, success: true, message: 'Member participation updated successfully', data: member });
+});
+
 export const removeMember = catchAsync(async (req: Request, res: Response) => {
   const member = await memberService.removeMember(req.messId!, req.params.memberId as string);
   sendResponse(res, { statusCode: 200, success: true, message: 'Member removed successfully', data: member });

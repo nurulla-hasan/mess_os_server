@@ -5,6 +5,10 @@ export interface IMessMember extends Document {
   userId: Types.ObjectId;
   messRole: 'manager' | 'member';
   status: 'pending' | 'active' | 'rejected' | 'removed';
+  participation: {
+    meals: boolean;
+    sharedExpenses: boolean;
+  };
   joinedAt?: Date;
   leftAt?: Date;
 }
@@ -14,6 +18,10 @@ const reqSchema = new Schema<IMessMember>({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   messRole: { type: String, enum: ['manager', 'member'], default: 'member' },
   status: { type: String, enum: ['pending', 'active', 'rejected', 'removed'], default: 'pending' },
+  participation: {
+    meals: { type: Boolean, default: true },
+    sharedExpenses: { type: Boolean, default: true },
+  },
   joinedAt: { type: Date },
   leftAt: { type: Date }
 }, {
