@@ -3267,7 +3267,7 @@
                 "billing"
               ]
             },
-            "description": "Role: Member+. Lists billing cycles. Requires messId variable."
+            "description": "Role: Member+. Lists billing cycles. Status values: draft or finalized. A missing month is not finalized yet, so managers may preview/finalize it. finalized cycles should show Reopen Cycle; draft cycles should show Finalize Billing."
           },
           "response": []
         },
@@ -3389,7 +3389,7 @@
                 "finalize"
               ]
             },
-            "description": "Role: Manager. Finalizes and saves billing cycle. Body: { month (number 1-12, required), year (number, required) }"
+            "description": "Role: Manager. Finalizes and saves billing cycle. Body: { month (number 1-12, required), year (number, required) }. Cannot finalize active/future months or months with pending expenses, pending payments, or unpaid utility bills. Finalized months lock meals, expense create/approval, payment approval, utility bill create/pay, and market completion."
           },
           "response": []
         },
@@ -3413,7 +3413,7 @@
                 "reopen"
               ]
             },
-            "description": "Role: Manager. Reopens finalized billing cycle for corrections. Requires messId and billingCycleId variables."
+            "description": "Role: Manager. Reopens finalized billing cycle for corrections. Changes status to draft, archives generated member bills, and voids billing-cycle ledger charges. Requires messId and billingCycleId variables."
           },
           "response": []
         }

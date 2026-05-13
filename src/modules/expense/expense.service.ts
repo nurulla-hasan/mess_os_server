@@ -6,6 +6,7 @@ import { REFERENCE_TYPES, FUND_SOURCES } from '../../constants/ledgerEntryTypes'
 import { CreateExpensePayload } from './expense.validation';
 import { MessMember } from '../mess-member/mess-member.model';
 import { isAfterTodayDhaka } from '../../shared/utils/dateUtils';
+import { assertBillingCycleOpenForDate } from '../billing/billing-lock.service';
 
 const expensePopulate = {
   path: 'paidBy',
@@ -25,6 +26,7 @@ const assertActiveMemberInMess = async (messId: string, messMemberId: string) =>
 export const createExpense = async (messId: string, payload: CreateExpensePayload) => {
   if (!payload.paidBy) throw new AppError(400, 'paidBy is required');
   if (isAfterTodayDhaka(payload.date)) throw new AppError(400, 'Expense date cannot be in the future');
+  await assertBillingCycleOpenForDate(messId, payload.date, 'Cannot create an expense for a finalized billing month');
   await assertActiveMemberInMess(messId, payload.paidBy);
 
   const expense = await Expense.create({
@@ -69,6 +71,7 @@ const approveExpense = async (messId: string, expenseId: string, managerId: stri
   try {
     const exp = await Expense.findOne({ _id: new Types.ObjectId(expenseId), messId: new Types.ObjectId(messId), status: 'pending' }).session(session);
     if (!exp) throw new AppError(404, 'Expense not found or not pending');
+    await assertBillingCycleOpenForDate(messId, exp.date, 'Cannot approve an expense for a finalized billing month');
 
     exp.status = 'approved';
     exp.approvedBy = new Types.ObjectId(managerId);
@@ -164,6 +167,7 @@ export const reimburseExpense = async (messId: string, expenseId: string, manage
     const exp = await Expense.findOne({ _id: new Types.ObjectId(expenseId), messId: new Types.ObjectId(messId), status: 'approved', fundSource: FUND_SOURCES.PERSONAL_CASH }).session(session);
     if (!exp) throw new AppError(404, 'Expense not found or ineligible for reimbursement');
     if (exp.reimbursementStatus === 'reimbursed') throw new AppError(400, 'Expense is already reimbursed');
+    await assertBillingCycleOpenForDate(messId, new Date(), 'Cannot reimburse expenses while the current billing month is finalized');
 
     exp.reimbursementStatus = 'reimbursed';
     

@@ -2,26 +2,51 @@ import mongoose, { ClientSession } from 'mongoose';
 import { BillingCycle } from './billing-cycle.model';
 import { MemberBill } from './member-bill.model';
 import { Expense } from '../expense/expense.model';
+import { Payment } from '../payment/payment.model';
 import { UtilityBill } from '../utility-bill/utility-bill.model';
 import { Meal } from '../meal/meal.model';
 import { MessMember } from '../mess-member/mess-member.model';
 import { MemberLedger } from '../ledger/member-ledger.model';
 import { Mess } from '../mess/mess.model';
+import '../user/user.model';
 import { ledgerHelper } from '../../shared/helpers/ledgerHelper';
 import { billingMathHelper } from '../../shared/helpers/billingMathHelper';
 import { getMonthBoundariesDhaka, DHAKA_OFFSET_MS } from '../../shared/utils/dateUtils';
 import { AppError } from '../../shared/utils/apiError';
 import { REFERENCE_TYPES, LEDGER_TRANSACTION_TYPES } from '../../constants/ledgerEntryTypes';
+import { assertBillingPeriodReadyToFinalize } from './billing-lock.service';
 
 export const getBillingCycles = async (messId: string) => {
   return await BillingCycle.find({ messId }).sort({ year: -1, month: -1 });
+};
+
+const memberBillPopulate = {
+  path: 'messMemberId',
+  select: 'userId messRole status participation joinedAt leftAt',
+  populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
+};
+
+const normalizeMemberBill = (bill: any): any => {
+  if (!bill?.messMemberId?.userId) return bill;
+  const { userId, ...member } = bill.messMemberId;
+  return {
+    ...bill,
+    messMemberId: {
+      ...member,
+      user: userId,
+    },
+  };
 };
 
 export const getMemberBills = async (messId: string, cycleId: string, memberId?: string, includeHistory = false) => {
   const filter: Record<string, unknown> = { messId, billingCycleId: cycleId };
   if (!includeHistory) filter.isArchived = false;
   if (memberId) filter.messMemberId = memberId;
-  return await MemberBill.find(filter).sort({ isArchived: 1, createdAt: -1 });
+  const bills = await MemberBill.find(filter)
+    .populate(memberBillPopulate)
+    .sort({ isArchived: 1, createdAt: -1 })
+    .lean();
+  return bills.map(normalizeMemberBill);
 };
 
 const generateBillingPayload = async (messId: string, billingMonth: number, billingYear: number, session?: ClientSession) => {
@@ -185,9 +210,25 @@ export const finalizeBillingCycle = async (messId: string, billingMonth: number,
   session.startTransaction();
 
   try {
+    assertBillingPeriodReadyToFinalize(billingMonth, billingYear);
+
     const existingCycle = await BillingCycle.findOne({ messId, month: billingMonth, year: billingYear }).session(session);
     if (existingCycle && existingCycle.status === 'finalized') {
       throw new AppError(400, 'Billing cycle already finalized');
+    }
+
+    const { start: periodStart, end: periodEnd } = getMonthBoundariesDhaka(billingMonth, billingYear);
+    const [pendingExpenses, pendingPayments, unpaidUtilities] = await Promise.all([
+      Expense.countDocuments({ messId, status: 'pending', date: { $gte: periodStart, $lte: periodEnd } }).session(session),
+      Payment.countDocuments({ messId, status: 'pending', createdAt: { $gte: periodStart, $lte: periodEnd } }).session(session),
+      UtilityBill.countDocuments({ messId, status: 'unpaid', billingMonth, year: billingYear }).session(session),
+    ]);
+
+    if (pendingExpenses || pendingPayments || unpaidUtilities) {
+      throw new AppError(
+        400,
+        `Cannot finalize billing with unresolved records: ${pendingExpenses} pending expenses, ${pendingPayments} pending payments, ${unpaidUtilities} unpaid utility bills`
+      );
     }
 
     const { start, end, totalMeals, totalMealExpense, totalEqualShareExpense, mealRate, memberBills, memberCharges } = await generateBillingPayload(messId, billingMonth, billingYear, session);

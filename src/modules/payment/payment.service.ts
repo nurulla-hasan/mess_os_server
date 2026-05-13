@@ -5,6 +5,7 @@ import { AppError } from '../../shared/utils/apiError';
 import { REFERENCE_TYPES } from '../../constants/ledgerEntryTypes';
 import { CreatePaymentPayload } from './payment.validation';
 import { MessMember } from '../mess-member/mess-member.model';
+import { assertBillingCycleOpenForDate } from '../billing/billing-lock.service';
 
 const paymentPopulate = {
   path: 'messMemberId',
@@ -74,6 +75,7 @@ const approvePayment = async (messId: string, paymentId: string, managerId: stri
     pay.status = 'approved';
     pay.approvedBy = new Types.ObjectId(managerId);
     pay.receivedDate = new Date();
+    await assertBillingCycleOpenForDate(messId, pay.receivedDate, 'Cannot approve a payment while the current billing month is finalized');
 
     await ledgerHelper.createCashIn({ 
       messId: new Types.ObjectId(messId), 

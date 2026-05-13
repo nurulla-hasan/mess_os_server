@@ -4,6 +4,7 @@ import { Expense } from '../expense/expense.model';
 import { AppError } from '../../shared/utils/apiError';
 import { getTodayDhakaNormalized, isBeforeTodayDhaka, normalizeMealDate } from '../../shared/utils/dateUtils';
 import { MessMember } from '../mess-member/mess-member.model';
+import { assertBillingCycleOpenForDate } from '../billing/billing-lock.service';
 
 const populateScheduleMembers = {
   path: 'assignedTo',
@@ -118,6 +119,7 @@ const completeSchedule = async (messId: string, scheduleId: string, payload: any
     if (schedule.targetDate > getTodayDhakaNormalized()) {
       throw new AppError(400, 'Cannot complete a market schedule before its target date');
     }
+    await assertBillingCycleOpenForDate(messId, new Date(), 'Cannot complete a market schedule while the current billing month is finalized');
 
     if (!isManager && !schedule.assignedTo.some(id => id.toString() === myMemberId)) {
       throw new AppError(403, 'Permission denied, only assigned members or managers can complete tasks');

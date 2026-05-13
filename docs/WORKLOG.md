@@ -276,6 +276,12 @@ Member participation separates access from billing responsibility:
 - Billing meal totals ignore meal records for members with `participation.meals=false`.
 - Billing equal-share units are calculated only for members with `participation.sharedExpenses=true`.
 - Manager-only users can keep `messRole=manager` with both participation flags set to `false`.
+- Member bill list/detail responses populate `messMemberId.user` with member name/email/phone/avatar.
+- Billing cycle status is `draft` or `finalized`; there is no separate `active` status.
+- A missing cycle for a month should be treated as not finalized; managers can preview/finalize it.
+- Finalized months are locked for meals, expense creation/approval, payment approval, utility bill create/pay, and market schedule completion.
+- Finalize is rejected for active/future months and when that month still has pending expenses, pending payments, or unpaid utility bills.
+- Reopen changes a finalized cycle back to `draft`, archives generated member bills, and voids billing-cycle ledger charges.
 
 Status/action endpoints are compressed so the same resource uses one status route instead of separate approve/reject/complete/void routes.
 

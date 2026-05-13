@@ -2,12 +2,12 @@ import mongoose from 'mongoose';
 import { Meal } from './meal.model';
 import { DHAKA_OFFSET_MS, isAfterTodayDhaka, normalizeMealDate } from '../../shared/utils/dateUtils';
 import { MessMember } from '../mess-member/mess-member.model';
-import { BillingCycle } from '../billing/billing-cycle.model';
 import { AppError } from '../../shared/utils/apiError';
 import { User } from '../user/user.model';
 import { isValidObjectId } from 'mongoose';
 import { Mess } from '../mess/mess.model';
 import { MealOffRequest } from '../meal-off-request/meal-off-request.model';
+import { assertBillingCycleOpenForDate } from '../billing/billing-lock.service';
 
 export type ListMealsOptions = {
   page?: number;
@@ -42,10 +42,11 @@ const getMonthYearFromMealDate = (mealDate: Date) => {
 
 const assertBillingCycleEditable = async (messId: string, mealDate: Date) => {
   const { month, year } = getMonthYearFromMealDate(mealDate);
-  const finalizedCycle = await BillingCycle.findOne({ messId, month, year, status: 'finalized' }).select('_id').lean();
-  if (finalizedCycle) {
-    throw new AppError(400, `Meals are locked because billing cycle ${month}/${year} is finalized. Reopen billing first.`);
-  }
+  await assertBillingCycleOpenForDate(
+    messId,
+    mealDate,
+    `Meals are locked because billing cycle ${month}/${year} is finalized. Reopen billing first.`
+  );
 };
 
 const assertActiveMemberInMess = async (messId: string, messMemberId: string) => {
