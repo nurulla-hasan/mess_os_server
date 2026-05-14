@@ -1,4 +1,6 @@
 import { Response } from 'express';
+import { normalizeResponseAvatars } from './responseNormalizer';
+
 export const sendResponse = <T>(
     res: Response,
     data: {
@@ -12,7 +14,7 @@ export const sendResponse = <T>(
     res.status(data.statusCode).json({
         success: data.success,
         message: data.message,
-        meta: data.meta,
-        data: data.data,
+        meta: normalizeResponseAvatars(data.meta),
+        data: normalizeResponseAvatars(data.data),
     });
 };
