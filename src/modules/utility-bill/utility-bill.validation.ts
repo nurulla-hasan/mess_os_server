@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { dateStringSchema } from '../../shared/validations/dateString';
 
 export const createUtilityBillSchema = z.object({
   body: z.object({
@@ -6,6 +7,6 @@ export const createUtilityBillSchema = z.object({
     amount: z.number().positive(),
     billingMonth: z.number().min(1).max(12),
     year: z.number().positive(),
-    dueDate: z.string().datetime().optional()
+    dueDate: dateStringSchema.optional()
   }).strict()
 });

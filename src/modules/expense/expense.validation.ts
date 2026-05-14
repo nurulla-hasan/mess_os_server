@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { isValidObjectId } from 'mongoose';
 import { FUND_SOURCES } from '../../constants/ledgerEntryTypes';
+import { dateStringSchema } from '../../shared/validations/dateString';
 
 const oId = z.string().refine(isValidObjectId);
 const emptyToUndefined = (value: unknown) => value === '' ? undefined : value;
@@ -9,7 +10,7 @@ export const createExpenseSchema = z.object({
   body: z.object({
     category: z.string().min(1),
     amount: z.number().positive(),
-    date: z.string().datetime(),
+    date: dateStringSchema,
     paidBy: oId.optional(),
     fundSource: z.enum([FUND_SOURCES.MESS_CASH, FUND_SOURCES.PERSONAL_CASH]),
     receiptUrl: z.string().url().optional()

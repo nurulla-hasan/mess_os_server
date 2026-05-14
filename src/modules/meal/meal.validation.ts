@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidObjectId } from 'mongoose';
+import { dateStringSchema } from '../../shared/validations/dateString';
 
 const oId = z.string().refine(isValidObjectId);
 const emptyToUndefined = (value: unknown) => value === '' ? undefined : value;
@@ -26,7 +27,7 @@ const mealEntry = z.object({
 export const logMealSchema = z.object({
   body: z.object({
     messMemberId: oId,
-    date: z.string().datetime(),
+    date: dateStringSchema,
     mealCount: mealCount.optional(),
     meals: mealBreakdown.optional(),
   }).strict().refine((value) => value.mealCount !== undefined || value.meals !== undefined, {
@@ -36,7 +37,7 @@ export const logMealSchema = z.object({
 
 export const bulkLogMealsSchema = z.object({
   body: z.object({
-    date: z.string().datetime(),
+    date: dateStringSchema,
     entries: z.array(mealEntry).min(1).max(200),
   }).strict()
 });
@@ -48,9 +49,9 @@ export const listMealsSchema = z.object({
     memberId: z.preprocess(emptyToUndefined, oId.optional()),
     scope: z.preprocess(emptyToUndefined, z.enum(['all', 'my']).optional()),
     searchTerm: z.preprocess(emptyToUndefined, z.string().trim().max(100).optional()),
-    start: z.preprocess(emptyToUndefined, z.string().datetime().optional()),
-    end: z.preprocess(emptyToUndefined, z.string().datetime().optional()),
-    startDate: z.preprocess(emptyToUndefined, z.string().datetime().optional()),
-    endDate: z.preprocess(emptyToUndefined, z.string().datetime().optional()),
+    start: z.preprocess(emptyToUndefined, dateStringSchema.optional()),
+    end: z.preprocess(emptyToUndefined, dateStringSchema.optional()),
+    startDate: z.preprocess(emptyToUndefined, dateStringSchema.optional()),
+    endDate: z.preprocess(emptyToUndefined, dateStringSchema.optional()),
   }).strict()
 });

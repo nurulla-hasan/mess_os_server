@@ -3143,7 +3143,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"category\": \"grocery\",\n  \"amount\": 1200,\n  \"date\": \"2026-05-13T00:00:00.000Z\",\n  \"fundSource\": \"mess_cash\",\n  \"receiptUrl\": \"https://example.com/receipt.png\"\n}"
+              "raw": "{\n  \"category\": \"grocery\",\n  \"amount\": 1200,\n  \"date\": \"2026-05-13\",\n  \"fundSource\": \"mess_cash\",\n  \"receiptUrl\": \"https://example.com/receipt.png\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/expenses",
@@ -3158,7 +3158,7 @@
                 "expenses"
               ]
             },
-            "description": "Role: Member+. Body: { category, amount, date, paidBy?, fundSource, receiptUrl? }. Expense date cannot be in the future. Members can omit paidBy and it defaults to their own active membership. Managers may pass paidBy for another active member of the same mess."
+            "description": "Role: Member+. Body: { category, amount, date, paidBy?, fundSource, receiptUrl? }. Date accepts YYYY-MM-DD or ISO datetime and is normalized by Dhaka day. Expense date cannot be in the future. Members can omit paidBy and it defaults to their own active membership. Managers may pass paidBy for another active member of the same mess."
           },
           "response": []
         },
@@ -3468,13 +3468,13 @@
                 {
                   "key": "start",
                   "value": "",
-                  "description": "Optional ISO datetime. startDate is also accepted.",
+                  "description": "Optional date. Accepts YYYY-MM-DD or ISO datetime. startDate is also accepted.",
                   "disabled": true
                 },
                 {
                   "key": "end",
                   "value": "",
-                  "description": "Optional ISO datetime. endDate is also accepted.",
+                  "description": "Optional date. Accepts YYYY-MM-DD or ISO datetime. endDate is also accepted.",
                   "disabled": true
                 },
                 {
@@ -3502,7 +3502,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"messMemberId\": \"{{memberId}}\",\n  \"date\": \"2025-01-01T00:00:00.000Z\",\n  \"meals\": {\n    \"Breakfast\": 1,\n    \"Lunch\": 1,\n    \"Dinner\": 1,\n    \"Guest\": 2\n  }\n}"
+              "raw": "{\n  \"messMemberId\": \"{{memberId}}\",\n  \"date\": \"2025-01-01\",\n  \"meals\": {\n    \"Breakfast\": 1,\n    \"Lunch\": 1,\n    \"Dinner\": 1,\n    \"Guest\": 2\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/meals",
@@ -3517,7 +3517,7 @@
                 "meals"
               ]
             },
-            "description": "Role: Manager. Creates or updates one member's meal count for a date. Preferred body uses meals breakdown from mess settings mealCategories plus special Guest category, for example { meals: { Breakfast: 1, Lunch: 1, Dinner: 1, Guest: 2 } }. Backend calculates mealCount from meals, so guest meals increase that member's total. Backward compatible body { mealCount: 2 } is also accepted. Counts support 0.5 increments. Regular meals cannot exceed 3; total including Guest cannot exceed 50. Locked if that month has a finalized billing cycle. Also blocked if the member has an approved meal off request for that date; cancel the meal off request first to log meals again."
+            "description": "Role: Manager. Creates or updates one member's meal count for a date. Date accepts YYYY-MM-DD or ISO datetime and is normalized by Dhaka day. Preferred body uses meals breakdown from mess settings mealCategories plus special Guest category, for example { meals: { Breakfast: 1, Lunch: 1, Dinner: 1, Guest: 2 } }. Backend calculates mealCount from meals, so guest meals increase that member's total. Backward compatible body { mealCount: 2 } is also accepted. Counts support 0.5 increments. Regular meals cannot exceed 3; total including Guest cannot exceed 50. Locked if that month has a finalized billing cycle. Also blocked if the member has an approved meal off request for that date; cancel the meal off request first to log meals again."
           },
           "response": []
         },
@@ -3534,7 +3534,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"date\": \"2025-01-01T00:00:00.000Z\",\n  \"entries\": [\n    {\n      \"messMemberId\": \"{{memberId}}\",\n      \"meals\": {\n        \"Breakfast\": 1,\n        \"Lunch\": 1,\n        \"Dinner\": 1,\n        \"Guest\": 2\n      }\n    }\n  ]\n}"
+              "raw": "{\n  \"date\": \"2025-01-01\",\n  \"entries\": [\n    {\n      \"messMemberId\": \"{{memberId}}\",\n      \"meals\": {\n        \"Breakfast\": 1,\n        \"Lunch\": 1,\n        \"Dinner\": 1,\n        \"Guest\": 2\n      }\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/meals/bulk",
@@ -3550,7 +3550,7 @@
                 "bulk"
               ]
             },
-            "description": "Role: Manager. Creates or updates meal counts for multiple active members on one date. Preferred entries use meals breakdown from mess settings mealCategories plus special Guest category. Backend calculates mealCount from meals, so guest meals increase that member's total. Backward compatible mealCount entries are also accepted. Body entries max 200. Duplicate messMemberId is rejected. Counts support 0.5 increments. Regular meals cannot exceed 3; total including Guest cannot exceed 50. Locked if that month has a finalized billing cycle. Also blocked for any entry where the member has an approved meal off request for that date; cancel the meal off request first to log meals again."
+            "description": "Role: Manager. Creates or updates meal counts for multiple active members on one date. Date accepts YYYY-MM-DD or ISO datetime and is normalized by Dhaka day. Preferred entries use meals breakdown from mess settings mealCategories plus special Guest category. Backend calculates mealCount from meals, so guest meals increase that member's total. Backward compatible mealCount entries are also accepted. Body entries max 200. Duplicate messMemberId is rejected. Counts support 0.5 increments. Regular meals cannot exceed 3; total including Guest cannot exceed 50. Locked if that month has a finalized billing cycle. Also blocked for any entry where the member has an approved meal off request for that date; cancel the meal off request first to log meals again."
           },
           "response": []
         }
@@ -3750,7 +3750,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"category\": \"electricity\",\n  \"amount\": 2500,\n  \"billingMonth\": 1,\n  \"year\": 2025,\n  \"dueDate\": \"2025-02-01T00:00:00.000Z\"\n}"
+              "raw": "{\n  \"category\": \"electricity\",\n  \"amount\": 2500,\n  \"billingMonth\": 1,\n  \"year\": 2025,\n  \"dueDate\": \"2025-02-01\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/utility-bills",
@@ -3765,7 +3765,7 @@
                 "utility-bills"
               ]
             },
-            "description": "Role: Manager. Creates utility bill. Body: { category (string, required), amount (number, positive, required), billingMonth (number 1-12, required), year (number, required), dueDate (ISO datetime, optional) }"
+            "description": "Role: Manager. Creates utility bill. Body: { category (string, required), amount (number, positive, required), billingMonth (number 1-12, required), year (number, required), dueDate (date-only YYYY-MM-DD or ISO datetime, optional) }"
           },
           "response": []
         },
@@ -3906,7 +3906,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"assignedTo\": [\n    \"{{memberId}}\"\n  ],\n  \"targetDate\": \"2026-05-20T10:00:00.000Z\",\n  \"shoppingItems\": [\n    {\n      \"name\": \"Rice\",\n      \"quantity\": \"5 KG\"\n    },\n    {\n      \"name\": \"Oil\",\n      \"quantity\": \"2 L\"\n    }\n  ],\n  \"estimatedBudget\": 1500\n}"
+              "raw": "{\n  \"assignedTo\": [\n    \"{{memberId}}\"\n  ],\n  \"targetDate\": \"2026-05-20\",\n  \"shoppingItems\": [\n    {\n      \"name\": \"Rice\",\n      \"quantity\": \"5 KG\"\n    },\n    {\n      \"name\": \"Oil\",\n      \"quantity\": \"2 L\"\n    }\n  ],\n  \"estimatedBudget\": 1500\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/market-schedules",
@@ -3921,7 +3921,7 @@
                 "market-schedules"
               ]
             },
-            "description": "Role: Manager. Body: { assignedTo (unique active same-mess member ObjectId[], min 1, required), targetDate (ISO datetime, required, cannot be past), shoppingItems (array of {name, quantity}, required), estimatedBudget (number, positive, required) }. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details."
+            "description": "Role: Manager. Body: { assignedTo (unique active same-mess member ObjectId[], min 1, required), targetDate (YYYY-MM-DD or ISO datetime, required, cannot be past), shoppingItems (array of {name, quantity}, required), estimatedBudget (number, positive, required) }. Dates are normalized by Dhaka day. Assigned members are populated as assignedTo[] objects with _id, messRole, status, and user details."
           },
           "response": []
         },
@@ -4072,7 +4072,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"date\": \"2026-05-13T00:00:00.000Z\",\n  \"meals\": {\n    \"Breakfast\": \"Ruti, dal, egg\",\n    \"Lunch\": \"Rice, chicken curry\",\n    \"Dinner\": \"Khichuri, beef\"\n  },\n  \"isAiGenerated\": false,\n  \"aiPreference\": \"Bangla low cost\",\n  \"aiBudget\": 1200,\n  \"avoidRecentDays\": 7\n}"
+              "raw": "{\n  \"date\": \"2026-05-13\",\n  \"meals\": {\n    \"Breakfast\": \"Ruti, dal, egg\",\n    \"Lunch\": \"Rice, chicken curry\",\n    \"Dinner\": \"Khichuri, beef\"\n  },\n  \"isAiGenerated\": false,\n  \"aiPreference\": \"Bangla low cost\",\n  \"aiBudget\": 1200,\n  \"avoidRecentDays\": 7\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans",
@@ -4087,7 +4087,7 @@
                 "menu-plans"
               ]
             },
-            "description": "Role: Manager. Creates a draft menu plan. For manual creation, send meals with keys matching mess.settings.mealCategories. For AI generation, send isAiGenerated=true and omit meals. Optional AI fields: aiPreference (e.g. healthy, low cost, Bangla), aiBudget, avoidRecentDays (0-30, defaults to 7). Backend uses mess mealCategories and recent menu context to avoid repeated meals."
+            "description": "Role: Manager. Creates a draft menu plan. Date accepts YYYY-MM-DD or ISO datetime and is normalized by Dhaka day. For manual creation, send meals with keys matching mess.settings.mealCategories. For AI generation, send isAiGenerated=true and omit meals. Optional AI fields: aiPreference (e.g. healthy, low cost, Bangla), aiBudget, avoidRecentDays (0-30, defaults to 7). Backend uses mess mealCategories and recent menu context to avoid repeated meals."
           },
           "response": [
             {
@@ -4103,7 +4103,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"date\": \"2026-05-13T00:00:00.000Z\",\n  \"meals\": {\n    \"Breakfast\": \"Ruti, dal, egg\",\n    \"Lunch\": \"Rice, chicken curry\",\n    \"Dinner\": \"Khichuri, beef\"\n  },\n  \"isAiGenerated\": false,\n  \"aiPreference\": \"Bangla low cost\",\n  \"aiBudget\": 1200,\n  \"avoidRecentDays\": 7\n}"
+                  "raw": "{\n  \"date\": \"2026-05-13\",\n  \"meals\": {\n    \"Breakfast\": \"Ruti, dal, egg\",\n    \"Lunch\": \"Rice, chicken curry\",\n    \"Dinner\": \"Khichuri, beef\"\n  },\n  \"isAiGenerated\": false,\n  \"aiPreference\": \"Bangla low cost\",\n  \"aiBudget\": 1200,\n  \"avoidRecentDays\": 7\n}"
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/menu-plans",
@@ -4281,7 +4281,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"menuPlanId\": \"{{menuPlanId}}\",\n  \"targetDate\": \"2026-05-20T10:00:00.000Z\"\n}"
+              "raw": "{\n  \"menuPlanId\": \"{{menuPlanId}}\",\n  \"targetDate\": \"2026-05-20\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/ai-shopping/generate",
@@ -4297,7 +4297,7 @@
                 "generate"
               ]
             },
-            "description": "Role: Manager. Generates shopping list from menu plan meals. Backend reads the menu plan meals and produces bazar items from the menu text. Body: { menuPlanId (ObjectId, required), targetDate (ISO datetime, required, cannot be past) }"
+            "description": "Role: Manager. Generates shopping list from menu plan meals. Backend reads the menu plan meals and produces bazar items from the menu text. Body: { menuPlanId (ObjectId, required), targetDate (YYYY-MM-DD or ISO datetime, required, cannot be past) }. Dates are normalized by Dhaka day."
           },
           "response": []
         },

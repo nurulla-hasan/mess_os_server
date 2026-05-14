@@ -1,8 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
+import { ZodError } from 'zod';
 
 export const globalErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal server error';
+
+  if (err instanceof ZodError || err.name === 'ZodError') {
+    const errors = err.issues?.map((issue: any) => {
+      const path = issue.path?.join('.') || 'request';
+      return `${path}: ${issue.message}`;
+    }) || [];
+    message = `Invalid input data. ${errors.join('. ')}`;
+    statusCode = 400;
+  }
 
   // Handle Mongoose CastError (Invalid ObjectId)
   if (err.name === 'CastError') {

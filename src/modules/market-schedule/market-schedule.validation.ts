@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { isValidObjectId } from 'mongoose';
 import { FUND_SOURCES } from '../../constants/ledgerEntryTypes';
+import { dateStringSchema } from '../../shared/validations/dateString';
 
 const oId = z.string().refine(isValidObjectId);
 const emptyToUndefined = (value: unknown) => value === '' ? undefined : value;
@@ -21,7 +22,7 @@ export const listMarketScheduleSchema = z.object({
 export const createMarketScheduleSchema = z.object({
   body: z.object({
     assignedTo: z.array(oId).min(1),
-    targetDate: z.string().datetime(),
+    targetDate: dateStringSchema,
     shoppingItems: z.array(z.object({ name: z.string(), quantity: z.string() })),
     estimatedBudget: z.number().positive()
   }).strict()

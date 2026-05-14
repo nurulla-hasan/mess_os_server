@@ -586,6 +586,7 @@ Recently cleaned:
 - made empty query filters safe for manager request and mess member list endpoints
 - payment and expense list endpoints support validated `page`, `limit`, and `status`
 - report date filters accept both `start`/`end` and `startDate`/`endDate`
+- date inputs now accept `YYYY-MM-DD` as well as ISO datetime, and business dates are normalized using Dhaka day handling where applicable
 
 ## Menu Plan AI Notes
 

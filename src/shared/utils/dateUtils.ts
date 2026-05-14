@@ -33,6 +33,12 @@ export const normalizeMealDate = (inputDate: Date | string): Date => {
   return new Date(normalizedDhakaUtc.getTime() - DHAKA_OFFSET_MS);
 };
 
+export const getDhakaDayBounds = (inputDate: Date | string) => {
+  const start = normalizeMealDate(inputDate);
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000 - 1);
+  return { start, end };
+};
+
 export const getTodayDhakaNormalized = (): Date => normalizeMealDate(getDhakaNow());
 
 export const isBeforeTodayDhaka = (inputDate: Date | string): boolean => {

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidObjectId } from 'mongoose';
+import { dateStringSchema } from '../../shared/validations/dateString';
 
 const oId = z.string().refine(isValidObjectId);
 const emptyToUndefined = (value: unknown) => value === '' ? undefined : value;
@@ -14,8 +15,8 @@ const mealOffStatus = z.enum(['pending', 'approved', 'rejected', 'canceled']);
 export const createMealOffSchema = z.object({
   body: z.object({
     messMemberId: oId.optional(),
-    startDate: z.string(),
-    endDate: z.string(),
+    startDate: dateStringSchema,
+    endDate: dateStringSchema,
     reason: z.string().optional()
   }).strict()
 });
@@ -29,10 +30,10 @@ export const listMealOffRequestsSchema = z.object({
     messMemberId: z.preprocess(emptyToUndefined, oId.optional()),
     memberId: z.preprocess(emptyToUndefined, oId.optional()),
     searchTerm: z.preprocess(emptyToUndefined, z.string().trim().max(100).optional()),
-    start: z.preprocess(emptyToUndefined, z.string().optional()),
-    end: z.preprocess(emptyToUndefined, z.string().optional()),
-    startDate: z.preprocess(emptyToUndefined, z.string().optional()),
-    endDate: z.preprocess(emptyToUndefined, z.string().optional()),
+    start: z.preprocess(emptyToUndefined, dateStringSchema.optional()),
+    end: z.preprocess(emptyToUndefined, dateStringSchema.optional()),
+    startDate: z.preprocess(emptyToUndefined, dateStringSchema.optional()),
+    endDate: z.preprocess(emptyToUndefined, dateStringSchema.optional()),
   }).strict()
 });
 

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidObjectId } from 'mongoose';
+import { dateStringSchema } from '../../shared/validations/dateString';
 
 const oId = z.string().refine(isValidObjectId);
 const emptyToUndefined = (value: unknown) => value === '' ? undefined : value;
@@ -17,16 +18,16 @@ export const listMenuPlansSchema = z.object({
     page: z.preprocess(emptyToUndefined, positiveIntegerString.optional()),
     limit: z.preprocess(emptyToUndefined, limitString.optional()),
     status: z.preprocess(emptyToUndefined, menuStatus.optional()),
-    start: z.preprocess(emptyToUndefined, z.string().optional()),
-    end: z.preprocess(emptyToUndefined, z.string().optional()),
-    startDate: z.preprocess(emptyToUndefined, z.string().optional()),
-    endDate: z.preprocess(emptyToUndefined, z.string().optional()),
+    start: z.preprocess(emptyToUndefined, dateStringSchema.optional()),
+    end: z.preprocess(emptyToUndefined, dateStringSchema.optional()),
+    startDate: z.preprocess(emptyToUndefined, dateStringSchema.optional()),
+    endDate: z.preprocess(emptyToUndefined, dateStringSchema.optional()),
   }).strict()
 });
 
 export const createMenuPlanSchema = z.object({
   body: z.object({
-    date: z.string().datetime(),
+    date: dateStringSchema,
     meals: mealsSchema.optional(),
     isAiGenerated: z.boolean().default(false),
     aiPreference: z.string().trim().max(200).optional(),

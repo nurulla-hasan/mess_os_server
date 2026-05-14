@@ -4,10 +4,12 @@ import { ledgerHelper } from '../../shared/helpers/ledgerHelper';
 import { AppError } from '../../shared/utils/apiError';
 import { REFERENCE_TYPES } from '../../constants/ledgerEntryTypes';
 import { assertBillingCycleOpenForMonth } from '../billing/billing-lock.service';
+import { normalizeMealDate } from '../../shared/utils/dateUtils';
 
 export const createUtilityBill = async (messId: string, payload: any) => {
   await assertBillingCycleOpenForMonth(messId, payload.billingMonth, payload.year, 'Cannot create a utility bill for a finalized billing month');
-  return await UtilityBill.create({ messId, ...payload, status: 'unpaid' });
+  const dueDate = payload.dueDate ? normalizeMealDate(payload.dueDate) : undefined;
+  return await UtilityBill.create({ messId, ...payload, dueDate, status: 'unpaid' });
 };
 export const getUtilityBills = async (messId: string) => { return await UtilityBill.find({ messId }).sort({ year: -1, billingMonth: -1 }); };
 

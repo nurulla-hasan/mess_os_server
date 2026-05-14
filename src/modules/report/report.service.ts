@@ -7,6 +7,7 @@ import { Payment } from '../payment/payment.model';
 import { AppError } from '../../shared/utils/apiError';
 import { parseAsync } from 'json2csv';
 import mongoose from 'mongoose';
+import { getDhakaDayBounds } from '../../shared/utils/dateUtils';
 
 export const getMessSummary = async (messId: string) => {
    const cashLedgers = await CashLedger.find({ messId: new mongoose.Types.ObjectId(messId), isVoided: false });
@@ -40,7 +41,7 @@ export const getMemberStatement = async (messId: string, memberId: string) => {
 export const getExpenseReport = async (messId: string, start?: string, end?: string) => {
    const query: Record<string, unknown> = { messId, status: 'approved' };
    if (start && end) {
-       query.date = { $gte: new Date(start), $lte: new Date(end) };
+       query.date = { $gte: getDhakaDayBounds(start).start, $lte: getDhakaDayBounds(end).end };
    }
    return await Expense.find(query).sort({ date: -1 });
 };
@@ -49,7 +50,7 @@ export const getPaymentReport = async (messId: string, start?: string, end?: str
    const query: Record<string, unknown> = { messId, status: 'approved' };
    if (start && end) {
        // Approved financial reporting uses receivedDate as the canonical accounting boundary natively
-       query.receivedDate = { $gte: new Date(start), $lte: new Date(end) };
+       query.receivedDate = { $gte: getDhakaDayBounds(start).start, $lte: getDhakaDayBounds(end).end };
    }
    return await Payment.find(query).sort({ receivedDate: -1 });
 };

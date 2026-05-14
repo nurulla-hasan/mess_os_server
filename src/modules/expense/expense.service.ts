@@ -5,7 +5,7 @@ import { AppError } from '../../shared/utils/apiError';
 import { REFERENCE_TYPES, FUND_SOURCES } from '../../constants/ledgerEntryTypes';
 import { CreateExpensePayload } from './expense.validation';
 import { MessMember } from '../mess-member/mess-member.model';
-import { isAfterTodayDhaka } from '../../shared/utils/dateUtils';
+import { isAfterTodayDhaka, normalizeMealDate } from '../../shared/utils/dateUtils';
 import { assertBillingCycleOpenForDate } from '../billing/billing-lock.service';
 
 const expensePopulate = {
@@ -25,14 +25,16 @@ const assertActiveMemberInMess = async (messId: string, messMemberId: string) =>
 
 export const createExpense = async (messId: string, payload: CreateExpensePayload) => {
   if (!payload.paidBy) throw new AppError(400, 'paidBy is required');
-  if (isAfterTodayDhaka(payload.date)) throw new AppError(400, 'Expense date cannot be in the future');
-  await assertBillingCycleOpenForDate(messId, payload.date, 'Cannot create an expense for a finalized billing month');
+  const expenseDate = normalizeMealDate(payload.date);
+  if (isAfterTodayDhaka(expenseDate)) throw new AppError(400, 'Expense date cannot be in the future');
+  await assertBillingCycleOpenForDate(messId, expenseDate, 'Cannot create an expense for a finalized billing month');
   await assertActiveMemberInMess(messId, payload.paidBy);
 
   const expense = await Expense.create({
     ...payload,
     messId: new Types.ObjectId(messId),
     paidBy: new Types.ObjectId(payload.paidBy),
+    date: expenseDate,
     status: 'pending'
   });
 

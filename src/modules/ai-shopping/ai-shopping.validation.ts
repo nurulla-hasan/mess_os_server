@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidObjectId } from 'mongoose';
+import { dateStringSchema } from '../../shared/validations/dateString';
 
 const oId = z.string().refine(isValidObjectId);
 const emptyToUndefined = (value: unknown) => value === '' ? undefined : value;
@@ -19,7 +20,7 @@ export const listAiShoppingSchema = z.object({
 export const generateListSchema = z.object({
   body: z.object({
     menuPlanId: oId,
-    targetDate: z.string().datetime()
+    targetDate: dateStringSchema
   }).strict()
 });
 

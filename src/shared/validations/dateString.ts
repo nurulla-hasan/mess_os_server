@@ -1,0 +1,30 @@
+import { z } from 'zod';
+
+const dateOnlyPattern = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+const isValidDateOnly = (value: string) => {
+  const match = value.match(dateOnlyPattern);
+  if (!match) return false;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+};
+
+export const isValidDateString = (value: string) => {
+  const trimmed = value.trim();
+  if (isValidDateOnly(trimmed)) return true;
+  return !Number.isNaN(Date.parse(trimmed)) && !Number.isNaN(new Date(trimmed).getTime());
+};
+
+export const dateStringSchema = z.string().trim().refine(isValidDateString, {
+  message: 'Invalid date. Use YYYY-MM-DD or ISO datetime',
+});
+
