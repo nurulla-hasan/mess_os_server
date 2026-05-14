@@ -140,10 +140,11 @@ export const getActiveMemberOptions = async (messId: string) => {
     const user = member.userId as any;
     return {
       _id: member._id,
+      userId: user?._id,
       name: user?.fullName ?? '',
       email: user?.email,
       phone: user?.phone,
-      avatarUrl: user?.avatarUrl,
+      avatar: user?.avatarUrl ?? '',
       messRole: member.messRole,
       participation: {
         meals: member.participation?.meals ?? true,

@@ -2783,7 +2783,7 @@
                 "options"
               ]
             },
-            "description": "Role: Member+. Lightweight active member options for selectors/dropdowns such as meal logging. Returns all active members without pagination. Response fields: _id (messMemberId), name, email, phone, avatarUrl, messRole, participation."
+            "description": "Role: Member+. Lightweight active member options for selectors/dropdowns such as meal logging and ownership transfer. Returns all active members without pagination. Response fields: _id (messMemberId), userId (actual User _id), name, email, phone, avatar, messRole, participation. Use userId as newManagerUserId for ownership transfer."
           },
           "response": [
             {
@@ -2815,7 +2815,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Active member options fetched successfully\",\n  \"data\": [\n    {\n      \"_id\": \"{{memberId}}\",\n      \"name\": \"Golap Hasan\",\n      \"email\": \"golaphasan379@gmail.com\",\n      \"phone\": \"017123456789\",\n      \"avatarUrl\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1778230663/avatars/el1ms2tv7bsbai31qgct.jpg\",\n      \"messRole\": \"manager\",\n      \"participation\": {\n        \"meals\": true,\n        \"sharedExpenses\": true\n      }\n    }\n  ]\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Active member options fetched successfully\",\n  \"data\": [\n    {\n      \"_id\": \"{{memberId}}\",\n      \"userId\": \"{{userId}}\",\n      \"name\": \"Golap Hasan\",\n      \"email\": \"golaphasan379@gmail.com\",\n      \"phone\": \"017123456789\",\n      \"avatar\": \"https://res.cloudinary.com/dwcmooqao/image/upload/v1778230663/avatars/el1ms2tv7bsbai31qgct.jpg\",\n      \"messRole\": \"manager\",\n      \"participation\": {\n        \"meals\": true,\n        \"sharedExpenses\": true\n      }\n    }\n  ]\n}"
             }
           ]
         },
@@ -2916,7 +2916,7 @@
           "response": []
         }
       ],
-      "description": "Member management within a mess. GET /options returns lightweight active member options without pagination for selectors. GET / returns all statuses for managers when status is omitted and supports ?status=active|pending|rejected|removed plus ?searchTerm= for name/email/phone search. Members can use status=active. PATCH /:memberId/status approves or rejects pending requests with body status=active|rejected. PATCH /:memberId/participation updates participation.meals and participation.sharedExpenses for active members. POST remove requires manager role. All routes protected by messContext middleware."
+      "description": "Member management within a mess. GET /options returns lightweight active member options without pagination for selectors and includes both _id (messMemberId) and userId (actual User _id). GET / returns all statuses for managers when status is omitted and supports ?status=active|pending|rejected|removed plus ?searchTerm= for name/email/phone search. Members can use status=active. PATCH /:memberId/status approves or rejects pending requests with body status=active|rejected. PATCH /:memberId/participation updates participation.meals and participation.sharedExpenses for active members. POST remove requires manager role. All routes protected by messContext middleware."
     },
     {
       "name": "Payments",
