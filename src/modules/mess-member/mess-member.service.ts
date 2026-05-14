@@ -3,6 +3,9 @@ import { User } from '../user/user.model';
 import { MessMember } from './mess-member.model';
 import { AppError } from '../../shared/utils/apiError';
 import { UpdateMemberParticipationPayload } from './mess-member.validation';
+import { Subscription } from '../subscription/subscription.model';
+import { SubscriptionPlan } from '../subscription/subscription-plan.model';
+import { assignDefaultSubscription } from '../subscription/subscription.service';
 
 // Reusable helper to find a member by query or throw an AppError
 const findMemberOrThrow = async (query: object, errorMsg: string, statusCode = 404) => {
@@ -56,6 +59,17 @@ type GetMembersOptions = {
 };
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const assertMemberLimitAvailable = async (messId: string) => {
+  const subscription = (await Subscription.findOne({ messId }).lean()) || (await assignDefaultSubscription(messId)).toObject();
+  const plan = await SubscriptionPlan.findOne({ code: subscription.planId, isActive: true }).select('name maxMembers').lean();
+  if (!plan) throw new AppError(402, 'Your current subscription plan is unavailable. Please choose a plan.');
+
+  const activeMembers = await MessMember.countDocuments({ messId, status: 'active' });
+  if (activeMembers >= plan.maxMembers) {
+    throw new AppError(402, `Your current plan (${plan.name}) allows up to ${plan.maxMembers} active members. Please upgrade to approve more members.`);
+  }
+};
 
 export const getMembers = async (messId: string, options: GetMembersOptions = {}) => {
   const { status, searchTerm } = options;
@@ -152,6 +166,8 @@ export const updatePendingMemberStatus = async (
     },
     'Pending join request not found'
   );
+
+  if (status === 'active') await assertMemberLimitAvailable(messId);
 
   member.status = status;
   if (status === 'active') member.joinedAt = new Date();

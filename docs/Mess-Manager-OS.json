@@ -5160,7 +5160,7 @@
           "response": []
         }
       ],
-      "description": "Subscription management for frontend integration. Use plans/current/history/subscribe/cancel from the app. SSLCommerz callback routes still exist in backend for the payment gateway but are intentionally hidden from this collection."
+      "description": "Subscription management for frontend integration. Use plans/current/history/subscribe/cancel from the app. SSLCommerz callback routes still exist in backend for the payment gateway but are intentionally hidden from this collection. Module routes are backend-guarded by plan.features: meals, expenses, billing, reports, marketSchedule, aiShopping, notices, and complaints. Active member approval is also limited by plan.maxMembers."
     },
     {
       "name": "Admin (Super Admin)",
@@ -5469,7 +5469,7 @@
                 "subscription-plans"
               ]
             },
-            "description": "Role: Super Admin. Creates a subscription plan. billingCycle allowed values: free, monthly, yearly. code can contain lowercase letters, numbers, and underscores. If isDefault=true, other plans are unset as default."
+            "description": "Role: Super Admin. Creates a subscription plan. billingCycle allowed values: free, monthly, yearly. code can contain lowercase letters, numbers, and underscores. If isDefault=true, other plans are unset as default. features controls backend module access for known keys: meals, expenses, billing, reports, marketSchedule, aiShopping, notices, complaints, prioritySupport."
           },
           "response": []
         },
@@ -5506,7 +5506,7 @@
                 "{{subscriptionPlanId}}"
               ]
             },
-            "description": "Role: Super Admin. Updates a subscription plan by MongoDB plan id. If isDefault=true, this plan is forced active and other plans are unset as default."
+            "description": "Role: Super Admin. Updates a subscription plan by MongoDB plan id. If isDefault=true, this plan is forced active and other plans are unset as default. features can be partially updated with known feature keys to turn module access on/off."
           },
           "response": []
         },

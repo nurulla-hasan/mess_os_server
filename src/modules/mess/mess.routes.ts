@@ -3,6 +3,7 @@ import { authenticate } from '../../shared/middlewares/authenticate';
 import { messContext } from '../../shared/middlewares/messContext';
 import { authorize } from '../../shared/middlewares/authorize';
 import { validateRequest } from '../../shared/middlewares/validateRequest';
+import { requireSubscriptionFeature } from '../../shared/middlewares/requireSubscriptionFeature';
 import * as messVal from './mess.validation';
 import * as messCtl from './mess.controller';
 import * as memberVal from '../mess-member/mess-member.validation';
@@ -39,18 +40,18 @@ router.post('/:messId/regenerate-invite-code', authorize(MESS_ROLES.MANAGER), me
 router.post('/:messId/transfer-ownership', authorize(MESS_ROLES.MANAGER), validateRequest(messVal.transferOwnershipSchema), messCtl.transferOwnership);
 
 router.use('/:messId/members', messMemberRoutes);
-router.use('/:messId/payments', paymentRoutes);
-router.use('/:messId/expenses', expenseRoutes);
-router.use('/:messId/billing', billingRoutes);
-router.use('/:messId/meals', mealRoutes);
-router.use('/:messId/meal-off-requests', mealOffRequestRoutes);
-router.use('/:messId/utility-bills', utilityBillRoutes);
-router.use('/:messId/market-schedules', marketScheduleRoutes);
-router.use('/:messId/menu-plans', menuPlanRoutes);
-router.use('/:messId/ai-shopping', aiShoppingRoutes);
-router.use('/:messId/notices', noticeRoutes);
-router.use('/:messId/complaints', complaintRoutes);
-router.use('/:messId/reports', reportRoutes);
+router.use('/:messId/payments', requireSubscriptionFeature('expenses'), paymentRoutes);
+router.use('/:messId/expenses', requireSubscriptionFeature('expenses'), expenseRoutes);
+router.use('/:messId/billing', requireSubscriptionFeature('billing'), billingRoutes);
+router.use('/:messId/meals', requireSubscriptionFeature('meals'), mealRoutes);
+router.use('/:messId/meal-off-requests', requireSubscriptionFeature('meals'), mealOffRequestRoutes);
+router.use('/:messId/utility-bills', requireSubscriptionFeature('billing'), utilityBillRoutes);
+router.use('/:messId/market-schedules', requireSubscriptionFeature('marketSchedule'), marketScheduleRoutes);
+router.use('/:messId/menu-plans', requireSubscriptionFeature('meals'), menuPlanRoutes);
+router.use('/:messId/ai-shopping', requireSubscriptionFeature('aiShopping'), aiShoppingRoutes);
+router.use('/:messId/notices', requireSubscriptionFeature('notices'), noticeRoutes);
+router.use('/:messId/complaints', requireSubscriptionFeature('complaints'), complaintRoutes);
+router.use('/:messId/reports', requireSubscriptionFeature('reports'), reportRoutes);
 router.use('/:messId/subscriptions', messSubscriptionRoutes);
 
 export const messRoutes = router;
