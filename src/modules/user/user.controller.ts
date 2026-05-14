@@ -19,7 +19,7 @@ export const updateAvatar = catchAsync(async (req: Request, res: Response) => {
     return;
   }
 
-  const user = await userService.getUser(req.user!.userId);
+  const user = await userService.getUserPrivateFields(req.user!.userId);
   
   const { secureUrl, publicId } = await uploadToCloudinary(req.file.buffer, 'avatars');
   

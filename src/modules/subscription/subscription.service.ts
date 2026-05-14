@@ -223,8 +223,7 @@ export const deletePlan = async (planId: string) => {
 };
 
 export const getCurrentPlan = async (messId: string) => {
-  const subscription = await Subscription.findOne({ messId }).lean();
-  if (!subscription) return null;
+  const subscription = (await Subscription.findOne({ messId }).lean()) || (await assignDefaultSubscription(messId)).toObject();
   const plan = await SubscriptionPlan.findOne({ code: subscription.planId }).lean();
   return { ...subscription, plan };
 };
@@ -390,6 +389,8 @@ export const markSslCommerzPaymentFailed = async (payload: Record<string, any>, 
 
   const payment = await SubscriptionPayment.findOne({ tranId });
   if (!payment) throw new AppError(404, 'Subscription payment transaction not found');
+  if (payment.status === 'validated') return payment;
+  if (payment.status === 'failed' || payment.status === 'canceled') return payment;
 
   payment.status = status;
   payment.rawValidationResponse = payload;

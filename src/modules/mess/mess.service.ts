@@ -21,10 +21,37 @@ import { DHAKA_OFFSET_MS, getMonthBoundariesDhaka, normalizeMealDate } from '../
 const generateInviteCode = (): string =>
   crypto.randomBytes(4).toString('hex').toUpperCase();
 
-export const createMess = async (userId: string, payload: { name: string; address: string; settings?: any }) => {
-  const inviteCode = generateInviteCode();
+const defaultSettings = {
+  mealCategories: ['Breakfast', 'Lunch', 'Dinner'],
+  equalShareCategories: ['rent', 'wifi', 'electricity', 'water', 'gas', 'bua'],
+};
 
-  const mess = await Mess.create({ ...payload, inviteCode });
+const normalizeSettings = (settings?: any, baseSettings: any = {}) => {
+  const nextSettings = {
+    ...defaultSettings,
+    ...baseSettings,
+    ...(settings || {}),
+  };
+
+  return {
+    mealCategories: nextSettings.mealCategories,
+    equalShareCategories: nextSettings.equalShareCategories,
+  };
+};
+
+const generateUniqueInviteCode = async () => {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const inviteCode = generateInviteCode();
+    const exists = await Mess.exists({ inviteCode });
+    if (!exists) return inviteCode;
+  }
+  throw new AppError(500, 'Could not generate a unique invite code');
+};
+
+export const createMess = async (userId: string, payload: { name: string; address: string; settings?: any }) => {
+  const inviteCode = await generateUniqueInviteCode();
+
+  const mess = await Mess.create({ ...payload, settings: normalizeSettings(payload.settings), inviteCode });
 
   // Add the creator as the manager of the newly created mess
   await MessMember.create({
@@ -173,13 +200,21 @@ export const getDashboard = async (messId: string) => {
 };
 
 export const updateMess = async (messId: string, payload: { name?: string; address?: string; settings?: any }) => {
-  const mess = await Mess.findByIdAndUpdate(messId, payload, { new: true, runValidators: true });
+  const existing = await Mess.findById(messId);
+  if (!existing) throw new AppError(404, 'Mess not found');
+
+  const updatePayload = {
+    ...payload,
+    ...(payload.settings ? { settings: normalizeSettings(payload.settings, existing.settings || {}) } : {}),
+  };
+
+  const mess = await Mess.findByIdAndUpdate(messId, updatePayload, { new: true, runValidators: true });
   if (!mess) throw new AppError(404, 'Mess not found');
   return mess;
 };
 
 export const regenerateInviteCode = async (messId: string) => {
-  const inviteCode = generateInviteCode();
+  const inviteCode = await generateUniqueInviteCode();
   const mess = await Mess.findByIdAndUpdate(messId, { inviteCode }, { new: true });
   if (!mess) throw new AppError(404, 'Mess not found');
   return mess;

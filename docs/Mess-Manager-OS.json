@@ -1425,7 +1425,7 @@
                 "me"
               ]
             },
-            "description": "Role: Auth. Returns current user profile."
+            "description": "Role: Auth. Returns current safe user profile with avatar alias and memberships. Private fields such as passwordHash, avatarPublicId, OTPs, and refreshTokenHash are never returned."
           },
           "response": [
             {
@@ -1567,7 +1567,7 @@
                 "me"
               ]
             },
-            "description": "Role: Auth. Body: { fullName (string, optional), phone (string, optional), address (string, optional), bio (string, max 500 chars, optional) }"
+            "description": "Role: Auth. Body requires at least one field: { fullName (string, optional, max 80), phone (string, optional, max 20), address (string, optional, max 200), bio (string, max 500 chars, optional) }"
           },
           "response": [
             {
@@ -2030,7 +2030,7 @@
                 "messes"
               ]
             },
-            "description": "Role: Manager / Super Admin. Body: { name, address, settings: { mealCategories: string[], equalShareCategories: string[] } }"
+            "description": "Role: Manager / Super Admin. Body: { name, address, settings?: { mealCategories?: string[], equalShareCategories?: string[] } }. Category arrays must be non-empty, max 20, unique, and each item max 40 chars. Missing settings fall back to default meal/equal-share categories."
           },
           "response": [
             {
@@ -2518,7 +2518,7 @@
                 "{{messId}}"
               ]
             },
-            "description": "Role: Manager. Body: Optional fields to update (name, address, settings). settings can include mealCategories and equalShareCategories arrays."
+            "description": "Role: Manager. Body requires at least one field to update: name, address, settings. settings can include mealCategories and/or equalShareCategories arrays. Partial settings are merged with existing settings instead of wiping the other settings array."
           },
           "response": []
         },
@@ -2577,7 +2577,7 @@
           "response": []
         }
       ],
-      "description": "Mess management. Create, join, update mess. Manager dashboard uses GET /:messId/dashboard as a single aggregate summary endpoint. All routes require authentication. Routes under /:messId require mess membership."
+      "description": "Mess management. Create, join, update mess/settings, regenerate invite code, and transfer ownership. Manager dashboard uses GET /:messId/dashboard as a single aggregate summary endpoint. All routes require authentication. Routes under /:messId require mess membership."
     },
     {
       "name": "Mess Members",
@@ -5076,7 +5076,7 @@
                 "current"
               ]
             },
-            "description": "Role: Manager. Gets current mess subscription. Requires messId variable."
+            "description": "Role: Manager. Gets current mess subscription with plan details. If a mess has no subscription row yet, backend initializes the default active plan before returning. Requires messId variable."
           },
           "response": []
         },
@@ -5132,7 +5132,7 @@
                 "subscribe"
               ]
             },
-            "description": "Role: Manager. Subscribes to an active plan by plan code or plan id. Use planId=free for Free. Paid plans initialize an SSLCommerz payment session and return gatewayUrl; frontend must redirect the user to gatewayUrl."
+            "description": "Role: Manager. Subscribes to an active plan by plan code or plan id. Use planId=free for Free. Paid plans initialize an SSLCommerz payment session and return gatewayUrl; frontend must redirect the user to gatewayUrl. SSLCommerz fail/cancel callbacks will not overwrite an already validated payment."
           },
           "response": []
         },

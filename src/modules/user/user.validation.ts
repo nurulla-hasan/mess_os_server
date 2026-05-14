@@ -5,11 +5,13 @@ const oId = z.string().refine(isValidObjectId, 'Invalid MongoDB ID');
 
 export const updateMeSchema = z.object({
   body: z.object({
-    fullName: z.string().min(1).optional(),
-    phone: z.string().optional(),
-    address: z.string().optional(),
-    bio: z.string().max(500).optional()
-  }).strict()
+    fullName: z.string().trim().min(1).max(80).optional(),
+    phone: z.string().trim().max(20).optional(),
+    address: z.string().trim().max(200).optional(),
+    bio: z.string().trim().max(500).optional()
+  }).strict().refine((value) => Object.keys(value).length > 0, {
+    message: 'At least one field is required',
+  })
 });
 
 export const switchMessSchema = z.object({
