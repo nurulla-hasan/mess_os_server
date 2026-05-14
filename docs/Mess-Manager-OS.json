@@ -4381,7 +4381,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/notices",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/notices?page=1&limit=20&status=&searchTerm=",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -4391,9 +4391,31 @@
                 "messes",
                 "{{messId}}",
                 "notices"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Optional. Positive integer page number."
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Optional. Max 100."
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Optional for managers: active|archived. Members always receive active notices only."
+                },
+                {
+                  "key": "searchTerm",
+                  "value": "",
+                  "description": "Optional title/content search."
+                }
               ]
             },
-            "description": "Role: Member+. Lists notices. Requires messId variable."
+            "description": "Role: Member+. Lists notices with pagination. Managers can filter active/archived; members only see active notices. Response includes meta and data. CreatedBy is populated with user details. Requires messId variable."
           },
           "response": []
         },
@@ -4416,7 +4438,7 @@
                 "{{noticeId}}"
               ]
             },
-            "description": "Role: Member+. Gets notice by ID. Requires messId and noticeId variables."
+            "description": "Role: Member+. Gets notice by ID. Members can only access active notices; managers can access active or archived notices. Requires messId and noticeId variables."
           },
           "response": []
         },
@@ -4448,7 +4470,7 @@
                 "notices"
               ]
             },
-            "description": "Role: Manager. Body: { title (string, required), content (string, required), isPinned (boolean, optional) }"
+            "description": "Role: Manager. Body: { title (string, required, max 120), content (string, required, max 5000), isPinned (boolean, optional) }"
           },
           "response": []
         },
@@ -4481,15 +4503,25 @@
                 "{{noticeId}}"
               ]
             },
-            "description": "Role: Manager. Body: { title (string, optional), content (string, optional), isPinned (boolean, optional), status ('active'|'archived', optional) }"
+            "description": "Role: Manager. Body: { title (string, optional, max 120), content (string, optional, max 5000), isPinned (boolean, optional), status ('active'|'archived', optional) }. Archiving a notice unpins it."
           },
           "response": []
         },
         {
-          "name": "Pin Notice (Manager)",
+          "name": "Set Notice Pin State (Manager)",
           "request": {
-            "method": "POST",
-            "header": [],
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isPinned\": true\n}"
+            },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/notices/{{noticeId}}/pin",
               "host": [
@@ -4505,7 +4537,7 @@
                 "pin"
               ]
             },
-            "description": "Role: Manager. Pins notice to top. Requires messId and noticeId variables."
+            "description": "Role: Manager. Sets active notice pin state. Body: { isPinned: true|false }. Archived notices cannot be pinned or unpinned through this endpoint. Requires messId and noticeId variables. Legacy POST /pin still pins for backward compatibility."
           },
           "response": []
         },
@@ -4529,12 +4561,12 @@
                 "archive"
               ]
             },
-            "description": "Role: Manager. Archives notice. Requires messId and noticeId variables."
+            "description": "Role: Manager. Archives notice and unpins it. Requires messId and noticeId variables."
           },
           "response": []
         }
       ],
-      "description": "Notice board management. Managers create/update/pin notices."
+      "description": "Notice board management. Managers create/update/archive notices and set pin state with a toggle-friendly endpoint."
     },
     {
       "name": "Complaints",
@@ -4545,7 +4577,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/complaints",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/complaints?page=1&limit=20&status=&searchTerm=&scope=",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -4558,14 +4590,34 @@
               ],
               "query": [
                 {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Optional. Positive integer page number."
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Optional. Max 100."
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Optional: open|in_progress|resolved|rejected."
+                },
+                {
+                  "key": "searchTerm",
+                  "value": "",
+                  "description": "Optional title/description/member search."
+                },
+                {
                   "key": "scope",
-                  "value": "my",
+                  "value": "",
                   "description": "Optional. Use my to return only authenticated user records; omit or use all for manager all-records view.",
                   "disabled": true
                 }
               ]
             },
-            "description": "Role: Member+. Managers list all complaints; members list only their own complaints. Optional query params: page, limit, status=open|in_progress|resolved|rejected. Responses populate messMemberId with member/user details. Requires messId variable. Use scope=my on this endpoint for authenticated user complaints."
+            "description": "Role: Member+. Managers list all complaints; members list only their own complaints. Optional query params: page, limit, scope=my, status=open|in_progress|resolved|rejected, searchTerm, messMemberId/memberId (manager only). Responses populate messMemberId with member/user details and expose the populated user as messMemberId.user. Requires messId variable."
           },
           "response": []
         },
@@ -4588,7 +4640,7 @@
                 "{{complaintId}}"
               ]
             },
-            "description": "Role: Member+. Managers can view any complaint in the mess; members can view only their own complaint. Response populates messMemberId with member/user details. Requires messId and complaintId variables."
+            "description": "Role: Member+. Managers can view any complaint in the mess; members can view only their own complaint. Response populates messMemberId with member/user details and exposes the populated user as messMemberId.user. Requires messId and complaintId variables."
           },
           "response": []
         },
@@ -4620,7 +4672,7 @@
                 "complaints"
               ]
             },
-            "description": "Role: Member+. Creates complaint. Body: { title (string, required), description (string, required) }"
+            "description": "Role: Member+. Creates complaint for the authenticated active mess membership. Body: { title (string, required, max 120), description (string, required, max 5000) }"
           },
           "response": []
         },
@@ -4654,7 +4706,7 @@
                 "status"
               ]
             },
-            "description": "Role: Manager. Updates complaint status. Body status allowed values: in_progress."
+            "description": "Role: Manager. Moves an open complaint to in_progress. Body: { status: \"in_progress\" }."
           },
           "response": []
         },
@@ -4688,12 +4740,12 @@
                 "status"
               ]
             },
-            "description": "Role: Manager. Updates complaint status through one endpoint. Body: { status: \"in_progress\" | \"resolved\" | \"rejected\", resolvedNote?: string }. resolved/rejected stores resolvedBy/resolvedAt."
+            "description": "Role: Manager. Updates complaint status through one endpoint. Body: { status: \"in_progress\" | \"resolved\" | \"rejected\", resolvedNote?: string }. resolvedNote is required for resolved/rejected. Resolved/rejected complaints are terminal and cannot be updated again."
           },
           "response": []
         }
       ],
-      "description": "Complaint management. Lists support page, limit, status. Managers update in_progress/resolved/rejected through one status endpoint."
+      "description": "Complaint management. Lists support page, limit, status, scope=my, and searchTerm. Managers update open/in_progress complaints through one status endpoint; resolved/rejected statuses are terminal."
     },
     {
       "name": "Reports",
