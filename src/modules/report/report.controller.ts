@@ -9,9 +9,8 @@ export const getMessSummary = catchAsync(async (req: Request, res: Response) => 
 });
 
 export const getMonthlyFinancials = catchAsync(async (req: Request, res: Response) => {
-  const month = parseInt(String(req.query.month));
-  const year = parseInt(String(req.query.year));
-  if (!month || !year) throw new AppError(400, 'Month and year query parameters are required');
+  const month = Number(req.query.month);
+  const year = Number(req.query.year);
   sendResponse(res, { statusCode: 200, success: true, message: 'Monthly financials fetched successfully', data: await rptService.getMonthlyFinancials(req.messId!, month, year) });
 });
 
@@ -30,18 +29,34 @@ export const getMemberStatement = catchAsync(async (req: Request, res: Response)
 export const getExpenseReport = catchAsync(async (req: Request, res: Response) => {
   const start = req.query.start ? String(req.query.start) : req.query.startDate ? String(req.query.startDate) : undefined;
   const end = req.query.end ? String(req.query.end) : req.query.endDate ? String(req.query.endDate) : undefined;
-  sendResponse(res, { statusCode: 200, success: true, message: 'Expenses aggregated successfully', data: await rptService.getExpenseReport(req.messId!, start, end) });
+  const result = await rptService.getExpenseReport(req.messId!, {
+    ...req.query,
+    start,
+    end,
+    requesterMemberId: req.messMember?._id.toString(),
+    isManager: req.messMember?.messRole === 'manager' || req.messRole === 'manager',
+  });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Expenses aggregated successfully', data: result });
 });
 
 export const getPaymentReport = catchAsync(async (req: Request, res: Response) => {
   const start = req.query.start ? String(req.query.start) : req.query.startDate ? String(req.query.startDate) : undefined;
   const end = req.query.end ? String(req.query.end) : req.query.endDate ? String(req.query.endDate) : undefined;
-  sendResponse(res, { statusCode: 200, success: true, message: 'Payments aggregated successfully', data: await rptService.getPaymentReport(req.messId!, start, end) });
+  const result = await rptService.getPaymentReport(req.messId!, {
+    ...req.query,
+    start,
+    end,
+    requesterMemberId: req.messMember?._id.toString(),
+    isManager: req.messMember?.messRole === 'manager' || req.messRole === 'manager',
+  });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Payments aggregated successfully', data: result });
 });
 
 export const exportCsvReport = catchAsync(async (req: Request, res: Response) => {
   const type = req.query.type === 'payments' ? 'payments' : 'expenses';
-  const csvData = await rptService.exportCsvReport(req.messId!, type);
+  const start = req.query.start ? String(req.query.start) : req.query.startDate ? String(req.query.startDate) : undefined;
+  const end = req.query.end ? String(req.query.end) : req.query.endDate ? String(req.query.endDate) : undefined;
+  const csvData = await rptService.exportCsvReport(req.messId!, type, { ...req.query, start, end });
   res.header('Content-Type', 'text/csv');
   res.attachment(`mess-report-${type}-${Date.now()}.csv`);
   res.send(csvData);

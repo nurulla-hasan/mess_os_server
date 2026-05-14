@@ -4779,7 +4779,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/financial",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/financial?month=5&year=2026",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -4790,6 +4790,18 @@
                 "{{messId}}",
                 "reports",
                 "financial"
+              ],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "5",
+                  "description": "Required. Month number 1-12."
+                },
+                {
+                  "key": "year",
+                  "value": "2026",
+                  "description": "Required. Billing year."
+                }
               ]
             },
             "description": "Role: Member+. Gets monthly financial report. Query params: month, year. Requires messId variable."
@@ -4816,7 +4828,7 @@
                 "{{memberId}}"
               ]
             },
-            "description": "Role: Member+. Gets individual member statement. Requires messId and memberId variables."
+            "description": "Role: Member+. Gets individual member statement with member details, finalized bills, ledger rows, and liveCurrentBalance. Managers can view any same-mess member. Members can view only their own statement. Requires messId and memberId variables."
           },
           "response": []
         },
@@ -4826,7 +4838,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/expenses",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/expenses?month=5&year=2026&scope=",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -4840,20 +4852,42 @@
               ],
               "query": [
                 {
+                  "key": "month",
+                  "value": "5",
+                  "description": "Optional with year. Month number 1-12."
+                },
+                {
+                  "key": "year",
+                  "value": "2026",
+                  "description": "Optional with month."
+                },
+                {
                   "key": "start",
                   "value": "",
-                  "description": "Optional. Start date; startDate is also accepted.",
+                  "description": "Optional. Date accepts YYYY-MM-DD or ISO datetime; startDate is also accepted.",
                   "disabled": true
                 },
                 {
                   "key": "end",
                   "value": "",
-                  "description": "Optional. End date; endDate is also accepted.",
+                  "description": "Optional. Date accepts YYYY-MM-DD or ISO datetime; endDate is also accepted.",
+                  "disabled": true
+                },
+                {
+                  "key": "scope",
+                  "value": "",
+                  "description": "Optional. Use my to force own records. Members always receive own records.",
+                  "disabled": true
+                },
+                {
+                  "key": "messMemberId",
+                  "value": "",
+                  "description": "Optional manager-only member filter. memberId is also accepted.",
                   "disabled": true
                 }
               ]
             },
-            "description": "Role: Member+. Gets expenses report. Optional query params: start/end or startDate/endDate. Requires messId variable."
+            "description": "Role: Member+. Gets approved expenses report with { summary, data }. Managers see all or can filter by messMemberId/memberId; members only see their own expense records. Optional query params: month/year or start/end or startDate/endDate, scope=my. Date filters use Dhaka day boundaries. Requires messId variable."
           },
           "response": []
         },
@@ -4863,7 +4897,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/payments",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/payments?month=5&year=2026&scope=",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -4877,20 +4911,42 @@
               ],
               "query": [
                 {
+                  "key": "month",
+                  "value": "5",
+                  "description": "Optional with year. Month number 1-12."
+                },
+                {
+                  "key": "year",
+                  "value": "2026",
+                  "description": "Optional with month."
+                },
+                {
                   "key": "start",
                   "value": "",
-                  "description": "Optional. Start date; startDate is also accepted.",
+                  "description": "Optional. Date accepts YYYY-MM-DD or ISO datetime; startDate is also accepted.",
                   "disabled": true
                 },
                 {
                   "key": "end",
                   "value": "",
-                  "description": "Optional. End date; endDate is also accepted.",
+                  "description": "Optional. Date accepts YYYY-MM-DD or ISO datetime; endDate is also accepted.",
+                  "disabled": true
+                },
+                {
+                  "key": "scope",
+                  "value": "",
+                  "description": "Optional. Use my to force own records. Members always receive own records.",
+                  "disabled": true
+                },
+                {
+                  "key": "messMemberId",
+                  "value": "",
+                  "description": "Optional manager-only member filter. memberId is also accepted.",
                   "disabled": true
                 }
               ]
             },
-            "description": "Role: Member+. Gets payments report. Optional query params: start/end or startDate/endDate. Requires messId variable."
+            "description": "Role: Member+. Gets approved payments report with { summary, data }. Managers see all or can filter by messMemberId/memberId; members only see their own payment records. Optional query params: month/year or start/end or startDate/endDate, scope=my. Date filters use Dhaka day boundaries. Requires messId variable."
           },
           "response": []
         },
@@ -4900,7 +4956,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/export/csv",
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/reports/export/csv?type=expenses&month=5&year=2026",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -4912,9 +4968,38 @@
                 "reports",
                 "export",
                 "csv"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "expenses",
+                  "description": "Optional: expenses|payments. Defaults to expenses."
+                },
+                {
+                  "key": "month",
+                  "value": "5",
+                  "description": "Optional with year. Month number 1-12."
+                },
+                {
+                  "key": "year",
+                  "value": "2026",
+                  "description": "Optional with month."
+                },
+                {
+                  "key": "start",
+                  "value": "",
+                  "description": "Optional date range alternative. startDate is also accepted.",
+                  "disabled": true
+                },
+                {
+                  "key": "end",
+                  "value": "",
+                  "description": "Optional date range alternative. endDate is also accepted.",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Role: Manager. Exports report as CSV. Query params: month, year. Requires messId variable."
+            "description": "Role: Manager. Exports approved expenses or payments as CSV. Query params: type=expenses|payments, month/year or start/end or startDate/endDate. Date filters use Dhaka day boundaries. Requires messId variable."
           },
           "response": []
         },
@@ -4938,12 +5023,12 @@
                 "pdf"
               ]
             },
-            "description": "Role: Manager. Exports report as PDF. Query params: month, year. Requires messId variable."
+            "description": "Role: Manager. PDF export endpoint placeholder; currently returns 501 Not Implemented. Use CSV export for working exports."
           },
           "response": []
         }
       ],
-      "description": "Reporting and analytics. Managers can export data."
+      "description": "Reporting and analytics. Manager report endpoints can show all same-mess data; member report endpoints are scoped to the authenticated member where records are member-specific. Managers can export approved expenses/payments as CSV."
     },
     {
       "name": "Subscriptions",
