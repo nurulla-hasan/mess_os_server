@@ -263,6 +263,34 @@ const cancelRequest = async (messId: string, requestId: string, managerUserId: s
   return req;
 };
 
+export const cancelOwnPendingRequest = async (
+  messId: string,
+  requestId: string,
+  actorMemberId: string,
+  actorUserId: string
+) => {
+  const req = await MealOffRequest.findOneAndUpdate(
+    {
+      _id: requestId,
+      messId,
+      messMemberId: actorMemberId,
+      status: 'pending',
+    },
+    {
+      status: 'canceled',
+      reviewedBy: new mongoose.Types.ObjectId(actorUserId),
+      reviewedAt: new Date(),
+    },
+    { new: true, runValidators: true }
+  );
+
+  if (!req) {
+    throw new AppError(404, 'Pending meal-off request not found for this member');
+  }
+
+  return req;
+};
+
 export const reviewRequest = async (
   messId: string,
   requestId: string,

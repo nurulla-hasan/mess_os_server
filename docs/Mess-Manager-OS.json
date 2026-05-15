@@ -3728,9 +3728,33 @@
             "description": "Role: Manager. Reviews a meal off request. Body: { status: \"approved\" | \"rejected\" | \"canceled\" }. pending requests can become approved or rejected; approved requests can become canceled. Review audit is stored in reviewedBy and reviewedAt. Approving future dates creates/updates meal records with mealCount 0 and blocks meal logging for those member/date values. Canceling allows normal meal logging again; existing zero meal records can be overwritten by meal logging."
           },
           "response": []
+        },
+        {
+          "name": "Cancel Own Pending Meal Off Request (Member+)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/meal-off-requests/{{requestId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "messes",
+                "{{messId}}",
+                "meal-off-requests",
+                "{{requestId}}",
+                "cancel"
+              ]
+            },
+            "description": "Role: Member or Manager. Cancels only the authenticated member's own pending meal-off request. This endpoint cannot cancel another member's request and cannot cancel approved/rejected requests. Managers should use the status review endpoint for administrative review actions."
+          },
+          "response": []
         }
       ],
-      "description": "Meal off request management. Members create requests, managers approve/reject/cancel through a single status update endpoint."
+      "description": "Meal off request management. Members create requests and can cancel their own pending requests. Managers approve/reject pending requests and can cancel approved requests through the status update endpoint."
     },
     {
       "name": "Utility Bills",

@@ -54,3 +54,21 @@ export const reviewRequest = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
+export const cancelOwnPendingRequest = catchAsync(async (req: Request, res: Response) => {
+  if (!req.messMember) throw new AppError(403, 'Active member context is required');
+
+  const result = await morService.cancelOwnPendingRequest(
+    req.messId!,
+    String(req.params.requestId),
+    req.messMember._id.toString(),
+    req.user!.userId
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Meal off request canceled',
+    data: result,
+  });
+});

@@ -38,7 +38,16 @@ export const listMealOffRequestsSchema = z.object({
 });
 
 export const reviewMealOffRequestSchema = z.object({
+  params: z.object({
+    requestId: oId,
+  }),
   body: z.object({
     status: z.enum(['approved', 'rejected', 'canceled']),
   }).strict()
+});
+
+export const mealOffRequestIdParamSchema = z.object({
+  params: z.object({
+    requestId: oId,
+  }),
 });
