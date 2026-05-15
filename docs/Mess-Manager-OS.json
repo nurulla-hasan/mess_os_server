@@ -3,9 +3,7 @@
     "_postman_id": "1eb56c98-c3e5-4d71-8c94-7d029f9517c7",
     "name": "MessManagerOS API (v1)",
     "description": "Complete Postman collection for MessManagerOS API. 85+ requests covering all modules: auth, users, mess, mess-member, payments, expenses, billing, meals, meal-off-requests, utility-bills, market-schedules, menu-plans, ai-shopping, notices, complaints, reports, subscriptions, and admin.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "44237160",
-    "_collection_link": "https://go.postman.co/collection/44237160-1eb56c98-c3e5-4d71-8c94-7d029f9517c7?source=collection_link"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
@@ -196,7 +194,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"nurullahasan.dev@gmail.com\",\n  \"password\": \"111111\"\n}"
+              "raw": "{\n  \"email\": \"golaphasan5229@gmail.com\",\n  \"password\": \"111111\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
@@ -210,7 +208,7 @@
                 "login"
               ]
             },
-            "description": "Role: Public. Rate limited. Body: { email (string, required), password (string, required) }. Returns accessToken in response, refreshToken in HTTP-only cookie."
+            "description": "Role: Public. Rate limited. Body: { email (string, required), password (string, required) }. Returns accessToken in response, refreshToken in HTTP-only cookie. Test accounts: Admin = nurullahasan.dev@gmail.com / 111111, Manager = golaphasan379@gmail.com / 111111, Member = golaphasan5229@gmail.com / 111111."
           },
           "response": [
             {
@@ -226,7 +224,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"email\": \"nurullahasan.dev@gmail.com\",\n  \"password\": \"111111\"\n}"
+                  "raw": "{\n  \"email\": \"golaphasan5229@gmail.com\",\n  \"password\": \"111111\"\n}"
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/v1/auth/login",
@@ -2490,6 +2488,28 @@
               "body": "{\n  \"success\": true,\n  \"message\": \"Manager dashboard loaded\",\n  \"data\": {\n    \"mess\": {\n      \"_id\": \"{{messId}}\",\n      \"name\": \"Sunrise Mess\",\n      \"address\": \"Aqua tower\",\n      \"inviteCode\": \"85A97F1F\",\n      \"status\": \"active\",\n      \"settings\": {\n        \"mealCategories\": [\n          \"Breakfast\",\n          \"Lunch\",\n          \"Dinner\"\n        ],\n        \"equalShareCategories\": [\n          \"rent\",\n          \"wifi\",\n          \"electricity\",\n          \"water\",\n          \"gas\",\n          \"bua\"\n        ]\n      }\n    },\n    \"subscription\": {\n      \"_id\": \"69feb0e228a418779866bf5b\",\n      \"planId\": \"max\",\n      \"status\": \"active\",\n      \"currentPeriodStart\": \"2026-05-09T03:58:25.722Z\",\n      \"currentPeriodEnd\": \"2026-06-08T03:58:25.722Z\",\n      \"plan\": {\n        \"name\": \"Max\",\n        \"code\": \"max\",\n        \"price\": 999,\n        \"currency\": \"BDT\",\n        \"billingCycle\": \"monthly\",\n        \"maxMembers\": 100\n      }\n    },\n    \"summary\": {\n      \"activeMembers\": 18,\n      \"pendingJoinRequests\": 3,\n      \"todayMeals\": 24,\n      \"todayMealRecords\": 8,\n      \"pendingPaymentsAmount\": 4500,\n      \"pendingPaymentsCount\": 5,\n      \"monthlyExpensesAmount\": 12850,\n      \"monthlyExpensesCount\": 9,\n      \"pendingExpensesAmount\": 1200,\n      \"pendingExpensesCount\": 3,\n      \"unpaidUtilities\": 2,\n      \"openComplaints\": 1,\n      \"pendingMarketDuties\": 2,\n      \"totalMessFund\": 42500,\n      \"totalDeposits\": 55000,\n      \"totalCashOut\": 12500\n    },\n    \"today\": {\n      \"date\": \"2026-05-11T18:00:00.000Z\",\n      \"mealBreakdown\": {\n        \"Breakfast\": 8,\n        \"Lunch\": 16\n      }\n    },\n    \"recent\": {\n      \"notices\": [\n        {\n          \"_id\": \"69ff00000000000000000001\",\n          \"title\": \"Monthly bazar budget update\",\n          \"content\": \"Budget updated for this month.\",\n          \"isPinned\": true,\n          \"createdAt\": \"2026-05-10T09:00:00.000Z\"\n        }\n      ]\n    },\n    \"pendingActions\": {\n      \"joinRequests\": 3,\n      \"payments\": 5,\n      \"expenses\": 3,\n      \"utilities\": 2,\n      \"complaints\": 1,\n      \"marketDuties\": 2\n    }\n  }\n}"
             }
           ]
+        },
+        {
+          "name": "Get Member Dashboard (Member+)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/member-dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "messes",
+                "{{messId}}",
+                "member-dashboard"
+              ]
+            },
+            "description": "Role: Member or Manager. Aggregated dashboard summary for the member dashboard. Returns mess, current subscription with plan/features, latest bill/balance, current month meals, next market duty, recent payments/notices, and quick link availability. Requires messId variable."
+          },
+          "response": []
         },
         {
           "name": "Update Mess (Manager)",
@@ -5690,7 +5710,7 @@
     },
     {
       "key": "messId",
-      "value": ""
+      "value": "69fb394e8a4ae7fa0a9664c4"
     },
     {
       "key": "memberId",

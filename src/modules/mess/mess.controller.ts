@@ -18,6 +18,11 @@ export const getDashboard = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, { statusCode: 200, success: true, message: 'Manager dashboard loaded', data: result });
 });
 
+export const getMemberDashboard = catchAsync(async (req: Request, res: Response) => {
+  const result = await messService.getMemberDashboard(req.messId!, req.messMember!._id.toString(), req.messRole!);
+  sendResponse(res, { statusCode: 200, success: true, message: 'Member dashboard loaded', data: result });
+});
+
 export const updateMess = catchAsync(async (req: Request, res: Response) => {
   const mess = await messService.updateMess(req.messId!, req.body);
   sendResponse(res, { statusCode: 200, success: true, message: 'Mess updated successfully', data: mess });

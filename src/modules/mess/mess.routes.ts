@@ -35,6 +35,7 @@ router.post('/', authorize(GLOBAL_ROLES.MANAGER, GLOBAL_ROLES.SUPER_ADMIN), vali
 router.use('/:messId', messContext);
 router.get('/:messId', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), messCtl.getMess);
 router.get('/:messId/dashboard', authorize(MESS_ROLES.MANAGER), messCtl.getDashboard);
+router.get('/:messId/member-dashboard', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), messCtl.getMemberDashboard);
 router.patch('/:messId', authorize(MESS_ROLES.MANAGER), validateRequest(messVal.updateMessSchema), messCtl.updateMess);
 router.post('/:messId/regenerate-invite-code', authorize(MESS_ROLES.MANAGER), messCtl.regenerateInviteCode);
 router.post('/:messId/transfer-ownership', authorize(MESS_ROLES.MANAGER), validateRequest(messVal.transferOwnershipSchema), messCtl.transferOwnership);

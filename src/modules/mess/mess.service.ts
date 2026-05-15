@@ -14,6 +14,8 @@ import { Complaint } from '../complaint/complaint.model';
 import { MarketSchedule } from '../market-schedule/market-schedule.model';
 import { Notice } from '../notice/notice.model';
 import { CashLedger } from '../ledger/cash-ledger.model';
+import { BillingCycle } from '../billing/billing-cycle.model';
+import { MemberBill } from '../billing/member-bill.model';
 import { CASH_TRANSACTION_TYPES } from '../../constants/ledgerEntryTypes';
 import { DHAKA_OFFSET_MS, getMonthBoundariesDhaka, normalizeMealDate } from '../../shared/utils/dateUtils';
 
@@ -195,6 +197,162 @@ export const getDashboard = async (messId: string) => {
       utilities: unpaidUtilities,
       complaints: openComplaints,
       marketDuties: pendingMarketDuties,
+    },
+  };
+};
+
+export const getMemberDashboard = async (messId: string, messMemberId: string, messRole: string) => {
+  const messObjectId = new mongoose.Types.ObjectId(messId);
+  const memberObjectId = new mongoose.Types.ObjectId(messMemberId);
+
+  const mess = await Mess.findById(messId).select('name address status settings').lean();
+  if (!mess) throw new AppError(404, 'Mess not found');
+
+  const today = normalizeMealDate(new Date());
+  const dhakaToday = new Date(today.getTime() + DHAKA_OFFSET_MS);
+  const { start: monthStart, end: monthEnd } = getMonthBoundariesDhaka(dhakaToday.getUTCMonth() + 1, dhakaToday.getUTCFullYear());
+
+  const [
+    subscription,
+    activeCycle,
+    latestBill,
+    monthlyMeals,
+    recentPayments,
+    recentNotices,
+    nextMarketDuty,
+  ] = await Promise.all([
+    Subscription.findOne({ messId: messObjectId }).lean(),
+    BillingCycle.findOne({
+      messId: messObjectId,
+      startDate: { $lte: today },
+      endDate: { $gte: today },
+    }).sort({ year: -1, month: -1 }).lean(),
+    MemberBill.findOne({
+      messId: messObjectId,
+      messMemberId: memberObjectId,
+      isArchived: false,
+    }).sort({ createdAt: -1 }).lean(),
+    Meal.aggregate([
+      {
+        $match: {
+          messId: messObjectId,
+          messMemberId: memberObjectId,
+          date: { $gte: monthStart, $lte: monthEnd },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalMeals: { $sum: '$mealCount' },
+          records: { $sum: 1 },
+          breakdowns: { $push: '$meals' },
+        },
+      },
+    ]),
+    Payment.find({ messId: messObjectId, messMemberId: memberObjectId })
+      .select('amount method reference status receivedDate createdAt updatedAt')
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .limit(5)
+      .lean(),
+    Notice.find({ messId: messObjectId, status: 'active' })
+      .select('title content isPinned createdAt')
+      .sort({ isPinned: -1, createdAt: -1 })
+      .limit(3)
+      .lean(),
+    MarketSchedule.findOne({
+      messId: messObjectId,
+      assignedTo: memberObjectId,
+      targetDate: { $gte: today },
+      status: 'pending',
+    })
+      .select('targetDate shoppingItems estimatedBudget status assignedTo')
+      .sort({ targetDate: 1 })
+      .populate({
+        path: 'assignedTo',
+        select: 'userId messRole status',
+        populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
+      })
+      .lean(),
+  ]);
+
+  const resolvedSubscription = subscription || (await assignDefaultSubscription(messId)).toObject();
+  const plan = await SubscriptionPlan.findOne({ code: resolvedSubscription.planId }).select('name code price currency billingCycle maxMembers features').lean();
+
+  const mealBreakdown: Record<string, number> = {};
+  for (const breakdown of monthlyMeals[0]?.breakdowns ?? []) {
+    const entries = breakdown instanceof Map ? Array.from(breakdown.entries()) : Object.entries(breakdown ?? {});
+    for (const [category, count] of entries) {
+      mealBreakdown[category] = (mealBreakdown[category] ?? 0) + Number(count || 0);
+    }
+  }
+
+  const finalDue = latestBill?.summary?.finalDue ?? 0;
+  const finalAdvance = latestBill?.summary?.finalAdvance ?? 0;
+  const balanceType = finalAdvance > 0 ? 'advance' : finalDue > 0 ? 'due' : 'settled';
+
+  const recentActivity = [
+    ...recentPayments.map((payment: any) => ({
+      type: 'payment',
+      title: payment.status === 'approved' ? 'Payment Approved' : payment.status === 'pending' ? 'Payment Submitted' : `Payment ${payment.status}`,
+      description: `${payment.amount} ${payment.method} payment`,
+      status: payment.status,
+      amount: payment.amount,
+      createdAt: payment.updatedAt ?? payment.createdAt,
+      refId: payment._id,
+    })),
+    ...recentNotices.map((notice: any) => ({
+      type: 'notice',
+      title: 'New Notice Posted',
+      description: notice.title,
+      isPinned: notice.isPinned,
+      createdAt: notice.createdAt,
+      refId: notice._id,
+    })),
+  ]
+    .sort((a, b) => new Date(b.createdAt as Date).getTime() - new Date(a.createdAt as Date).getTime())
+    .slice(0, 6);
+
+  return {
+    mess,
+    subscription: { ...resolvedSubscription, plan },
+    member: {
+      _id: messMemberId,
+      role: messRole,
+    },
+    billing: {
+      activeCycle,
+      latestBill,
+      balance: {
+        type: balanceType,
+        amount: balanceType === 'advance' ? finalAdvance : finalDue,
+        finalDue,
+        finalAdvance,
+        status: latestBill?.status ?? null,
+        updatedAt: (latestBill as any)?.updatedAt ?? null,
+      },
+    },
+    meals: {
+      month: dhakaToday.getUTCMonth() + 1,
+      year: dhakaToday.getUTCFullYear(),
+      total: monthlyMeals[0]?.totalMeals ?? 0,
+      records: monthlyMeals[0]?.records ?? 0,
+      breakdown: mealBreakdown,
+    },
+    marketDuty: {
+      next: nextMarketDuty,
+    },
+    recent: {
+      activity: recentActivity,
+      payments: recentPayments,
+      notices: recentNotices,
+    },
+    quickLinks: {
+      myBill: Boolean(latestBill),
+      submitPayment: true,
+      requestMealOff: true,
+      myMeals: true,
+      notices: true,
+      complaints: Boolean(plan?.features?.complaints),
     },
   };
 };
