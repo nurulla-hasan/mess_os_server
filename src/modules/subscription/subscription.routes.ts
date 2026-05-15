@@ -16,7 +16,7 @@ globalSubscriptionRoutes.get('/sslcommerz/fail', ctl.sslCommerzFail);
 globalSubscriptionRoutes.get('/sslcommerz/cancel', ctl.sslCommerzCancel);
 
 export const messSubscriptionRoutes = Router({ mergeParams: true });
-messSubscriptionRoutes.get('/current', authorize(MESS_ROLES.MANAGER), ctl.getCurrentPlan);
+messSubscriptionRoutes.get('/current', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.getCurrentPlan);
 messSubscriptionRoutes.get('/history', authorize(MESS_ROLES.MANAGER), ctl.getHistory);
 messSubscriptionRoutes.post('/trial', authorize(MESS_ROLES.MANAGER), ctl.startTrial);
 messSubscriptionRoutes.post('/subscribe', authorize(MESS_ROLES.MANAGER), validateRequest(val.subscribeSchema), ctl.subscribePlan);

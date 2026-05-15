@@ -5058,7 +5058,7 @@
           "response": []
         },
         {
-          "name": "Get Current Subscription (Manager)",
+          "name": "Get Current Subscription (Member+)",
           "request": {
             "method": "GET",
             "header": [],
@@ -5076,7 +5076,7 @@
                 "current"
               ]
             },
-            "description": "Role: Manager. Gets current mess subscription with plan details. If a mess has no subscription row yet, backend initializes the default active plan before returning. Requires messId variable."
+            "description": "Role: Member or Manager. Gets current mess subscription with plan details for mess-scoped feature locking. If a mess has no subscription row yet, backend initializes the default active plan before returning. Requires messId variable."
           },
           "response": []
         },
