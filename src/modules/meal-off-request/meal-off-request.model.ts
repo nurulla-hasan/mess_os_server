@@ -5,6 +5,7 @@ export interface IMealOffRequest extends Document {
   messMemberId: Types.ObjectId;
   startDate: Date;
   endDate: Date;
+  meals: string[];
   status: 'pending' | 'approved' | 'rejected' | 'canceled';
   reason?: string;
   reviewedBy?: Types.ObjectId;
@@ -16,6 +17,7 @@ const mealOffRequestSchema = new Schema<IMealOffRequest>({
   messMemberId: { type: Schema.Types.ObjectId, ref: 'MessMember', required: true },
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
+  meals: [{ type: String, trim: true }],
   status: { type: String, enum: ['pending', 'approved', 'rejected', 'canceled'], default: 'pending' },
   reason: { type: String },
   reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },

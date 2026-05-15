@@ -11,12 +11,14 @@ const limitString = positiveIntegerString.refine((value) => Number(value) <= 100
   message: 'Limit cannot be greater than 100',
 });
 const mealOffStatus = z.enum(['pending', 'approved', 'rejected', 'canceled']);
+const mealCategoryList = z.array(z.string().trim().min(1)).min(1).max(10);
 
 export const createMealOffSchema = z.object({
   body: z.object({
     messMemberId: oId.optional(),
     startDate: dateStringSchema,
     endDate: dateStringSchema,
+    meals: mealCategoryList.optional(),
     reason: z.string().optional()
   }).strict()
 });

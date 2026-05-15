@@ -3537,7 +3537,7 @@
                 "meals"
               ]
             },
-            "description": "Role: Manager. Creates or updates one member's meal count for a date. Date accepts YYYY-MM-DD or ISO datetime and is normalized by Dhaka day. Preferred body uses meals breakdown from mess settings mealCategories plus special Guest category, for example { meals: { Breakfast: 1, Lunch: 1, Dinner: 1, Guest: 2 } }. Backend calculates mealCount from meals, so guest meals increase that member's total. Backward compatible body { mealCount: 2 } is also accepted. Counts support 0.5 increments. Regular meals cannot exceed 3; total including Guest cannot exceed 50. Locked if that month has a finalized billing cycle. Also blocked if the member has an approved meal off request for that date; cancel the meal off request first to log meals again."
+            "description": "Role: Manager. Creates or updates one member's meal count for a date. Date accepts YYYY-MM-DD or ISO datetime and is normalized by Dhaka day. Preferred body uses meals breakdown from mess settings mealCategories plus special Guest category, for example { meals: { Breakfast: 1, Lunch: 1, Dinner: 1, Guest: 2 } }. Backend calculates mealCount from meals, so guest meals increase that member's total. Backward compatible body { mealCount: 2 } is also accepted. Counts support 0.5 increments. Regular meals cannot exceed 3; total including Guest cannot exceed 50. Locked if that month has a finalized billing cycle. Category-specific approved meal-off requests block only matching meal categories; legacy mealCount-only writes are blocked whenever any approved meal-off exists for that date/member."
           },
           "response": []
         },
@@ -3570,12 +3570,12 @@
                 "bulk"
               ]
             },
-            "description": "Role: Manager. Creates or updates meal counts for multiple active members on one date. Date accepts YYYY-MM-DD or ISO datetime and is normalized by Dhaka day. Preferred entries use meals breakdown from mess settings mealCategories plus special Guest category. Backend calculates mealCount from meals, so guest meals increase that member's total. Backward compatible mealCount entries are also accepted. Body entries max 200. Duplicate messMemberId is rejected. Counts support 0.5 increments. Regular meals cannot exceed 3; total including Guest cannot exceed 50. Locked if that month has a finalized billing cycle. Also blocked for any entry where the member has an approved meal off request for that date; cancel the meal off request first to log meals again."
+            "description": "Role: Manager. Creates or updates meal counts for multiple active members on one date. Date accepts YYYY-MM-DD or ISO datetime and is normalized by Dhaka day. Preferred entries use meals breakdown from mess settings mealCategories plus special Guest category. Backend calculates mealCount from meals, so guest meals increase that member's total. Backward compatible mealCount entries are also accepted. Body entries max 200. Duplicate messMemberId is rejected. Counts support 0.5 increments. Regular meals cannot exceed 3; total including Guest cannot exceed 50. Locked if that month has a finalized billing cycle. Category-specific approved meal-off requests block only matching meal categories; legacy mealCount-only entries are blocked whenever any approved meal-off exists for that date/member."
           },
           "response": []
         }
       ],
-      "description": "Production meal logging. Managers can log single or bulk meals with category breakdown such as Breakfast/Lunch/Dinner/Guest; backend stores both meals breakdown and total mealCount for billing. Guest meals are charged to the selected member. Members can read only their own meals. Meal records are locked after the monthly billing cycle is finalized and while an approved meal off request covers the member/date."
+      "description": "Production meal logging. Managers can log single or bulk meals with category breakdown such as Breakfast/Lunch/Dinner/Guest; backend stores both meals breakdown and total mealCount for billing. Guest meals are charged to the selected member. Members can read only their own meals. Meal records are locked after the monthly billing cycle is finalized. Approved meal-off requests block matching meal categories for the member/date."
     },
     {
       "name": "Meal Off Requests",
@@ -3676,7 +3676,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"startDate\": \"2026-05-20\",\n  \"endDate\": \"2026-05-22\",\n  \"reason\": \"Travel\"\n}"
+              "raw": "{\n  \"startDate\": \"2026-05-20\",\n  \"endDate\": \"2026-05-22\",\n  \"meals\": [\"Breakfast\", \"Lunch\", \"Dinner\"],\n  \"reason\": \"Travel\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/meal-off-requests",
@@ -3691,7 +3691,7 @@
                 "meal-off-requests"
               ]
             },
-            "description": "Role: Member+. Creates meal off request. Start/end dates cannot be in the past, and pending/approved requests cannot overlap for the same member. Body supports optional messMemberId; members default to themselves and managers may create for another active meal participant."
+            "description": "Role: Member+. Creates meal off request. Start/end dates cannot be in the past, and pending/approved requests cannot overlap for the same member/date/meal category. Body supports optional meals array using mess settings mealCategories, for example [\"Lunch\"] for only lunch off. If meals is omitted, backend defaults to all configured meal categories for a full-day off request. Body supports optional messMemberId; members default to themselves and managers may create for another active meal participant."
           },
           "response": []
         },

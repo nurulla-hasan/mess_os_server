@@ -2,6 +2,7 @@ import { MealOffRequest } from './meal-off-request.model';
 import { Meal } from '../meal/meal.model';
 import { MessMember } from '../mess-member/mess-member.model';
 import { User } from '../user/user.model';
+import { Mess } from '../mess/mess.model';
 import { AppError } from '../../shared/utils/apiError';
 import { generateDateRange, getTodayDhakaNormalized, normalizeMealDate } from '../../shared/utils/dateUtils';
 import mongoose, { isValidObjectId } from 'mongoose';
@@ -24,6 +25,48 @@ export type ListMealOffRequestsOptions = {
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+const getMealCategories = async (messId: string) => {
+  const mess = await Mess.findById(messId).select('settings.mealCategories').lean();
+  if (!mess) throw new AppError(404, 'Mess not found');
+  const categories = mess.settings?.mealCategories?.length
+    ? mess.settings.mealCategories
+    : ['Breakfast', 'Lunch', 'Dinner'];
+  return categories;
+};
+
+const normalizeMealOffMeals = async (messId: string, meals?: string[]) => {
+  const allowedCategories = await getMealCategories(messId);
+  if (!meals?.length) return allowedCategories;
+
+  const allowedByLower = new Map(allowedCategories.map((category) => [category.toLowerCase(), category]));
+  const normalized: string[] = [];
+  const seen = new Set<string>();
+
+  for (const meal of meals) {
+    const key = meal.trim().toLowerCase();
+    const canonical = allowedByLower.get(key);
+    if (!canonical) {
+      throw new AppError(400, `Invalid meal-off category: ${meal}. Allowed categories: ${allowedCategories.join(', ')}`);
+    }
+    if (!seen.has(canonical.toLowerCase())) {
+      normalized.push(canonical);
+      seen.add(canonical.toLowerCase());
+    }
+  }
+
+  return normalized;
+};
+
+const mealSetsOverlap = (left?: string[], right?: string[]) => {
+  if (!left?.length || !right?.length) return true;
+  const rightSet = new Set(right.map((meal) => meal.toLowerCase()));
+  return left.some((meal) => rightSet.has(meal.toLowerCase()));
+};
+
+const recalculateMealCount = (meals: Record<string, number>) => {
+  return Object.values(meals).reduce((sum, count) => sum + Number(count || 0), 0);
+};
+
 const assertActiveMemberInMess = async (messId: string, messMemberId: string) => {
   const member = await MessMember.findOne({ _id: messMemberId, messId, status: 'active' }).select('_id participation').lean();
   if (!member) throw new AppError(400, 'Active mess member not found for this mess');
@@ -43,16 +86,18 @@ const assertNoOverlappingActiveRequest = async (
   messId: string,
   messMemberId: string,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  requestedMeals: string[]
 ) => {
-  const existing = await MealOffRequest.findOne({
+  const existingRequests = await MealOffRequest.find({
     messId,
     messMemberId,
     status: { $in: ['pending', 'approved'] },
     startDate: { $lte: endDate },
     endDate: { $gte: startDate },
-  }).select('_id status startDate endDate').lean();
+  }).select('_id status startDate endDate meals').lean();
 
+  const existing = existingRequests.find((request) => mealSetsOverlap(request.meals, requestedMeals));
   if (existing) {
     throw new AppError(409, 'An active meal-off request already overlaps this date range');
   }
@@ -121,15 +166,16 @@ const applyMemberSearch = async (messId: string, query: Record<string, unknown>,
   return true;
 };
 
-export const createRequest = async (messId: string, payload: { messMemberId: string, startDate: string, endDate: string, reason?: string }) => {
+export const createRequest = async (messId: string, payload: { messMemberId: string, startDate: string, endDate: string, meals?: string[], reason?: string }) => {
   await assertActiveMemberInMess(messId, payload.messMemberId);
   const sDate = normalizeMealDate(payload.startDate);
   const eDate = normalizeMealDate(payload.endDate);
+  const meals = await normalizeMealOffMeals(messId, payload.meals);
 
   assertFutureOrTodayRange(sDate, eDate);
-  await assertNoOverlappingActiveRequest(messId, payload.messMemberId, sDate, eDate);
+  await assertNoOverlappingActiveRequest(messId, payload.messMemberId, sDate, eDate, meals);
 
-  return await MealOffRequest.create({ messId, messMemberId: payload.messMemberId, startDate: sDate, endDate: eDate, reason: payload.reason, status: 'pending' });
+  return await MealOffRequest.create({ messId, messMemberId: payload.messMemberId, startDate: sDate, endDate: eDate, meals, reason: payload.reason, status: 'pending' });
 };
 
 export const listRequests = async (messId: string, options: ListMealOffRequestsOptions = {}) => {
@@ -221,14 +267,26 @@ const approveRequest = async (messId: string, requestId: string, managerUserId: 
       throw new AppError(400, 'Cannot approve a meal-off request that starts in the past');
     }
 
+    const mealCategories = req.meals?.length ? req.meals : await getMealCategories(messId);
     const datesToLock = generateDateRange(req.startDate, req.endDate);
 
-    const automatedMealPromises = datesToLock.map(d => {
-       return Meal.findOneAndUpdate(
-         { messId, messMemberId: req.messMemberId, date: d },
-         { mealCount: 0, createdBy: new mongoose.Types.ObjectId(managerUserId) },
-         { new: true, upsert: true, runValidators: true, session }
-       );
+    const automatedMealPromises = datesToLock.map(async (d) => {
+      const existingMeal = await Meal.findOne({ messId, messMemberId: req.messMemberId, date: d }).session(session);
+      const meals = existingMeal?.meals instanceof Map
+        ? Object.fromEntries(existingMeal.meals.entries())
+        : { ...(existingMeal?.meals as Record<string, number> | undefined) };
+
+      for (const category of mealCategories) {
+        meals[category] = 0;
+      }
+
+      const mealCount = recalculateMealCount(meals);
+
+      return Meal.findOneAndUpdate(
+        { messId, messMemberId: req.messMemberId, date: d },
+        { mealCount, meals, createdBy: new mongoose.Types.ObjectId(managerUserId) },
+        { new: true, upsert: true, runValidators: true, session }
+      );
     });
 
     await Promise.all(automatedMealPromises);

@@ -62,31 +62,54 @@ const assertMealParticipantInMess = async (messId: string, messMemberId: string)
   }
 };
 
-const assertNoApprovedMealOff = async (messId: string, messMemberId: string, mealDate: Date) => {
-  const mealOffRequest = await MealOffRequest.findOne({
+const hasMealOffConflict = (requestMeals: string[] | undefined, mealCategories?: string[]) => {
+  if (!requestMeals?.length || !mealCategories?.length) return true;
+  const requestedSet = new Set(requestMeals.map((meal) => meal.toLowerCase()));
+  return mealCategories.some((meal) => requestedSet.has(meal.toLowerCase()));
+};
+
+const assertNoApprovedMealOff = async (messId: string, messMemberId: string, mealDate: Date, meals?: Record<string, number>) => {
+  const mealOffRequests = await MealOffRequest.find({
     messId,
     messMemberId,
     status: 'approved',
     startDate: { $lte: mealDate },
     endDate: { $gte: mealDate },
-  }).select('_id').lean();
+  }).select('_id meals').lean();
 
-  if (mealOffRequest) {
-    throw new AppError(400, 'Meal cannot be logged because this member has an approved meal off request for this date. Cancel the meal off request first.');
+  if (!mealOffRequests.length) return;
+
+  const mealCategories = meals ? Object.keys(meals).filter((category) => Number(meals[category] || 0) > 0) : undefined;
+  const conflictingRequest = mealOffRequests.find((request) => hasMealOffConflict(request.meals, mealCategories));
+
+  if (conflictingRequest) {
+    const blockedMeals = conflictingRequest.meals?.length ? ` (${conflictingRequest.meals.join(', ')})` : '';
+    throw new AppError(400, `Meal cannot be logged because this member has an approved meal-off request${blockedMeals} for this date. Cancel the meal-off request first.`);
   }
 };
 
-const assertNoApprovedMealOffForBulk = async (messId: string, messMemberIds: string[], mealDate: Date) => {
+const assertNoApprovedMealOffForBulk = async (messId: string, entries: MealEntryPayload[], mealDate: Date) => {
+  const messMemberIds = entries.map((entry) => entry.messMemberId);
   const mealOffRequests = await MealOffRequest.find({
     messId,
     messMemberId: { $in: messMemberIds },
     status: 'approved',
     startDate: { $lte: mealDate },
     endDate: { $gte: mealDate },
-  }).select('messMemberId').lean();
+  }).select('messMemberId meals').lean();
 
-  if (mealOffRequests.length) {
-    const blockedMemberIds = mealOffRequests.map((request) => String(request.messMemberId));
+  const entryByMemberId = new Map(entries.map((entry) => [entry.messMemberId, entry]));
+  const blockedMemberIds = mealOffRequests
+    .filter((request) => {
+      const entry = entryByMemberId.get(String(request.messMemberId));
+      const mealCategories = entry?.meals
+        ? Object.keys(entry.meals).filter((category) => Number(entry.meals?.[category] || 0) > 0)
+        : undefined;
+      return hasMealOffConflict(request.meals, mealCategories);
+    })
+    .map((request) => String(request.messMemberId));
+
+  if (blockedMemberIds.length) {
     throw new AppError(400, `Meal cannot be logged because approved meal off requests exist for these members on this date: ${blockedMemberIds.join(', ')}. Cancel meal off requests first.`);
   }
 };
@@ -241,8 +264,8 @@ export const createOrUpdateMeal = async (
   if (isAfterTodayDhaka(targetDate)) throw new AppError(400, 'Meal cannot be logged for a future date');
   await assertBillingCycleEditable(messId, targetDate);
   await assertMealParticipantInMess(messId, messMemberId);
-  await assertNoApprovedMealOff(messId, messMemberId, targetDate);
   const normalizedPayload = await normalizeMealPayload(messId, mealCount, meals);
+  await assertNoApprovedMealOff(messId, messMemberId, targetDate, normalizedPayload.meals);
 
   return await Meal.findOneAndUpdate(
     { messId, messMemberId, date: targetDate },
@@ -288,9 +311,8 @@ export const bulkCreateOrUpdateMeals = async (
     throw new AppError(400, `Meal cannot be logged because these members do not participate in mess meals: ${nonMealParticipantIds.join(', ')}`);
   }
 
-  await assertNoApprovedMealOffForBulk(messId, uniqueMemberIds, targetDate);
-
   const normalizedEntries = await normalizeMealPayloads(messId, entries);
+  await assertNoApprovedMealOffForBulk(messId, normalizedEntries, targetDate);
 
   await Meal.bulkWrite(normalizedEntries.map((entry) => ({
     updateOne: {
