@@ -11,7 +11,13 @@ export const getMessSummary = catchAsync(async (req: Request, res: Response) => 
 export const getMonthlyFinancials = catchAsync(async (req: Request, res: Response) => {
   const month = Number(req.query.month);
   const year = Number(req.query.year);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Monthly financials fetched successfully', data: await rptService.getMonthlyFinancials(req.messId!, month, year) });
+  const financials = await rptService.getMonthlyFinancials(req.messId!, month, year);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: financials ? 'Monthly financials fetched successfully' : 'No finalized billing cycle found for this period',
+    data: financials,
+  });
 });
 
 export const getMemberStatement = catchAsync(async (req: Request, res: Response) => {

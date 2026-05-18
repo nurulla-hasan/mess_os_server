@@ -97,8 +97,7 @@ export const getMessSummary = async (messId: string) => {
 
 export const getMonthlyFinancials = async (messId: string, month: number, year: number) => {
    const cycle = await BillingCycle.findOne({ messId, month, year, status: 'finalized' });
-   if (!cycle) throw new AppError(404, 'Finalized billing cycle not found for this period');
-   return cycle;
+   return cycle || null;
 };
 
 export const getMemberStatement = async (messId: string, memberId: string) => {
