@@ -38,7 +38,7 @@ export const updateStatusSchema = z.object({
   params: z.object({ messId: oId, complaintId: oId }).strict(),
   body: z.object({
     status: z.enum(['in_progress', 'resolved', 'rejected']),
-    resolvedNote: z.string().trim().min(1).max(1000).optional(),
+    resolvedNote: z.preprocess(emptyToUndefined, z.string().trim().min(1).max(1000).optional()),
   }).strict().superRefine((value, ctx) => {
     if ((value.status === 'resolved' || value.status === 'rejected') && !value.resolvedNote) {
       ctx.addIssue({
