@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { config } from '../../config';
 import { sendEmail } from '../../shared/utils/emailHelper';
+import { createOtpEmailTemplate } from '../../shared/utils/emailTemplates';
 import { authLogger } from '../../shared/utils/logger';
 import crypto from 'crypto';
 import { RegisterPayload, LoginPayload, ResetPasswordPayload } from './auth.validation';
@@ -36,7 +37,17 @@ export const registerUser = async (payload: RegisterPayload) => {
   });
 
   try {
-    await sendEmail(user.email, 'Verify your email', `<p>Your verification OTP is <b>${otp}</b>. It expires in 10 minutes.</p>`);
+    await sendEmail(
+      user.email,
+      'Verify your Mess OS email',
+      createOtpEmailTemplate({
+        title: 'Verify your email',
+        preheader: 'Use this OTP to verify your Mess OS account.',
+        intro: 'Welcome to Mess OS. Use the verification code below to activate your account and start managing your mess securely.',
+        otp,
+        expiresIn: '10 minutes',
+      })
+    );
     authLogger.info('User registration successful', { email: user.email });
   } catch (error) {
     await User.findByIdAndDelete(user._id);
@@ -128,7 +139,17 @@ export const resendOtp = async (email: string) => {
     await user.save();
 
     try {
-      await sendEmail(user.email, 'Verification OTP Resent', `<p>Your new verification OTP is <b>${otp}</b>.</p>`);
+      await sendEmail(
+        user.email,
+        'Your new Mess OS verification OTP',
+        createOtpEmailTemplate({
+          title: 'New verification OTP',
+          preheader: 'Use this new OTP to verify your Mess OS account.',
+          intro: 'You requested a new verification code. Use the OTP below to complete your email verification.',
+          otp,
+          expiresIn: '10 minutes',
+        })
+      );
       authLogger.info('Verification OTP resent', { userId: user._id });
     } catch (e) {
       user.verificationOtp = oldOtp;
@@ -214,7 +235,18 @@ export const forgotPassword = async (email: string) => {
     await user.save();
 
     try {
-      await sendEmail(email, 'Password Reset OTP', `<p>Your reset OTP is <b>${otp}</b>. It expires in 15 minutes.</p>`);
+      await sendEmail(
+        email,
+        'Reset your Mess OS password',
+        createOtpEmailTemplate({
+          title: 'Reset your password',
+          preheader: 'Use this OTP to reset your Mess OS password.',
+          intro: 'We received a request to reset your password. Use the OTP below to continue with password reset.',
+          otp,
+          expiresIn: '15 minutes',
+          note: 'If this was not you, do not share this code. Your current password will remain unchanged.',
+        })
+      );
       authLogger.info('Forgot password requested', { email });
     } catch (e) {
       user.resetPasswordOtp = oldOtp;
