@@ -46,16 +46,47 @@ export const getExpenses = async (messId: string, query: any = {}) => {
   if (query.paidBy) filter.paidBy = new Types.ObjectId(query.paidBy as string);
   if (query.status) filter.status = query.status;
   if (query.fundSource) filter.fundSource = query.fundSource;
+  const summaryFilter = { ...filter };
+  delete summaryFilter.status;
   
   const page = Number(query.page) || 1;
   const limit = Number(query.limit) || 20;
   const skip = (page - 1) * limit;
 
-  const data = await Expense.find(filter).populate(expensePopulate).sort({ date: -1 }).skip(skip).limit(limit);
-  const total = await Expense.countDocuments(filter);
+  const [data, total, summaryResult] = await Promise.all([
+    Expense.find(filter).populate(expensePopulate).sort({ date: -1 }).skip(skip).limit(limit),
+    Expense.countDocuments(filter),
+    Expense.aggregate([
+      { $match: summaryFilter },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: '$amount' },
+          totalCount: { $sum: 1 },
+          pendingAmount: { $sum: { $cond: [{ $eq: ['$status', 'pending'] }, '$amount', 0] } },
+          pendingCount: { $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] } },
+          approvedAmount: { $sum: { $cond: [{ $eq: ['$status', 'approved'] }, '$amount', 0] } },
+          approvedCount: { $sum: { $cond: [{ $eq: ['$status', 'approved'] }, 1, 0] } },
+          personalCashAmount: { $sum: { $cond: [{ $eq: ['$fundSource', 'personal_cash'] }, '$amount', 0] } },
+          personalCashCount: { $sum: { $cond: [{ $eq: ['$fundSource', 'personal_cash'] }, 1, 0] } },
+        },
+      },
+    ]),
+  ]);
+
+  const summary = summaryResult[0] ?? {
+    totalAmount: 0,
+    totalCount: 0,
+    pendingAmount: 0,
+    pendingCount: 0,
+    approvedAmount: 0,
+    approvedCount: 0,
+    personalCashAmount: 0,
+    personalCashCount: 0,
+  };
 
   return {
-    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    meta: { page, limit, total, totalPages: Math.ceil(total / limit), summary },
     data
   };
 };
