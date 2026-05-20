@@ -3814,6 +3814,39 @@
           "response": []
         },
         {
+          "name": "Update Utility Bill (Manager)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"internet\",\n  \"amount\": 1200,\n  \"billingMonth\": 5,\n  \"year\": 2026,\n  \"dueDate\": \"2026-05-31\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/messes/{{messId}}/utility-bills/{{billId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "messes",
+                "{{messId}}",
+                "utility-bills",
+                "{{billId}}"
+              ]
+            },
+            "description": "Role: Manager. Updates an unpaid utility bill before it is marked as paid. Paid bills and finalized billing months are locked. Body fields are optional, but at least one is required."
+          },
+          "response": []
+        },
+        {
           "name": "Mark Utility Bill Paid (Manager)",
           "request": {
             "method": "POST",
@@ -3838,7 +3871,7 @@
           "response": []
         }
       ],
-      "description": "Utility bill tracking. Managers create bills and mark as paid."
+      "description": "Utility bill tracking. Managers create bills, update unpaid bills, and mark bills as paid."
     },
     {
       "name": "Market Schedules",

@@ -13,6 +13,11 @@ export const getUtilityBills = catchAsync(async (req: Request, res: Response) =>
   sendResponse(res, { statusCode: 200, success: true, message: 'Utility bills retrieved', data: result });
 });
 
+export const updateUtilityBill = catchAsync(async (req: Request, res: Response) => {
+  const result = await ubService.updateUtilityBill(req.messId!, String(req.params.billId), req.body);
+  sendResponse(res, { statusCode: 200, success: true, message: 'Utility bill updated', data: result });
+});
+
 export const markPaid = catchAsync(async (req: Request, res: Response) => {
   const result = await ubService.markUtilityBillPaid(req.messId!, String(req.params.billId));
   sendResponse(res, { statusCode: 200, success: true, message: 'Utility bill explicitly tracked via cash ledger flow', data: result });

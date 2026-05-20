@@ -9,6 +9,7 @@ const router = Router({ mergeParams: true });
 
 router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), ctl.getUtilityBills);
 router.post('/', authorize(MESS_ROLES.MANAGER), validateRequest(val.createUtilityBillSchema), ctl.createUtilityBill);
+router.patch('/:billId', authorize(MESS_ROLES.MANAGER), validateRequest(val.updateUtilityBillSchema), ctl.updateUtilityBill);
 router.post('/:billId/pay', authorize(MESS_ROLES.MANAGER), ctl.markPaid);
 
 export const utilityBillRoutes = router;
