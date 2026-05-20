@@ -13,7 +13,29 @@ type ListManagerRequestsOptions = {
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+const cleanupStaleApprovedRequests = async () => {
+  const approvedRequests = await ManagerRequest.find({ status: 'approved' }).select('userId').lean();
+  if (!approvedRequests.length) return;
+
+  const requestUserIds = approvedRequests.map((request) => request.userId);
+  const activeManagerUsers = await User.find({
+    _id: { $in: requestUserIds },
+    globalRole: { $in: ['manager', 'super_admin'] },
+  }).select('_id').lean();
+
+  const activeManagerUserIds = new Set(activeManagerUsers.map((user) => String(user._id)));
+  const staleRequestIds = approvedRequests
+    .filter((request) => !activeManagerUserIds.has(String(request.userId)))
+    .map((request) => request._id);
+
+  if (staleRequestIds.length) {
+    await ManagerRequest.deleteMany({ _id: { $in: staleRequestIds } });
+  }
+};
+
 export const createManagerRequest = async (userId: string, reason?: string) => {
+  await cleanupStaleApprovedRequests();
+
   const user = await User.findById(userId);
   if (!user) throw new AppError(404, 'User not found');
   if (user.globalRole === 'manager' || user.globalRole === 'super_admin') {
@@ -39,10 +61,13 @@ export const createManagerRequest = async (userId: string, reason?: string) => {
 };
 
 export const getMyManagerRequest = async (userId: string) => {
+  await cleanupStaleApprovedRequests();
   return ManagerRequest.findOne({ userId }).sort({ createdAt: -1 }).lean();
 };
 
 export const listManagerRequests = async (options: ListManagerRequestsOptions) => {
+  await cleanupStaleApprovedRequests();
+
   const { status, searchTerm, page, limit } = options;
   const query: Record<string, unknown> = status ? { status } : {};
 

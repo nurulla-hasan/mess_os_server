@@ -9,6 +9,7 @@ import { AppError } from '../../shared/utils/apiError';
 import { parseAsync } from 'json2csv';
 import mongoose from 'mongoose';
 import { getDhakaDayBounds, getMonthBoundariesDhaka } from '../../shared/utils/dateUtils';
+import { CASH_TRANSACTION_TYPES } from '../../constants/ledgerEntryTypes';
 
 type ReportOptions = {
    start?: string;
@@ -86,7 +87,10 @@ const applyMemberScope = (query: Record<string, unknown>, field: string, options
 
 export const getMessSummary = async (messId: string) => {
    const cashLedgers = await CashLedger.find({ messId: new mongoose.Types.ObjectId(messId), isVoided: false });
-   const totalMessCash = cashLedgers.reduce((sum, l) => sum + (l.type === 'IN' ? l.amount : -l.amount), 0);
+   const totalMessCash = cashLedgers.reduce(
+      (sum, ledger) => sum + (ledger.type === CASH_TRANSACTION_TYPES.IN ? ledger.amount : -ledger.amount),
+      0
+   );
    
    const pendingExpenses = await Expense.countDocuments({ messId, status: 'pending' });
    const pendingPayments = await Payment.countDocuments({ messId, status: 'pending' });
