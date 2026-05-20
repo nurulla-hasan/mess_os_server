@@ -16,8 +16,17 @@ export const createRequest = catchAsync(async (req: Request, res: Response) => {
     req.body.messMemberId = actorMemberId;
   }
 
-  const result = await morService.createRequest(req.messId!, req.body);
-  sendResponse(res, { statusCode: 201, success: true, message: 'Meal off request submitted safely', data: result });
+  const result = await morService.createRequest(req.messId!, req.body, {
+    actorMemberId,
+    actorUserId: req.user!.userId,
+    actorRole: req.messMember.messRole,
+  });
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: result.status === 'approved' ? 'Meal off request approved automatically' : 'Meal off request submitted safely',
+    data: result,
+  });
 });
 
 export const listRequests = catchAsync(async (req: Request, res: Response) => {

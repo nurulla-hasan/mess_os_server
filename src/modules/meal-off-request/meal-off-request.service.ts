@@ -166,7 +166,11 @@ const applyMemberSearch = async (messId: string, query: Record<string, unknown>,
   return true;
 };
 
-export const createRequest = async (messId: string, payload: { messMemberId: string, startDate: string, endDate: string, meals?: string[], reason?: string }) => {
+export const createRequest = async (
+  messId: string,
+  payload: { messMemberId: string, startDate: string, endDate: string, meals?: string[], reason?: string },
+  options: { actorMemberId?: string; actorUserId?: string; actorRole?: 'manager' | 'member' } = {}
+) => {
   await assertActiveMemberInMess(messId, payload.messMemberId);
   const sDate = normalizeMealDate(payload.startDate);
   const eDate = normalizeMealDate(payload.endDate);
@@ -175,7 +179,17 @@ export const createRequest = async (messId: string, payload: { messMemberId: str
   assertFutureOrTodayRange(sDate, eDate);
   await assertNoOverlappingActiveRequest(messId, payload.messMemberId, sDate, eDate, meals);
 
-  return await MealOffRequest.create({ messId, messMemberId: payload.messMemberId, startDate: sDate, endDate: eDate, meals, reason: payload.reason, status: 'pending' });
+  const request = await MealOffRequest.create({ messId, messMemberId: payload.messMemberId, startDate: sDate, endDate: eDate, meals, reason: payload.reason, status: 'pending' });
+
+  const isManagerSelfRequest = options.actorRole === 'manager'
+    && options.actorMemberId === payload.messMemberId
+    && options.actorUserId;
+
+  if (isManagerSelfRequest) {
+    return approveRequest(messId, request._id.toString(), options.actorUserId!);
+  }
+
+  return request;
 };
 
 export const listRequests = async (messId: string, options: ListMealOffRequestsOptions = {}) => {
