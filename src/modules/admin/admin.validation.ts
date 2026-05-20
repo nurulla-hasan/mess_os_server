@@ -41,6 +41,12 @@ export const paginationSchema = z.object({
   }).strict()
 });
 
+export const deleteMessSchema = z.object({
+  params: z.object({
+    messId: oId
+  })
+});
+
 export const subscriptionListSchema = z.object({
   query: z.object({
     page: z.string().regex(/^\d+$/).optional(),

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { User } from '../user/user.model';
 import { Mess } from '../mess/mess.model';
 import { MessMember } from '../mess-member/mess-member.model';
@@ -5,6 +6,21 @@ import { ManagerRequest } from '../manager-request/manager-request.model';
 import { Subscription } from '../subscription/subscription.model';
 import { SubscriptionPlan } from '../subscription/subscription-plan.model';
 import { SubscriptionHistory } from '../subscription/subscription-history.model';
+import { SubscriptionPayment } from '../subscription/subscription-payment.model';
+import { Meal } from '../meal/meal.model';
+import { Payment } from '../payment/payment.model';
+import { Expense } from '../expense/expense.model';
+import { UtilityBill } from '../utility-bill/utility-bill.model';
+import { MarketSchedule } from '../market-schedule/market-schedule.model';
+import { MenuPlan } from '../menu-plan/menu-plan.model';
+import { AiShoppingList } from '../ai-shopping/ai-shopping.model';
+import { Notice } from '../notice/notice.model';
+import { Complaint } from '../complaint/complaint.model';
+import { MealOffRequest } from '../meal-off-request/meal-off-request.model';
+import { BillingCycle } from '../billing/billing-cycle.model';
+import { MemberBill } from '../billing/member-bill.model';
+import { CashLedger } from '../ledger/cash-ledger.model';
+import { MemberLedger } from '../ledger/member-ledger.model';
 import { AppError } from '../../shared/utils/apiError';
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -151,6 +167,112 @@ export const updateMessStatus = async (messId: string, status: 'active' | 'suspe
   const mess = await Mess.findByIdAndUpdate(messId, update, { new: true });
   if(!mess) throw new AppError(404, 'Mess not found');
   return mess;
+};
+
+export const deleteMessPermanently = async (messId: string) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const messObjectId = new mongoose.Types.ObjectId(messId);
+    const mess = await Mess.findById(messObjectId).session(session);
+    if (!mess) throw new AppError(404, 'Mess not found');
+
+    const managerMemberships = await MessMember.find({
+      messId: messObjectId,
+      messRole: 'manager',
+    }).select('userId').session(session).lean();
+    const managerUserIds = managerMemberships.map((member) => member.userId);
+
+    const deleteResults = await Promise.all([
+      Meal.deleteMany({ messId: messObjectId }).session(session),
+      MealOffRequest.deleteMany({ messId: messObjectId }).session(session),
+      Payment.deleteMany({ messId: messObjectId }).session(session),
+      Expense.deleteMany({ messId: messObjectId }).session(session),
+      UtilityBill.deleteMany({ messId: messObjectId }).session(session),
+      MarketSchedule.deleteMany({ messId: messObjectId }).session(session),
+      MenuPlan.deleteMany({ messId: messObjectId }).session(session),
+      AiShoppingList.deleteMany({ messId: messObjectId }).session(session),
+      Notice.deleteMany({ messId: messObjectId }).session(session),
+      Complaint.deleteMany({ messId: messObjectId }).session(session),
+      BillingCycle.deleteMany({ messId: messObjectId }).session(session),
+      MemberBill.deleteMany({ messId: messObjectId }).session(session),
+      CashLedger.deleteMany({ messId: messObjectId }).session(session),
+      MemberLedger.deleteMany({ messId: messObjectId }).session(session),
+      Subscription.deleteMany({ messId: messObjectId }).session(session),
+      SubscriptionHistory.deleteMany({ messId: messObjectId }).session(session),
+      SubscriptionPayment.deleteMany({ messId: messObjectId }).session(session),
+      MessMember.deleteMany({ messId: messObjectId }).session(session),
+    ]);
+
+    const deletedMess = await Mess.deleteOne({ _id: messObjectId }).session(session);
+
+    let downgradedManagers = 0;
+    let deletedManagerRequests = 0;
+    if (managerUserIds.length) {
+      const remainingManagerMemberships = await MessMember.find({
+        userId: { $in: managerUserIds },
+        messRole: 'manager',
+        status: 'active',
+      }).select('userId').session(session).lean();
+      const usersStillManaging = new Set(remainingManagerMemberships.map((member) => String(member.userId)));
+      const usersToDowngrade = managerUserIds.filter((userId) => !usersStillManaging.has(String(userId)));
+
+      if (usersToDowngrade.length) {
+        const downgradeResult = await User.updateMany(
+          { _id: { $in: usersToDowngrade }, globalRole: 'manager' },
+          { globalRole: 'user' },
+          { session }
+        );
+        downgradedManagers = downgradeResult.modifiedCount;
+
+        const requestDeleteResult = await ManagerRequest.deleteMany({
+          userId: { $in: usersToDowngrade },
+          status: 'approved',
+        }).session(session);
+        deletedManagerRequests = requestDeleteResult.deletedCount;
+      }
+    }
+
+    await session.commitTransaction();
+
+    const labels = [
+      'meals',
+      'mealOffRequests',
+      'payments',
+      'expenses',
+      'utilityBills',
+      'marketSchedules',
+      'menuPlans',
+      'aiShoppingLists',
+      'notices',
+      'complaints',
+      'billingCycles',
+      'memberBills',
+      'cashLedgerEntries',
+      'memberLedgerEntries',
+      'subscriptions',
+      'subscriptionHistory',
+      'subscriptionPayments',
+      'memberships',
+    ];
+
+    return {
+      messId,
+      messDeleted: deletedMess.deletedCount,
+      downgradedManagers,
+      deletedManagerRequests,
+      deleted: labels.reduce<Record<string, number>>((acc, label, index) => {
+        acc[label] = deleteResults[index].deletedCount ?? 0;
+        return acc;
+      }, {}),
+    };
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
+  }
 };
 
 export const getAllSubscriptions = async (

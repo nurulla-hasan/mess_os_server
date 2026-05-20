@@ -5717,6 +5717,28 @@
             "description": "Role: Super Admin. Updates mess platform status. Body status allowed values: active, suspended. suspensionNote is optional and useful when status=suspended. Suspended messes are blocked for managers and members; super admin can still access. Activating a mess clears suspensionNote, suspendedAt, and suspendedBy."
           },
           "response": []
+        },
+        {
+          "name": "Delete Mess Permanently (Super Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/messes/{{messId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "messes",
+                "{{messId}}"
+              ]
+            },
+            "description": "Role: Super Admin. Permanently hard-deletes a mess and all related mess data: memberships, meals, meal-off requests, payments, expenses, utility bills, market schedules, menu plans, AI shopping lists, notices, complaints, billing cycles, member bills, cash/member ledgers, subscriptions, subscription history, and subscription payments. User accounts are not deleted. Managers with no remaining active managed mess are downgraded to globalRole=user. This action is irreversible."
+          },
+          "response": []
         }
       ],
       "description": "Platform administration. Strictly restricted to super_admin global role. Includes user, mess, stats, subscription plan management, and manager access request review."

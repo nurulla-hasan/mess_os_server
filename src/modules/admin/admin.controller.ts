@@ -63,3 +63,12 @@ export const suspendMess = catchAsync(async (req: Request, res: Response) => {
     data: await adminService.updateMessStatus(String(req.params.messId), req.body.status, req.user!.userId, req.body.suspensionNote)
   });
 });
+
+export const deleteMess = catchAsync(async (req: Request, res: Response) => {
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Mess and all related records permanently deleted',
+    data: await adminService.deleteMessPermanently(String(req.params.messId))
+  });
+});
