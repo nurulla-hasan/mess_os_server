@@ -41,8 +41,17 @@ export const createExpense = async (messId: string, payload: CreateExpensePayloa
   return Expense.findById(expense._id).populate(expensePopulate);
 };
 
-export const getExpenses = async (messId: string, query: any = {}) => { 
-  const filter: any = { messId: new Types.ObjectId(messId) };
+interface ExpenseQuery {
+  page?: string;
+  limit?: string;
+  paidBy?: string;
+  status?: string;
+  fundSource?: string;
+  scope?: string;
+}
+
+export const getExpenses = async (messId: string, query: ExpenseQuery = {}) => { 
+  const filter: Record<string, unknown> = { messId: new Types.ObjectId(messId) };
   if (query.paidBy) filter.paidBy = new Types.ObjectId(query.paidBy as string);
   if (query.status) filter.status = query.status;
   if (query.fundSource) filter.fundSource = query.fundSource;
@@ -115,7 +124,7 @@ const approveExpense = async (messId: string, expenseId: string, managerId: stri
         messId: new Types.ObjectId(messId), 
         amount: exp.amount, 
         referenceType: REFERENCE_TYPES.EXPENSE, 
-        referenceId: exp._id as Types.ObjectId, 
+        referenceId: exp._id, 
         description: `Expense approved from mess cash: ${exp.category}`, 
         date: exp.date 
       }, session);
@@ -125,7 +134,7 @@ const approveExpense = async (messId: string, expenseId: string, managerId: stri
         messMemberId: exp.paidBy, 
         amount: exp.amount, 
         referenceType: REFERENCE_TYPES.EXPENSE, 
-        referenceId: exp._id as Types.ObjectId, 
+        referenceId: exp._id, 
         description: `Personal expense credit for reimbursement: ${exp.category}`, 
         date: exp.date 
       }, session);
@@ -143,10 +152,10 @@ const approveExpense = async (messId: string, expenseId: string, managerId: stri
   }
 };
 
-const rejectExpense = async (messId: string, expenseId: string, managerId: string) => {
+const rejectExpense = async (messId: string, expenseId: string) => {
   const exp = await Expense.findOneAndUpdate(
     { _id: new Types.ObjectId(expenseId), messId: new Types.ObjectId(messId), status: 'pending' },
-    { status: 'rejected', approvedBy: new Types.ObjectId(managerId), approvedAt: new Date() },
+    { status: 'rejected' },
     { new: true }
   );
   if (!exp) throw new AppError(404, 'Expense not found or not pending for rejection');
@@ -154,22 +163,32 @@ const rejectExpense = async (messId: string, expenseId: string, managerId: strin
 };
 
 export const cancelExpense = async (messId: string, expenseId: string, actorMemberId: string, actorRole: string) => {
-  const exp = await Expense.findOne({ _id: new Types.ObjectId(expenseId), messId: new Types.ObjectId(messId) });
-  if (!exp) throw new AppError(404, 'Expense not found');
-  
-  if (exp.status !== 'pending') throw new AppError(400, 'Cannot cancel a processed expense record safely');
-  
-  // Ownership check
-  const isOwner = exp.paidBy.toString() === actorMemberId;
-  const isManager = actorRole === 'manager';
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  if (!isOwner && !isManager) {
-     throw new AppError(403, 'You are not authorized to cancel this expense');
+  try {
+    const exp = await Expense.findOne({ _id: new Types.ObjectId(expenseId), messId: new Types.ObjectId(messId) }).session(session);
+    if (!exp) throw new AppError(404, 'Expense not found');
+    
+    if (exp.status !== 'pending') throw new AppError(400, 'Cannot cancel a processed expense record safely');
+    
+    const isOwner = exp.paidBy.toString() === actorMemberId;
+    const isManager = actorRole === 'manager';
+
+    if (!isOwner && !isManager) {
+       throw new AppError(403, 'You are not authorized to cancel this expense');
+    }
+
+    exp.status = 'canceled';
+    await exp.save({ session });
+    await session.commitTransaction();
+    return exp.populate(expensePopulate);
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
   }
-
-  exp.status = 'canceled';
-  await exp.save();
-  return exp.populate(expensePopulate);
 };
 
 export const updateExpenseStatus = async (
@@ -186,7 +205,7 @@ export const updateExpenseStatus = async (
   }
   if (status === 'rejected') {
     if (actorRole !== 'manager') throw new AppError(403, 'Only managers can reject expenses');
-    return rejectExpense(messId, expenseId, managerUserId);
+    return rejectExpense(messId, expenseId);
   }
   if (status === 'canceled') return cancelExpense(messId, expenseId, actorMemberId, actorRole);
   throw new AppError(400, 'Invalid expense status');
@@ -208,7 +227,7 @@ export const reimburseExpense = async (messId: string, expenseId: string, manage
       messId: new Types.ObjectId(messId), 
       amount: exp.amount, 
       referenceType: REFERENCE_TYPES.EXPENSE, 
-      referenceId: exp._id as Types.ObjectId, 
+      referenceId: exp._id, 
       description: `Reimbursement cash-out for: ${exp.category}`, 
       date: new Date() 
     }, session);
@@ -218,7 +237,7 @@ export const reimburseExpense = async (messId: string, expenseId: string, manage
       messMemberId: exp.paidBy, 
       amount: exp.amount, 
       referenceType: REFERENCE_TYPES.EXPENSE, 
-      referenceId: exp._id as Types.ObjectId, 
+      referenceId: exp._id, 
       description: `Reimbursement charge clearing credit for: ${exp.category}`, 
       date: new Date() 
     }, session);

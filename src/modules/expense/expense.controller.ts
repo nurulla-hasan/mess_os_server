@@ -4,9 +4,12 @@ import { sendResponse } from '../../shared/utils/apiResponse';
 import { AppError } from '../../shared/utils/apiError';
 import * as expenseService from './expense.service';
 
-const getExpenseOwnerId = (expense: any) => {
+const getExpenseOwnerId = (expense: { paidBy: unknown }): string => {
   const member = expense.paidBy;
-  return typeof member === 'object' && member?._id ? member._id.toString() : member.toString();
+  if (typeof member === 'object' && member) {
+    return String((member as Record<string, unknown>)._id);
+  }
+  return String(member);
 };
 
 export const createExpense = catchAsync(async (req: Request, res: Response) => {
@@ -73,8 +76,4 @@ export const reimburseExpense = catchAsync(async (req: Request, res: Response) =
   sendResponse(res, { statusCode: 200, success: true, message: 'Personal expense reimbursed from mess cash correctly', data: result });
 });
 
-export const cancelExpense = catchAsync(async (req: Request, res: Response) => {
-  const actor = req.messMember!;
-  const result = await expenseService.cancelExpense(req.messId!, String(req.params.expenseId), actor._id.toString(), actor.messRole);
-  sendResponse(res, { statusCode: 200, success: true, message: 'Pending expense record canceled successfully', data: result });
-});
+
