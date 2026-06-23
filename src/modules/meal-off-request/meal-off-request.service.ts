@@ -68,7 +68,11 @@ const recalculateMealCount = (meals: Record<string, number>) => {
 };
 
 const assertActiveMemberInMess = async (messId: string, messMemberId: string) => {
-  const member = await MessMember.findOne({ _id: messMemberId, messId, status: 'active' }).select('_id participation').lean();
+  const member = await MessMember.findOne({
+    _id: new mongoose.Types.ObjectId(messMemberId),
+    messId: new mongoose.Types.ObjectId(messId),
+    status: 'active',
+  }).select('_id participation').lean();
   if (!member) throw new AppError(400, 'Active mess member not found for this mess');
   if (member.participation?.meals === false) {
     throw new AppError(400, 'Meal-off request is only available for meal participants');
@@ -222,9 +226,9 @@ export const listRequests = async (messId: string, options: ListMealOffRequestsO
     MealOffRequest.countDocuments(query),
   ]);
 
-  const legacyReviewerIds = items
-    .filter((item: any) => !item.reviewedBy && item.approvedBy)
-    .map((item: any) => item.approvedBy);
+  const legacyReviewerIds = (items as Array<Record<string, unknown>>)
+    .filter((item) => !item.reviewedBy && item.approvedBy)
+    .map((item) => item.approvedBy);
   const legacyReviewers = legacyReviewerIds.length
     ? await User.find({ _id: { $in: legacyReviewerIds } }).select('fullName email phone avatarUrl').lean()
     : [];
@@ -232,16 +236,16 @@ export const listRequests = async (messId: string, options: ListMealOffRequestsO
 
   return {
     items: items.map((item) => {
-      const request = { ...item };
-      const legacyApprovedBy = (request as any).approvedBy;
-      delete (request as any).approvedBy;
+      const request = { ...item } as Record<string, unknown>;
+      const legacyApprovedBy = request.approvedBy;
+      delete request.approvedBy;
 
       if (!request.reviewedBy && legacyApprovedBy) {
         request.reviewedBy = legacyReviewerById.get(String(legacyApprovedBy)) ?? legacyApprovedBy;
-        request.reviewedAt = (request as any).updatedAt;
+        request.reviewedAt = (item as Record<string, unknown>).updatedAt;
       }
 
-      const populatedMember = item.messMemberId as any;
+      const populatedMember = request.messMemberId as Record<string, unknown> | undefined;
       if (!populatedMember || !populatedMember.userId) {
         return request;
       }
