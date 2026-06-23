@@ -72,3 +72,12 @@ export const deleteMess = catchAsync(async (req: Request, res: Response) => {
     data: await adminService.deleteMessPermanently(String(req.params.messId))
   });
 });
+
+export const deleteUser = catchAsync(async (req: Request, res: Response) => {
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'User and associated data permanently deleted',
+    data: await adminService.deleteUserPermanently(String(req.params.userId))
+  });
+});

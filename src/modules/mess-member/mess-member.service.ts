@@ -333,6 +333,11 @@ export const updateMemberParticipation = async (
     'Active member not found'
   );
 
+  // Managers cannot modify participation — they must use Resident toggle flow
+  if (member.messRole === 'manager') {
+    throw new AppError(403, 'Managers cannot modify participation directly. Use Resident toggle instead.');
+  }
+
   member.participation = {
     meals: payload.participation.meals ?? member.participation?.meals ?? true,
     sharedExpenses: payload.participation.sharedExpenses ?? member.participation?.sharedExpenses ?? true,

@@ -53,6 +53,12 @@ export const deleteMessSchema = z.object({
   })
 });
 
+export const deleteUserSchema = z.object({
+  params: z.object({
+    userId: oId
+  })
+});
+
 export const subscriptionListSchema = z.object({
   query: z.object({
     page: z.string().regex(/^\d+$/).optional(),
