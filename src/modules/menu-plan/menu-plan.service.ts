@@ -4,8 +4,13 @@ import { isBeforeTodayDhaka, normalizeMealDate } from '../../shared/utils/dateUt
 import { aiService } from '../../shared/services/aiService';
 import { AppError } from '../../shared/utils/apiError';
 import { Mess } from '../mess/mess.model';
+import type { z } from 'zod';
+import type { createMenuPlanSchema, updateMenuPlanSchema } from './menu-plan.validation';
 
 export type MenuPlanStatus = 'draft' | 'published' | 'archived';
+
+type CreateMenuPlanPayload = z.infer<typeof createMenuPlanSchema>['body'];
+type UpdateMenuPlanPayload = z.infer<typeof updateMenuPlanSchema>['body'];
 
 type ListMenuPlanOptions = {
   page?: number;
@@ -15,9 +20,9 @@ type ListMenuPlanOptions = {
   end?: string;
 };
 
-const mapMealsToObject = (plan: any) => {
+const mapMealsToObject = (plan: Record<string, unknown>): Record<string, unknown> => {
   if (!plan?.meals) return plan;
-  const meals = plan.meals instanceof Map ? Object.fromEntries(plan.meals) : plan.meals;
+  const meals = plan.meals instanceof Map ? Object.fromEntries(plan.meals as Map<string, unknown>) : plan.meals;
   return { ...plan, meals };
 };
 
@@ -39,12 +44,12 @@ const getRecentMenuContext = async (messId: string, targetDate: Date, days: numb
 
   return plans.map((plan) => ({
     date: plan.date,
-    meals: mapMealsToObject(plan).meals ?? {},
+    meals: (mapMealsToObject(plan).meals as Record<string, string>) ?? {},
   }));
 };
 
-const normalizeMenuMeals = async (messId: string, meals?: Record<string, string>) => {
-  if (!meals) return meals;
+const normalizeMenuMeals = async (messId: string, meals?: Record<string, string> | null) => {
+  if (!meals) return meals ?? undefined;
 
   const allowedCategories = await getAllowedMealCategories(messId);
   const categoryByLowercase = new Map(allowedCategories.map((category) => [category.toLowerCase(), category]));
@@ -63,7 +68,7 @@ const normalizeMenuMeals = async (messId: string, meals?: Record<string, string>
   return normalizedMeals;
 };
 
-export const createMenuPlan = async (messId: string, payload: any, userId: string) => {
+export const createMenuPlan = async (messId: string, payload: CreateMenuPlanPayload, userId: string) => {
   const targetDate = normalizeMealDate(payload.date);
   if (isBeforeTodayDhaka(targetDate)) throw new AppError(400, 'Menu plan date cannot be in the past');
 
@@ -91,7 +96,7 @@ export const createMenuPlan = async (messId: string, payload: any, userId: strin
     isAiGenerated: payload.isAiGenerated,
     createdBy: new mongoose.Types.ObjectId(userId)
   });
-  return mapMealsToObject(plan.toObject());
+  return mapMealsToObject(plan.toObject() as unknown as Record<string, unknown>);
 };
 
 export const getMenuPlans = async (messId: string, options: ListMenuPlanOptions = {}) => {
@@ -126,7 +131,7 @@ export const getMenuPlans = async (messId: string, options: ListMenuPlanOptions 
   };
 };
 
-export const updateMenuPlan = async (messId: string, planId: string, payload: any) => {
+export const updateMenuPlan = async (messId: string, planId: string, payload: UpdateMenuPlanPayload) => {
   const meals = await normalizeMenuMeals(messId, payload.meals);
   const plan = await MenuPlan.findOneAndUpdate(
     { _id: planId, messId, status: { $ne: 'archived' } },

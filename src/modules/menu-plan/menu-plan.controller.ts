@@ -8,14 +8,14 @@ export const createMenuPlan = catchAsync(async (req: Request, res: Response) => 
 });
 
 export const getMenuPlans = catchAsync(async (req: Request, res: Response) => {
-  const start = req.query.start ? String(req.query.start) : req.query.startDate ? String(req.query.startDate) : undefined;
-  const end = req.query.end ? String(req.query.end) : req.query.endDate ? String(req.query.endDate) : undefined;
+  const start = String(req.query.start || req.query.startDate || '');
+  const end = String(req.query.end || req.query.endDate || '');
   const result = await menuService.getMenuPlans(req.messId!, {
     page: parseInt(String(req.query.page)) || 1,
     limit: parseInt(String(req.query.limit)) || 8,
     status: req.query.status ? String(req.query.status) as menuService.MenuPlanStatus : undefined,
-    start,
-    end,
+    start: start || undefined,
+    end: end || undefined,
   });
   sendResponse(res, { statusCode: 200, success: true, message: 'Menus read', meta: result.pagination, data: result.items });
 });
