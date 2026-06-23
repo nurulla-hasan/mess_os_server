@@ -22,3 +22,6 @@ export const updateUtilityBillSchema = z.object({
     message: 'At least one field is required',
   })
 });
+
+export type CreateUtilityBillPayload = z.infer<typeof createUtilityBillSchema>['body'];
+export type UpdateUtilityBillPayload = z.infer<typeof updateUtilityBillSchema>['body'];

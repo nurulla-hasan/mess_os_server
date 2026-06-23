@@ -5,6 +5,7 @@ import { AppError } from '../../shared/utils/apiError';
 import { REFERENCE_TYPES } from '../../constants/ledgerEntryTypes';
 import { assertBillingCycleOpenForMonth } from '../billing/billing-lock.service';
 import { normalizeMealDate } from '../../shared/utils/dateUtils';
+import type { CreateUtilityBillPayload, UpdateUtilityBillPayload } from './utility-bill.validation';
 
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -15,7 +16,7 @@ const assertUniqueUtilityBill = async (
   year: number,
   excludeBillId?: string
 ) => {
-  const query: any = {
+  const query: Record<string, unknown> = {
     messId,
     category: { $regex: `^${escapeRegex(category.trim())}$`, $options: 'i' },
     billingMonth,
@@ -30,7 +31,7 @@ const assertUniqueUtilityBill = async (
   }
 };
 
-export const createUtilityBill = async (messId: string, payload: any) => {
+export const createUtilityBill = async (messId: string, payload: CreateUtilityBillPayload) => {
   await assertBillingCycleOpenForMonth(messId, payload.billingMonth, payload.year, 'Cannot create a utility bill for a finalized billing month');
   await assertUniqueUtilityBill(messId, payload.category, payload.billingMonth, payload.year);
   const dueDate = payload.dueDate ? normalizeMealDate(payload.dueDate) : undefined;
@@ -38,7 +39,7 @@ export const createUtilityBill = async (messId: string, payload: any) => {
 };
 export const getUtilityBills = async (messId: string) => { return await UtilityBill.find({ messId }).sort({ year: -1, billingMonth: -1 }); };
 
-export const updateUtilityBill = async (messId: string, billId: string, payload: any) => {
+export const updateUtilityBill = async (messId: string, billId: string, payload: UpdateUtilityBillPayload) => {
   const bill = await UtilityBill.findOne({ _id: billId, messId, status: 'unpaid' });
   if (!bill) throw new AppError(404, 'Bill not found or already paid');
 
