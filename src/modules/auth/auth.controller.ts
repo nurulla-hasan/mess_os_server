@@ -13,12 +13,13 @@ export const register = catchAsync(async (req: Request, res: Response) => {
 
 export const login = catchAsync(async (req: Request, res: Response) => {
   const { user, accessToken, refreshToken } = await authService.loginUser(req.body);
+  const rememberMe = req.body.rememberMe === true;
   
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
     httpOnly: true,
     secure: config.env === 'production',
     sameSite: config.env === 'production' ? 'strict' : 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000 
+    ...(rememberMe ? { maxAge: 30 * 24 * 60 * 60 * 1000 } : {})
   });
 
   sendResponse(res, { statusCode: 200, success: true, message: 'Login successful', data: { accessToken, user } });
@@ -41,12 +42,13 @@ export const refreshToken = catchAsync(async (req: Request, res: Response) => {
         return sendResponse(res, { statusCode: 401, success: false, message: 'No refresh token provided' });
     }
     const { accessToken, refreshToken: newRefreshToken } = await authService.refreshToken(token);
+    const rememberMe = req.body?.rememberMe === true;
     
     res.cookie(REFRESH_COOKIE_NAME, newRefreshToken, {
       httpOnly: true,
       secure: config.env === 'production',
       sameSite: config.env === 'production' ? 'strict' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000 
+      ...(rememberMe ? { maxAge: 30 * 24 * 60 * 60 * 1000 } : {})
     });
 
     sendResponse(res, { statusCode: 200, success: true, message: 'Token rotated', data: { accessToken } });
