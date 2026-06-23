@@ -10,6 +10,10 @@ const limitString = positiveIntegerString.refine((value) => Number(value) <= 100
   message: 'Limit cannot be greater than 100',
 });
 
+export type CreateMarketSchedulePayload = z.infer<typeof createMarketScheduleSchema>['body'];
+export type UpdateMarketSchedulePayload = z.infer<typeof updateMarketScheduleSchema>['body'];
+export type UpdateMarketScheduleStatusPayload = z.infer<typeof updateMarketScheduleStatusSchema>['body'];
+
 export const listMarketScheduleSchema = z.object({
   query: z.object({
     page: z.preprocess(emptyToUndefined, positiveIntegerString.optional()),

@@ -5,6 +5,7 @@ import { AppError } from '../../shared/utils/apiError';
 import { getTodayDhakaNormalized, isBeforeTodayDhaka, normalizeMealDate } from '../../shared/utils/dateUtils';
 import { MessMember } from '../mess-member/mess-member.model';
 import { assertBillingCycleOpenForDate } from '../billing/billing-lock.service';
+import type { CreateMarketSchedulePayload, UpdateMarketSchedulePayload, UpdateMarketScheduleStatusPayload } from './market-schedule.validation';
 
 const populateScheduleMembers = {
   path: 'assignedTo',
@@ -12,22 +13,19 @@ const populateScheduleMembers = {
   populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
 };
 
-const normalizeAssignedMembers = (schedule: any): any => {
-  const normalizeMember = (member: any) => {
-    if (!member?.userId) return member;
-    const { userId, ...rest } = member;
-    return { ...rest, user: userId };
-  };
+const normalizeMember = (member: Record<string, unknown>): Record<string, unknown> => {
+  if (!member?.userId) return member;
+  const { userId, ...rest } = member;
+  return { ...rest, user: userId };
+};
 
+const normalizeAssignedMembers = (schedule: Record<string, unknown>): Record<string, unknown> => {
   if (Array.isArray(schedule)) {
-    return schedule.map((item) => normalizeAssignedMembers(item));
+    return schedule.map((item) => normalizeAssignedMembers(item as Record<string, unknown>)) as unknown as Record<string, unknown>;
   }
-
-  if (!schedule?.assignedTo) return schedule;
-  return {
-    ...schedule,
-    assignedTo: schedule.assignedTo.map(normalizeMember),
-  };
+  const assignedTo = schedule.assignedTo;
+  if (!Array.isArray(assignedTo)) return schedule;
+  return { ...schedule, assignedTo: assignedTo.map(normalizeMember) };
 };
 
 const assertActiveAssignedMembers = async (messId: string, assignedTo: string[]) => {
@@ -45,7 +43,7 @@ const assertActiveAssignedMembers = async (messId: string, assignedTo: string[])
   }
 };
 
-export const createSchedule = async (messId: string, payload: any, userId: string) => {
+export const createSchedule = async (messId: string, payload: CreateMarketSchedulePayload, userId: string) => {
   await assertActiveAssignedMembers(messId, payload.assignedTo);
   const targetDate = normalizeMealDate(payload.targetDate);
   if (isBeforeTodayDhaka(targetDate)) throw new AppError(400, 'Market schedule date cannot be in the past');
@@ -58,10 +56,16 @@ export const createSchedule = async (messId: string, payload: any, userId: strin
     createdBy: new mongoose.Types.ObjectId(userId)
   });
   const populated = await MarketSchedule.findById(schedule._id).populate(populateScheduleMembers).lean();
-  return normalizeAssignedMembers(populated);
+  return normalizeAssignedMembers(populated as unknown as Record<string, unknown>);
 };
 
-const listSchedules = async (query: Record<string, unknown>, options: any = {}) => {
+interface ListScheduleOptions {
+  page?: string;
+  limit?: string;
+  status?: string;
+}
+
+const listSchedules = async (query: Record<string, unknown>, options: ListScheduleOptions = {}) => {
   const page = Number(options.page) || 1;
   const limit = Number(options.limit) || 20;
   const [data, total] = await Promise.all([
@@ -73,22 +77,22 @@ const listSchedules = async (query: Record<string, unknown>, options: any = {}) 
       .lean(),
     MarketSchedule.countDocuments(query),
   ]);
-  return { meta: { page, limit, total, totalPages: Math.ceil(total / limit) }, data: normalizeAssignedMembers(data) };
+  return { meta: { page, limit, total, totalPages: Math.ceil(total / limit) }, data: data.map((d) => normalizeAssignedMembers(d as unknown as Record<string, unknown>)) };
 };
 
-export const getSchedules = async (messId: string, options: any = {}) => {
+export const getSchedules = async (messId: string, options: ListScheduleOptions = {}) => {
   const query: Record<string, unknown> = { messId };
   if (options.status) query.status = options.status;
   return listSchedules(query, options);
 };
 
-export const getMyDuties = async (messId: string, myMemberId: string, options: any = {}) => {
+export const getMyDuties = async (messId: string, myMemberId: string, options: ListScheduleOptions = {}) => {
   const query: Record<string, unknown> = { messId, assignedTo: new mongoose.Types.ObjectId(myMemberId) };
   if (options.status) query.status = options.status;
   return listSchedules(query, options);
 };
 
-export const updateSchedule = async (messId: string, scheduleId: string, payload: any) => {
+export const updateSchedule = async (messId: string, scheduleId: string, payload: UpdateMarketSchedulePayload) => {
   if (payload.assignedTo) await assertActiveAssignedMembers(messId, payload.assignedTo);
   const schedule = await MarketSchedule.findOneAndUpdate(
     { _id: scheduleId, messId, status: 'pending' },
@@ -96,7 +100,7 @@ export const updateSchedule = async (messId: string, scheduleId: string, payload
     { new: true, runValidators: true }
   ).populate(populateScheduleMembers).lean();
   if (!schedule) throw new AppError(404, 'Schedule not found or not mutable');
-  return normalizeAssignedMembers(schedule);
+  return normalizeAssignedMembers(schedule as unknown as Record<string, unknown>);
 };
 
 const voidSchedule = async (messId: string, scheduleId: string) => {
@@ -106,10 +110,10 @@ const voidSchedule = async (messId: string, scheduleId: string) => {
     { new: true }
   ).populate(populateScheduleMembers).lean();
   if (!schedule) throw new AppError(404, 'Schedule not mutable');
-  return normalizeAssignedMembers(schedule);
+  return normalizeAssignedMembers(schedule as unknown as Record<string, unknown>);
 };
 
-const completeSchedule = async (messId: string, scheduleId: string, payload: any, myMemberId: string, actorUserId: string, isManager: boolean) => {
+const completeSchedule = async (messId: string, scheduleId: string, payload: UpdateMarketScheduleStatusPayload, myMemberId: string, actorUserId: string, isManager: boolean) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -145,7 +149,7 @@ const completeSchedule = async (messId: string, scheduleId: string, payload: any
     await schedule.save({ session });
     await session.commitTransaction();
     const populated = await MarketSchedule.findById(schedule._id).populate(populateScheduleMembers).lean();
-    return normalizeAssignedMembers(populated);
+    return normalizeAssignedMembers(populated as unknown as Record<string, unknown>);
   } catch (err) {
     await session.abortTransaction();
     throw err;
@@ -154,7 +158,7 @@ const completeSchedule = async (messId: string, scheduleId: string, payload: any
   }
 };
 
-export const updateScheduleStatus = async (messId: string, scheduleId: string, payload: any, myMemberId: string, actorUserId: string, isManager: boolean) => {
+export const updateScheduleStatus = async (messId: string, scheduleId: string, payload: UpdateMarketScheduleStatusPayload, myMemberId: string, actorUserId: string, isManager: boolean) => {
   if (payload.status === 'completed') return completeSchedule(messId, scheduleId, payload, myMemberId, actorUserId, isManager);
   if (payload.status === 'void') {
     if (!isManager) throw new AppError(403, 'Only managers can void market schedules');
