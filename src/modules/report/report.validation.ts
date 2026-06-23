@@ -73,3 +73,8 @@ export const exportCsvReportSchema = z.object({
   })
 });
 
+export type FinancialReportQuery = z.infer<typeof financialReportSchema>['query'];
+export type MemberStatementParams = z.infer<typeof memberStatementSchema>['params'];
+export type DateRangeReportQuery = z.infer<typeof dateRangeReportSchema>['query'];
+export type ExportCsvReportQuery = z.infer<typeof exportCsvReportSchema>['query'];
+

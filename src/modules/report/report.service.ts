@@ -38,20 +38,24 @@ const paymentPopulate = [
    { path: 'approvedBy', select: 'fullName email phone avatarUrl' },
 ];
 
-const normalizeMemberRef = (member: any) => {
+const normalizeMemberRef = (member: Record<string, unknown>) => {
    if (!member?.userId) return member;
    const { userId, ...rest } = member;
    return { ...rest, user: userId };
 };
 
-const normalizeExpense = (expense: any) => {
-   const raw = typeof expense.toObject === 'function' ? expense.toObject() : expense;
-   return { ...raw, paidBy: normalizeMemberRef(raw.paidBy) };
+const normalizeExpense = (expense: Record<string, unknown>) => {
+   const raw = typeof (expense as unknown as Record<string, unknown> & { toObject(): Record<string, unknown> }).toObject === 'function' 
+     ? (expense as unknown as Record<string, unknown> & { toObject(): Record<string, unknown> }).toObject() 
+     : expense;
+   return { ...raw, paidBy: normalizeMemberRef(raw.paidBy as Record<string, unknown>) };
 };
 
-const normalizePayment = (payment: any) => {
-   const raw = typeof payment.toObject === 'function' ? payment.toObject() : payment;
-   return { ...raw, messMemberId: normalizeMemberRef(raw.messMemberId) };
+const normalizePayment = (payment: Record<string, unknown>) => {
+   const raw = typeof (payment as unknown as Record<string, unknown> & { toObject(): Record<string, unknown> }).toObject === 'function' 
+     ? (payment as unknown as Record<string, unknown> & { toObject(): Record<string, unknown> }).toObject() 
+     : payment;
+   return { ...raw, messMemberId: normalizeMemberRef(raw.messMemberId as Record<string, unknown>) };
 };
 
 const getDateRange = (options: ReportOptions): { start?: Date; end?: Date } => {
@@ -132,7 +136,7 @@ export const getExpenseReport = async (messId: string, options: ReportOptions = 
 
    const data = await Expense.find(query).populate(expensePopulate).sort({ date: -1 });
    const totalAmount = data.reduce((sum, expense) => sum + expense.amount, 0);
-   return { summary: { totalAmount, totalRecords: data.length }, data: data.map(normalizeExpense) };
+   return { summary: { totalAmount, totalRecords: data.length }, data: data.map((d) => normalizeExpense(d as unknown as Record<string, unknown>)) };
 };
 
 export const getPaymentReport = async (messId: string, options: ReportOptions = {}) => {
@@ -146,21 +150,21 @@ export const getPaymentReport = async (messId: string, options: ReportOptions = 
 
    const data = await Payment.find(query).populate(paymentPopulate).sort({ receivedDate: -1 });
    const totalAmount = data.reduce((sum, payment) => sum + payment.amount, 0);
-   return { summary: { totalAmount, totalRecords: data.length }, data: data.map(normalizePayment) };
+   return { summary: { totalAmount, totalRecords: data.length }, data: data.map((d) => normalizePayment(d as unknown as Record<string, unknown>)) };
 };
 
 export const exportCsvReport = async (messId: string, type: 'expenses'|'payments', options: ReportOptions = {}) => {
-   let data: object[];
+   let data: Record<string, unknown>[];
    if (type === 'expenses') {
        const query: Record<string, unknown> = { messId, status: 'approved' };
        const range = getDateRange(options);
        if (range.start && range.end) query.date = { $gte: range.start, $lte: range.end };
-       data = await Expense.find(query).sort({ date: -1 }).lean() as object[];
+       data = await Expense.find(query).sort({ date: -1 }).lean() as Record<string, unknown>[];
    } else {
        const query: Record<string, unknown> = { messId, status: 'approved' };
        const range = getDateRange(options);
        if (range.start && range.end) query.receivedDate = { $gte: range.start, $lte: range.end };
-       data = await Payment.find(query).sort({ receivedDate: -1 }).lean() as object[];
+       data = await Payment.find(query).sort({ receivedDate: -1 }).lean() as Record<string, unknown>[];
    }
    
    if (!data || data.length === 0) throw new AppError(404, 'No approved records found to export');
