@@ -53,3 +53,6 @@ export const setNoticePinSchema = z.object({
 
 export type CreateNoticePayload = z.infer<typeof createNoticeSchema>['body'];
 export type UpdateNoticePayload = z.infer<typeof updateNoticeSchema>['body'];
+export type ListNoticesQuery = z.infer<typeof listNoticesSchema>['query'];
+export type NoticeIdParams = z.infer<typeof noticeIdParamSchema>['params'];
+export type SetNoticePinPayload = z.infer<typeof setNoticePinSchema>['body'];
