@@ -13,6 +13,11 @@ import { MessMember } from '../mess-member/mess-member.model';
 const generateOtp = () => crypto.randomInt(100000, 999999).toString();
 const OTP_RESEND_COOLDOWN_SEC = 60;
 
+const signAccessToken = (payload: object) =>
+  jwt.sign(payload, config.jwt.accessSecret, { expiresIn: config.jwt.accessExpiresIn } as jwt.SignOptions);
+const signRefreshToken = (payload: object) =>
+  jwt.sign(payload, config.jwt.refreshSecret, { expiresIn: config.jwt.refreshExpiresIn } as jwt.SignOptions);
+
 const getUserMemberships = async (userId: string) => {
   return MessMember.find({ userId })
     .populate('messId', 'name address status suspensionNote suspendedAt suspendedBy')
@@ -28,8 +33,9 @@ export const registerUser = async (payload: RegisterPayload) => {
   const hashedOtp = await bcrypt.hash(otp, 10);
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); 
 
+  const { password, ...rest } = payload;
   const user = await User.create({ 
-    ...payload, 
+    ...rest, 
     passwordHash, 
     verificationOtp: hashedOtp, 
     verificationOtpExpiresAt: expiresAt,
@@ -76,17 +82,8 @@ export const loginUser = async (payload: LoginPayload) => {
     throw new AppError(401, 'Invalid email or password');
   }
 
-  const accessToken = jwt.sign(
-    { userId: user._id, globalRole: user.globalRole }, 
-    (config.jwt.accessSecret as string), 
-    { expiresIn: config.jwt.accessExpiresIn as jwt.SignOptions['expiresIn'] }
-  );
-
-  const refreshToken = jwt.sign(
-    { userId: user._id, globalRole: user.globalRole }, 
-    (config.jwt.refreshSecret as string), 
-    { expiresIn: config.jwt.refreshExpiresIn as jwt.SignOptions['expiresIn'] }
-  );
+  const accessToken = signAccessToken({ userId: user._id, globalRole: user.globalRole });
+  const refreshToken = signRefreshToken({ userId: user._id, globalRole: user.globalRole });
 
   user.refreshTokenHash = await bcrypt.hash(refreshToken, 10);
   await user.save();
@@ -151,7 +148,7 @@ export const resendOtp = async (email: string) => {
         })
       );
       authLogger.info('Verification OTP resent', { userId: user._id });
-    } catch (e) {
+    } catch {
       user.verificationOtp = oldOtp;
       user.verificationOtpExpiresAt = oldExpiresAt;
       user.lastVerificationOtpSentAt = oldSentAt;
@@ -174,17 +171,8 @@ export const refreshToken = async (token: string) => {
              throw new Error();
         }
 
-        const accessToken = jwt.sign(
-            { userId: user._id, globalRole: user.globalRole }, 
-            (config.jwt.accessSecret as string), 
-            { expiresIn: config.jwt.accessExpiresIn as jwt.SignOptions['expiresIn'] }
-        );
-
-        const newRefreshToken = jwt.sign(
-            { userId: user._id, globalRole: user.globalRole }, 
-            (config.jwt.refreshSecret as string), 
-            { expiresIn: config.jwt.refreshExpiresIn as jwt.SignOptions['expiresIn'] }
-        );
+        const accessToken = signAccessToken({ userId: user._id, globalRole: user.globalRole });
+        const newRefreshToken = signRefreshToken({ userId: user._id, globalRole: user.globalRole });
 
         user.refreshTokenHash = await bcrypt.hash(newRefreshToken, 10);
         await user.save();
@@ -248,7 +236,7 @@ export const forgotPassword = async (email: string) => {
         })
       );
       authLogger.info('Forgot password requested', { email });
-    } catch (e) {
+    } catch {
       user.resetPasswordOtp = oldOtp;
       user.resetPasswordOtpExpiresAt = oldExpiresAt;
       user.lastResetOtpSentAt = oldSentAt;
