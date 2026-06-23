@@ -61,3 +61,9 @@ export const deletePlanSchema = z.object({
     planId: oId,
   }).strict(),
 });
+
+export type SubscribePayload = z.infer<typeof subscribeSchema>['body'];
+export type CreatePlanPayload = z.infer<typeof createPlanSchema>['body'];
+export type UpdatePlanPayload = z.infer<typeof updatePlanSchema>['body'];
+export type UpdatePlanParams = z.infer<typeof updatePlanSchema>['params'];
+export type DeletePlanParams = z.infer<typeof deletePlanSchema>['params'];

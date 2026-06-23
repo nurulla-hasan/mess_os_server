@@ -327,9 +327,9 @@ export const subscribePlan = async (messId: string, planId: string, userId?: str
   });
 };
 
-export const validateSslCommerzPayment = async (payload: Record<string, any>) => {
-  const valId = payload.val_id;
-  const tranId = payload.tran_id;
+export const validateSslCommerzPayment = async (payload: Record<string, unknown>) => {
+  const valId = payload.val_id as string | undefined;
+  const tranId = payload.tran_id as string | undefined;
   if (!valId || !tranId) throw new AppError(400, 'SSLCommerz validation id or transaction id is missing');
 
   const payment = await SubscriptionPayment.findOne({ tranId });
@@ -383,8 +383,8 @@ export const validateSslCommerzPayment = async (payload: Record<string, any>) =>
   return payment;
 };
 
-export const markSslCommerzPaymentFailed = async (payload: Record<string, any>, status: 'failed' | 'canceled') => {
-  const tranId = payload.tran_id;
+export const markSslCommerzPaymentFailed = async (payload: Record<string, unknown>, status: 'failed' | 'canceled') => {
+  const tranId = payload.tran_id as string | undefined;
   if (!tranId) throw new AppError(400, 'SSLCommerz transaction id is missing');
 
   const payment = await SubscriptionPayment.findOne({ tranId });
