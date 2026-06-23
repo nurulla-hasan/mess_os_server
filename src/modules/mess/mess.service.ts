@@ -14,9 +14,10 @@ import { Complaint } from '../complaint/complaint.model';
 import { MarketSchedule } from '../market-schedule/market-schedule.model';
 import { Notice } from '../notice/notice.model';
 import { CashLedger } from '../ledger/cash-ledger.model';
+import { MemberLedger } from '../ledger/member-ledger.model';
 import { BillingCycle } from '../billing/billing-cycle.model';
 import { MemberBill } from '../billing/member-bill.model';
-import { CASH_TRANSACTION_TYPES } from '../../constants/ledgerEntryTypes';
+import { CASH_TRANSACTION_TYPES, LEDGER_TRANSACTION_TYPES } from '../../constants/ledgerEntryTypes';
 import { DHAKA_OFFSET_MS, getMonthBoundariesDhaka, normalizeMealDate } from '../../shared/utils/dateUtils';
 import type { CreateMessPayload, UpdateMessPayload } from './mess.validation';
 
@@ -295,8 +296,47 @@ export const getMemberDashboard = async (messId: string, messMemberId: string, m
     }
   }
 
-  const finalDue = latestBill?.summary?.finalDue ?? 0;
-  const finalAdvance = latestBill?.summary?.finalAdvance ?? 0;
+  // If current billing cycle is NOT finalized (draft or missing), use running ledger balance
+  // instead of showing last month's stale bill
+  let balanceSource: 'latest_bill' | 'running_ledger' = 'latest_bill';
+  let runningCredits = 0;
+  let runningCharges = 0;
+
+  if (!activeCycle || activeCycle.status === 'draft') {
+    const ledgerResult = await MemberLedger.aggregate([
+      {
+        $match: {
+          messId: messObjectId,
+          messMemberId: memberObjectId,
+          isVoided: { $ne: true },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalCredits: {
+            $sum: { $cond: [{ $eq: ['$type', LEDGER_TRANSACTION_TYPES.CREDIT] }, '$amount', 0] },
+          },
+          totalCharges: {
+            $sum: { $cond: [{ $eq: ['$type', LEDGER_TRANSACTION_TYPES.CHARGE] }, '$amount', 0] },
+          },
+        },
+      },
+    ]);
+
+    if (ledgerResult.length > 0) {
+      runningCredits = ledgerResult[0].totalCredits;
+      runningCharges = ledgerResult[0].totalCharges;
+    }
+    balanceSource = 'running_ledger';
+  }
+
+  const finalDue = balanceSource === 'running_ledger'
+    ? Math.max(0, runningCharges - runningCredits)
+    : (latestBill?.summary?.finalDue ?? 0);
+  const finalAdvance = balanceSource === 'running_ledger'
+    ? Math.max(0, runningCredits - runningCharges)
+    : (latestBill?.summary?.finalAdvance ?? 0);
   const balanceType = finalAdvance > 0 ? 'advance' : finalDue > 0 ? 'due' : 'settled';
 
   const recentActivity = [
@@ -336,6 +376,7 @@ export const getMemberDashboard = async (messId: string, messMemberId: string, m
         amount: balanceType === 'advance' ? finalAdvance : finalDue,
         finalDue,
         finalAdvance,
+        source: balanceSource,
         status: latestBill?.status ?? null,
         updatedAt: (latestBill as any)?.updatedAt ?? null,
       },
