@@ -1,7 +1,7 @@
-import mongoose from 'mongoose';
+import mongoose, { FlattenMaps } from 'mongoose';
 import { Complaint } from './complaint.model';
 import { AppError } from '../../shared/utils/apiError';
-import { CreateComplaintPayload } from './complaint.validation';
+import { CreateComplaintPayload, ListComplaintsQuery } from './complaint.validation';
 import { User } from '../user/user.model';
 import { MessMember } from '../mess-member/mess-member.model';
 
@@ -11,14 +11,18 @@ const complaintPopulate = {
   populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
 };
 
-const getComplaintOwnerId = (complaint: any) => {
+const getComplaintOwnerId = (complaint: Record<string, unknown>) => {
   const member = complaint.messMemberId;
-  return typeof member === 'object' && member?._id ? member._id.toString() : member.toString();
+  if (typeof member === 'object' && member) {
+    const memberObj = member as Record<string, unknown>;
+    if (memberObj._id) return String(memberObj._id);
+  }
+  return String(member);
 };
 
-const normalizeComplaint = (complaint: any) => {
-  const raw = typeof complaint.toObject === 'function' ? complaint.toObject() : complaint;
-  const populatedMember = raw.messMemberId;
+const normalizeComplaint = (complaint: Record<string, unknown>) => {
+  const raw = typeof (complaint as Record<string, unknown>).toObject === 'function' ? (complaint as unknown as Record<string, unknown> & { toObject(): Record<string, unknown> }).toObject() : complaint;
+  const populatedMember = raw.messMemberId as Record<string, unknown> | undefined;
   if (!populatedMember?.userId) return raw;
 
   const { userId, ...member } = populatedMember;
@@ -36,7 +40,7 @@ const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\
 export const createComplaint = async (messId: string, payload: CreateComplaintPayload, myMemberId: string) => {
   const complaint = await Complaint.create({ messId, messMemberId: new mongoose.Types.ObjectId(myMemberId), ...payload });
   const populated = await Complaint.findById(complaint._id).populate(complaintPopulate);
-  return normalizeComplaint(populated);
+  return normalizeComplaint(populated as unknown as Record<string, unknown>);
 };
 
 const paginate = async (query: Record<string, unknown>, page: number, limit: number) => {
@@ -49,10 +53,10 @@ const paginate = async (query: Record<string, unknown>, page: number, limit: num
       .limit(limit),
     Complaint.countDocuments(query),
   ]);
-  return { meta: { page, limit, total, totalPages: Math.ceil(total / limit) }, data: data.map(normalizeComplaint) };
+  return { meta: { page, limit, total, totalPages: Math.ceil(total / limit) }, data: data.map((d) => normalizeComplaint(d as unknown as Record<string, unknown>)) };
 };
 
-export const getComplaints = async (messId: string, options: any = {}) => {
+export const getComplaints = async (messId: string, options: ListComplaintsQuery = {}) => {
   const page = Number(options.page) || 1;
   const limit = Number(options.limit) || 20;
   const query: Record<string, unknown> = { messId };
@@ -83,14 +87,14 @@ export const getComplaints = async (messId: string, options: any = {}) => {
     query.$or = [
       { title: regex },
       { description: regex },
-      ...(memberIds.length ? [{ messMemberId: { $in: memberIds.map((member: any) => member._id) } }] : []),
+      ...(memberIds.length ? [{ messMemberId: { $in: memberIds.map((member) => member._id) } }] : []),
     ];
   }
 
   return paginate(query, page, limit);
 };
 
-export const getMyComplaints = async (messId: string, messMemberId: string, options: any = {}) => {
+export const getMyComplaints = async (messId: string, messMemberId: string, options: ListComplaintsQuery = {}) => {
   const page = Number(options.page) || 1;
   const limit = Number(options.limit) || 20;
   const query: Record<string, unknown> = { messId, messMemberId };
@@ -104,11 +108,11 @@ export const getComplaintById = async (messId: string, complaintId: string, myMe
     .populate('resolvedBy', 'fullName email phone avatarUrl');
   if (!comp) throw new AppError(404, 'Complaint not found');
   
-  if (!isManager && getComplaintOwnerId(comp) !== myMemberId) {
+  if (!isManager && getComplaintOwnerId(comp as unknown as Record<string, unknown>) !== myMemberId) {
     throw new AppError(403, 'Permission denied, you cannot view this complaint');
   }
   
-  return normalizeComplaint(comp);
+  return normalizeComplaint(comp as unknown as Record<string, unknown>);
 };
 
 export const updateComplaintStatus = async (messId: string, complaintId: string, status: string, resolvedNote: string, managerId: string) => {
@@ -134,5 +138,5 @@ export const updateComplaintStatus = async (messId: string, complaintId: string,
     { new: true, runValidators: true }
   ).populate(complaintPopulate).populate('resolvedBy', 'fullName email phone avatarUrl');
   if (!comp) throw new AppError(404, 'Complaint bounds check failed');
-  return normalizeComplaint(comp);
+  return normalizeComplaint(comp as unknown as Record<string, unknown>);
 };

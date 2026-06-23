@@ -17,6 +17,9 @@ export const createComplaintSchema = z.object({
 });
 
 export type CreateComplaintPayload = z.infer<typeof createComplaintSchema>['body'];
+export type ListComplaintsQuery = z.infer<typeof listComplaintsSchema>['query'];
+export type ComplaintIdParams = z.infer<typeof complaintIdParamSchema>['params'];
+export type UpdateStatusPayload = z.infer<typeof updateStatusSchema>['body'];
 
 export const listComplaintsSchema = z.object({
   query: z.object({
