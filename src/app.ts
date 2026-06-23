@@ -1,5 +1,4 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -27,7 +26,7 @@ app.use(cookieParser());
 
 app.use('/api/v1', v1Routes);
 
-app.get('/', (req, res, next) => {
+app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
     message: 'Hello from MessManagerOS API!',
@@ -37,20 +36,6 @@ app.get('/', (req, res, next) => {
 app.all('*', (req, res, next) => {
   next(new AppError(404, `Route not found: ${req.originalUrl}`));
 });
-
 app.use(globalErrorHandler);
-
-// Database connection for Serverless environments (Vercel)
-const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) return;
-  try {
-    await mongoose.connect(config.db.uri);
-    console.log('Database connected successfully');
-  } catch (error) {
-    console.error('Database connection error:', error);
-  }
-};
-
-connectDB();
 
 export default app;

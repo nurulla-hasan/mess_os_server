@@ -3,7 +3,6 @@ import { catchAsync } from '../../shared/utils/asyncHandler';
 import { sendResponse } from '../../shared/utils/apiResponse';
 import * as authService from './auth.service';
 import { config } from '../../config';
-import { authLogger } from '../../shared/utils/logger';
 
 const REFRESH_COOKIE_NAME = 'refreshToken';
 
