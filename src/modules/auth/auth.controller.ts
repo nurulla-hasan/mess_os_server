@@ -35,7 +35,8 @@ export const resendOtp = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const refreshToken = catchAsync(async (req: Request, res: Response) => {
-    const token = req.cookies[REFRESH_COOKIE_NAME];
+    // Accept refresh token from cookie (browser), Authorization header, or request body (server-side fetch)
+    const token = req.cookies[REFRESH_COOKIE_NAME] || req.headers.authorization?.replace('Bearer ', '') || req.body?.refreshToken;
     if (!token) {
         return sendResponse(res, { statusCode: 401, success: false, message: 'No refresh token provided' });
     }
@@ -52,7 +53,8 @@ export const refreshToken = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const logout = catchAsync(async (req: Request, res: Response) => {
-    const token = req.cookies[REFRESH_COOKIE_NAME];
+    // Accept refresh token from cookie (browser), Authorization header, or request body (server-side fetch)
+    const token = req.cookies[REFRESH_COOKIE_NAME] || req.headers.authorization?.replace('Bearer ', '') || req.body?.refreshToken;
     await authService.logout(token);
     res.clearCookie(REFRESH_COOKIE_NAME);
     sendResponse(res, { statusCode: 200, success: true, message: 'Logout successful' });
