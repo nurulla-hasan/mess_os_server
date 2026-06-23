@@ -1,6 +1,7 @@
 import { User } from '../user/user.model';
 import { ManagerRequest } from './manager-request.model';
 import { AppError } from '../../shared/utils/apiError';
+import { Types } from 'mongoose';
 
 type RequestStatus = 'pending' | 'approved' | 'rejected';
 type ReviewStatus = 'approved' | 'rejected';
@@ -120,7 +121,7 @@ export const reviewManagerRequest = async (requestId: string, adminId: string, s
 
   request.status = status;
   request.adminNote = adminNote;
-  request.reviewedBy = adminId as any;
+  request.reviewedBy = new Types.ObjectId(adminId);
   request.reviewedAt = new Date();
 
   if (status === 'approved') {

@@ -19,6 +19,10 @@ export const listManagerRequestsSchema = z.object({
   }).strict(),
 });
 
+export type ReviewManagerRequestPayload = z.infer<typeof reviewManagerRequestSchema>['body'];
+export type ReviewManagerRequestParams = z.infer<typeof reviewManagerRequestSchema>['params'];
+export type ListManagerRequestsQuery = z.infer<typeof listManagerRequestsSchema>['query'];
+
 export const reviewManagerRequestSchema = z.object({
   params: z.object({
     requestId: oId,
