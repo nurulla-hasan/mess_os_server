@@ -4,9 +4,12 @@ import { sendResponse } from '../../shared/utils/apiResponse';
 import { AppError } from '../../shared/utils/apiError';
 import * as paymentService from './payment.service';
 
-const getPaymentOwnerId = (payment: any) => {
+const getPaymentOwnerId = (payment: { messMemberId: unknown }): string => {
   const member = payment.messMemberId;
-  return typeof member === 'object' && member?._id ? member._id.toString() : member.toString();
+  if (typeof member === 'object' && member) {
+    return String((member as Record<string, unknown>)._id);
+  }
+  return String(member);
 };
 
 export const createPayment = catchAsync(async (req: Request, res: Response) => {

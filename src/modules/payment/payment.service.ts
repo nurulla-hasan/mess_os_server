@@ -81,7 +81,7 @@ const approvePayment = async (messId: string, paymentId: string, managerId: stri
       messId: new Types.ObjectId(messId), 
       amount: pay.amount, 
       referenceType: REFERENCE_TYPES.PAYMENT, 
-      referenceId: pay._id as Types.ObjectId, 
+      referenceId: pay._id, 
       description: `Payment received from member`, 
       date: pay.receivedDate 
     }, session);
@@ -91,7 +91,7 @@ const approvePayment = async (messId: string, paymentId: string, managerId: stri
       messMemberId: pay.messMemberId, 
       amount: pay.amount, 
       referenceType: REFERENCE_TYPES.PAYMENT, 
-      referenceId: pay._id as Types.ObjectId, 
+      referenceId: pay._id, 
       description: `Payment credit for balance`, 
       date: pay.receivedDate 
     }, session);
@@ -107,10 +107,10 @@ const approvePayment = async (messId: string, paymentId: string, managerId: stri
   }
 };
 
-const rejectPayment = async (messId: string, paymentId: string, managerId: string) => {
+const rejectPayment = async (messId: string, paymentId: string) => {
   const pay = await Payment.findOneAndUpdate(
     { _id: new Types.ObjectId(paymentId), messId: new Types.ObjectId(messId), status: 'pending' },
-    { status: 'rejected', approvedBy: new Types.ObjectId(managerId) },
+    { status: 'rejected' },
     { new: true }
   );
   if (!pay) throw new AppError(404, 'Payment not found or not pending for rejection');
@@ -118,22 +118,32 @@ const rejectPayment = async (messId: string, paymentId: string, managerId: strin
 };
 
 const cancelPayment = async (messId: string, paymentId: string, actorMemberId: string, actorRole: string) => {
-  const pay = await Payment.findOne({ _id: new Types.ObjectId(paymentId), messId: new Types.ObjectId(messId) });
-  if (!pay) throw new AppError(404, 'Payment not found');
-  
-  if (pay.status !== 'pending') throw new AppError(400, 'Cannot cancel a processed payment record safely');
-  
-  // Ownership check
-  const isOwner = pay.messMemberId.toString() === actorMemberId;
-  const isManager = actorRole === 'manager';
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  if (!isOwner && !isManager) {
-     throw new AppError(403, 'You are not authorized to cancel this payment');
+  try {
+    const pay = await Payment.findOne({ _id: new Types.ObjectId(paymentId), messId: new Types.ObjectId(messId) }).session(session);
+    if (!pay) throw new AppError(404, 'Payment not found');
+    
+    if (pay.status !== 'pending') throw new AppError(400, 'Cannot cancel a processed payment record safely');
+    
+    const isOwner = pay.messMemberId.toString() === actorMemberId;
+    const isManager = actorRole === 'manager';
+
+    if (!isOwner && !isManager) {
+       throw new AppError(403, 'You are not authorized to cancel this payment');
+    }
+
+    pay.status = 'canceled';
+    await pay.save({ session });
+    await session.commitTransaction();
+    return pay.populate(paymentPopulate);
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
   }
-
-  pay.status = 'canceled';
-  await pay.save();
-  return pay.populate(paymentPopulate);
 };
 
 export const updatePaymentStatus = async (
@@ -150,7 +160,7 @@ export const updatePaymentStatus = async (
   }
   if (status === 'rejected') {
     if (actorRole !== 'manager') throw new AppError(403, 'Only managers can reject payments');
-    return rejectPayment(messId, paymentId, managerUserId);
+    return rejectPayment(messId, paymentId);
   }
   if (status === 'canceled') return cancelPayment(messId, paymentId, actorMemberId, actorRole);
   throw new AppError(400, 'Invalid payment status');
