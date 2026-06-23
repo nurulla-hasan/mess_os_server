@@ -50,12 +50,20 @@ const assertBillingCycleEditable = async (messId: string, mealDate: Date) => {
 };
 
 const assertActiveMemberInMess = async (messId: string, messMemberId: string) => {
-  const member = await MessMember.findOne({ _id: messMemberId, messId, status: 'active' }).select('_id').lean();
+  const member = await MessMember.findOne({
+    _id: new mongoose.Types.ObjectId(messMemberId),
+    messId: new mongoose.Types.ObjectId(messId),
+    status: 'active',
+  }).select('_id').lean();
   if (!member) throw new AppError(400, 'Active mess member not found for this mess');
 };
 
 const assertMealParticipantInMess = async (messId: string, messMemberId: string) => {
-  const member = await MessMember.findOne({ _id: messMemberId, messId, status: 'active' }).select('_id participation').lean();
+  const member = await MessMember.findOne({
+    _id: new mongoose.Types.ObjectId(messMemberId),
+    messId: new mongoose.Types.ObjectId(messId),
+    status: 'active',
+  }).select('_id participation').lean();
   if (!member) throw new AppError(400, 'Active mess member not found for this mess');
   if (member.participation?.meals === false) {
     throw new AppError(400, 'Meal cannot be logged because this member does not participate in mess meals');
