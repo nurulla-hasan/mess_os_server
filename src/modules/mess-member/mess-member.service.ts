@@ -14,6 +14,12 @@ const findMemberOrThrow = async (query: object, errorMsg: string, statusCode = 4
   return member;
 };
 
+// Members can be looked up by _id or by userId — same pattern 3 times extracted here
+const memberIdOrUserIdQuery = (messId: string, memberId: string) => ({
+  $or: [{ _id: memberId }, { userId: memberId }],
+  messId,
+});
+
 export const requestJoin = async (userId: string, inviteCode: string) => {
   // Find the mess by invite code
   const mess = await Mess.findOne({ inviteCode });
@@ -118,7 +124,7 @@ export const getMembers = async (messId: string, options: GetMembersOptions = {}
       },
       joinedAt: m.joinedAt,
       leftAt: m.leftAt,
-      createdAt: (m as any).createdAt,
+      createdAt: (m as Record<string, unknown>).createdAt as string | undefined,
       user: m.userId, // populated user info
     })),
     pagination: {
@@ -137,7 +143,7 @@ export const getActiveMemberOptions = async (messId: string) => {
     .lean();
 
   return members.map((member) => {
-    const user = member.userId as any;
+    const user = member.userId as unknown as { _id: string; fullName: string; email?: string; phone?: string; avatarUrl?: string } | undefined;
     return {
       _id: member._id,
       userId: user?._id,
@@ -160,10 +166,9 @@ export const updatePendingMemberStatus = async (
   status: PendingMemberTargetStatus
 ) => {
   const member = await findMemberOrThrow(
-    { 
-      $or: [{ _id: memberId }, { userId: memberId }], 
-      messId, 
-      status: 'pending' 
+    {
+      ...memberIdOrUserIdQuery(messId, memberId),
+      status: 'pending',
     },
     'Pending join request not found'
   );
@@ -184,8 +189,7 @@ export const updateMemberParticipation = async (
 ) => {
   const member = await findMemberOrThrow(
     {
-      $or: [{ _id: memberId }, { userId: memberId }],
-      messId,
+      ...memberIdOrUserIdQuery(messId, memberId),
       status: 'active',
     },
     'Active member not found'
@@ -202,10 +206,9 @@ export const updateMemberParticipation = async (
 
 export const removeMember = async (messId: string, memberId: string) => {
   const member = await findMemberOrThrow(
-    { 
-      $or: [{ _id: memberId }, { userId: memberId }], 
-      messId, 
-      status: 'active' 
+    {
+      ...memberIdOrUserIdQuery(messId, memberId),
+      status: 'active',
     },
     'Active member not found'
   );
