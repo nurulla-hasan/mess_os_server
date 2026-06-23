@@ -31,14 +31,14 @@ export const getMyBill = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const previewBilling = catchAsync(async (req: Request, res: Response) => {
-  const { month, year } = req.body;
-  const result = await billingService.previewBillingCycle(req.messId!, parseInt(month), parseInt(year));
+  const { month, year } = req.body as { month: number; year: number };
+  const result = await billingService.previewBillingCycle(req.messId!, month, year);
   sendResponse(res, { statusCode: 200, success: true, message: 'Billing cycle preview generated successfully', data: result });
 });
 
 export const finalizeBilling = catchAsync(async (req: Request, res: Response) => {
-  const { month, year } = req.body;
-  const result = await billingService.finalizeBillingCycle(req.messId!, parseInt(month), parseInt(year), req.user!.userId);
+  const { month, year } = req.body as { month: number; year: number };
+  const result = await billingService.finalizeBillingCycle(req.messId!, month, year, req.user!.userId);
   sendResponse(res, { statusCode: 200, success: true, message: 'Billing cycle finalized successfully', data: result });
 });
 

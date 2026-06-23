@@ -26,16 +26,11 @@ const memberBillPopulate = {
   populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
 };
 
-const normalizeMemberBill = (bill: any): any => {
-  if (!bill?.messMemberId?.userId) return bill;
-  const { userId, ...member } = bill.messMemberId;
-  return {
-    ...bill,
-    messMemberId: {
-      ...member,
-      user: userId,
-    },
-  };
+const normalizeMemberBill = (bill: Record<string, unknown>): Record<string, unknown> => {
+  const member = bill.messMemberId as Record<string, unknown> | undefined;
+  if (!member?.userId) return bill;
+  const { userId, ...rest } = member;
+  return { ...bill, messMemberId: { ...rest, user: userId } };
 };
 
 export const getMemberBills = async (messId: string, cycleId: string, memberId?: string, includeHistory = false) => {
@@ -47,6 +42,47 @@ export const getMemberBills = async (messId: string, cycleId: string, memberId?:
     .sort({ isArchived: 1, createdAt: -1 })
     .lean();
   return bills.map(normalizeMemberBill);
+};
+
+const categorizeExpenses = (
+  expenses: Array<{ category: string; amount: number }>,
+  utilityBills: Array<{ category: string; amount: number }>,
+  mealCategories: string[],
+  equalShareCategories: string[],
+): { totalMealExpense: number; totalEqualShareExpense: number } => {
+  let totalMealExpense = 0;
+  let totalEqualShareExpense = 0;
+
+  for (const e of expenses) {
+    if (mealCategories.includes(e.category)) totalMealExpense += e.amount;
+    else if (equalShareCategories.includes(e.category)) totalEqualShareExpense += e.amount;
+  }
+
+  for (const b of utilityBills) {
+    if (equalShareCategories.includes(b.category)) totalEqualShareExpense += b.amount;
+  }
+
+  return { totalMealExpense, totalEqualShareExpense };
+};
+
+const calculateMemberShares = (
+  members: Array<{ _id: mongoose.Types.ObjectId; joinedAt?: Date; leftAt?: Date; participation?: { sharedExpenses?: boolean } }>,
+  start: Date,
+  end: Date,
+  totalDaysInMonth: number,
+): { memberShares: Array<{ memberId: mongoose.Types.ObjectId; unit: number }>; totalShareUnits: number } => {
+  let totalShareUnits = 0;
+  const memberShares = members
+    .filter(m => m.participation?.sharedExpenses !== false)
+    .map(m => {
+      const joined = m.joinedAt! > start ? m.joinedAt! : start;
+      const left = m.leftAt! && m.leftAt! < end ? m.leftAt! : end;
+      const activeDays = Math.max(0, (left.getTime() - joined.getTime()) / (1000 * 3600 * 24));
+      const unit = Number(totalDaysInMonth > 0 ? (activeDays / totalDaysInMonth).toFixed(2) : 0);
+      totalShareUnits += unit;
+      return { memberId: m._id, unit };
+    });
+  return { memberShares, totalShareUnits };
 };
 
 const generateBillingPayload = async (messId: string, billingMonth: number, billingYear: number, session?: ClientSession) => {
@@ -65,17 +101,7 @@ const generateBillingPayload = async (messId: string, billingMonth: number, bill
     const expenses = session ? await expensesQuery.session(session) : await expensesQuery;
     const utilityBills = session ? await utilityBillsQuery.session(session) : await utilityBillsQuery;
 
-    let totalMealExpense = 0;
-    let totalEqualShareExpense = 0;
-
-    expenses.forEach(e => {
-      if (mealCategories.includes(e.category)) totalMealExpense += e.amount;
-      else if (equalShareCategories.includes(e.category)) totalEqualShareExpense += e.amount;
-    });
-
-    utilityBills.forEach(b => {
-      if (equalShareCategories.includes(b.category)) totalEqualShareExpense += b.amount;
-    });
+    const { totalMealExpense, totalEqualShareExpense } = categorizeExpenses(expenses, utilityBills, mealCategories, equalShareCategories);
 
     const membersQuery = MessMember.find({ messId, joinedAt: { $lte: end } });
     const members = session ? await membersQuery.session(session) : await membersQuery;
@@ -101,19 +127,7 @@ const generateBillingPayload = async (messId: string, billingMonth: number, bill
     const mealRate = billingMathHelper.calculateMealRate(totalMealExpense, totalMeals);
 
     const totalDaysInMonth = new Date(end.getTime() + DHAKA_OFFSET_MS).getUTCDate();
-    let totalShareUnits = 0;
-    
-    const memberShares = validMembersForBilling
-      .filter(m => m.participation?.sharedExpenses !== false)
-      .map(m => {
-       const joined = m.joinedAt! > start ? m.joinedAt! : start;
-       const left = m.leftAt! && m.leftAt! < end ? m.leftAt! : end;
-       const activeDays = Math.max(0, (left.getTime() - joined.getTime()) / (1000 * 3600 * 24));
-       const unit = Number(totalDaysInMonth > 0 ? (activeDays / totalDaysInMonth).toFixed(2) : 0);
-       totalShareUnits += unit;
-       return { memberId: m._id, unit };
-      });
-
+    const { memberShares, totalShareUnits } = calculateMemberShares(validMembersForBilling, start, end, totalDaysInMonth);
     const equalizeMultiplier = totalShareUnits > 0 ? 1 / totalShareUnits : 0;
     
     const memberBills = [];
