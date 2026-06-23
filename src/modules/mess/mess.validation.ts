@@ -35,3 +35,6 @@ export const transferOwnershipSchema = z.object({
     newManagerUserId: oId,
   }).strict(),
 });
+
+export type CreateMessPayload = z.infer<typeof createMessSchema>['body'];
+export type UpdateMessPayload = z.infer<typeof updateMessSchema>['body'];

@@ -18,6 +18,7 @@ import { BillingCycle } from '../billing/billing-cycle.model';
 import { MemberBill } from '../billing/member-bill.model';
 import { CASH_TRANSACTION_TYPES } from '../../constants/ledgerEntryTypes';
 import { DHAKA_OFFSET_MS, getMonthBoundariesDhaka, normalizeMealDate } from '../../shared/utils/dateUtils';
+import type { CreateMessPayload, UpdateMessPayload } from './mess.validation';
 
 // Generate a short random uppercase invite code (e.g. "A3F2B1C4")
 const generateInviteCode = (): string =>
@@ -50,7 +51,7 @@ const generateUniqueInviteCode = async () => {
   throw new AppError(500, 'Could not generate a unique invite code');
 };
 
-export const createMess = async (userId: string, payload: { name: string; address: string; settings?: any }) => {
+export const createMess = async (userId: string, payload: CreateMessPayload) => {
   const inviteCode = await generateUniqueInviteCode();
 
   const mess = await Mess.create({ ...payload, settings: normalizeSettings(payload.settings), inviteCode });
@@ -365,7 +366,7 @@ export const getMemberDashboard = async (messId: string, messMemberId: string, m
   };
 };
 
-export const updateMess = async (messId: string, payload: { name?: string; address?: string; settings?: any }) => {
+export const updateMess = async (messId: string, payload: UpdateMessPayload) => {
   const existing = await Mess.findById(messId);
   if (!existing) throw new AppError(404, 'Mess not found');
 
