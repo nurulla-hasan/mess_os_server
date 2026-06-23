@@ -139,7 +139,7 @@ export const updateUserRole = async (userId: string, targetRole: string) => {
     }).populate('messId', 'name');
 
     if (managedMess) {
-      const messName = (managedMess.messId as any)?.name;
+      const messName = (managedMess.messId as { name?: string })?.name;
       throw new AppError(
         400,
         `Cannot downgrade this user while they manage an active mess${messName ? ` (${messName})` : ''}. Transfer ownership first.`
@@ -358,7 +358,7 @@ export const getAllSubscriptions = async (
   };
 };
 
-const buildDailyTrend = async (model: any, dateField: string, days = 30) => {
+const buildDailyTrend = async (model: mongoose.Model<any>, dateField: string, days = 30) => {
   const since = new Date();
   since.setHours(0, 0, 0, 0);
   since.setDate(since.getDate() - (days - 1));
@@ -379,7 +379,7 @@ const buildDailyTrend = async (model: any, dateField: string, days = 30) => {
     const date = new Date(since);
     date.setDate(since.getDate() + i);
     const dateKey = date.toISOString().slice(0, 10);
-    const match = results.find((item: any) => item._id === dateKey);
+    const match = results.find((item: { _id: string; count: number }) => item._id === dateKey);
     trends.push({ date: dateKey, count: match ? match.count : 0 });
   }
 

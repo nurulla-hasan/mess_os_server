@@ -4,6 +4,12 @@ import { isValidObjectId } from 'mongoose';
 const oId = z.string().refine(isValidObjectId, 'Invalid MongoDB ID');
 const emptyToUndefined = (value: unknown) => value === '' ? undefined : value;
 
+export type UpdateRolePayload = z.infer<typeof updateRoleSchema>['body'];
+export type BlockUserPayload = z.infer<typeof blockUserSchema>['body'];
+export type SuspendMessPayload = z.infer<typeof suspendMessSchema>['body'];
+export type PaginationQuery = z.infer<typeof paginationSchema>['query'];
+export type SubscriptionListQuery = z.infer<typeof subscriptionListSchema>['query'];
+
 export const updateRoleSchema = z.object({
   params: z.object({
     userId: oId
