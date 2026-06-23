@@ -10,6 +10,8 @@ export interface IMealOffRequest extends Document {
   reason?: string;
   reviewedBy?: Types.ObjectId;
   reviewedAt?: Date;
+  /** Backup of original meal counts before meal-off zeroed them out */
+  mealBackups?: Record<string, Record<string, number>>;
 }
 
 const mealOffRequestSchema = new Schema<IMealOffRequest>({
@@ -21,7 +23,8 @@ const mealOffRequestSchema = new Schema<IMealOffRequest>({
   status: { type: String, enum: ['pending', 'approved', 'rejected', 'canceled'], default: 'pending' },
   reason: { type: String },
   reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
-  reviewedAt: { type: Date }
+  reviewedAt: { type: Date },
+  mealBackups: { type: Schema.Types.Mixed }
 }, { timestamps: true, versionKey: false });
 
 export const MealOffRequest = model<IMealOffRequest>('MealOffRequest', mealOffRequestSchema);

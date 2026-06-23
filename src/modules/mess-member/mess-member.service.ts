@@ -6,6 +6,7 @@ import { UpdateMemberParticipationPayload } from './mess-member.validation';
 import { Subscription } from '../subscription/subscription.model';
 import { SubscriptionPlan } from '../subscription/subscription-plan.model';
 import { assignDefaultSubscription } from '../subscription/subscription.service';
+import { MemberBill } from '../billing/member-bill.model';
 
 // Reusable helper to find a member by query or throw an AppError
 const findMemberOrThrow = async (query: object, errorMsg: string, statusCode = 404) => {
@@ -216,6 +217,32 @@ export const removeMember = async (messId: string, memberId: string) => {
   // Prevent removing the manager
   if (member.messRole === 'manager') {
     throw new AppError(400, 'Cannot remove the mess manager. Transfer ownership first');
+  }
+
+  // Check for outstanding dues (member owes mess)
+  const outstandingDue = await MemberBill.findOne({
+    messMemberId: member._id,
+    'summary.finalDue': { $gt: 0 },
+  }).select('summary.finalDue').lean();
+
+  if (outstandingDue) {
+    throw new AppError(
+      400,
+      `Cannot remove member with outstanding balance of BDT ${outstandingDue.summary.finalDue}. Please settle all bills first.`
+    );
+  }
+
+  // Check for advance balance (mess owes member)
+  const outstandingAdvance = await MemberBill.findOne({
+    messMemberId: member._id,
+    'summary.finalAdvance': { $gt: 0 },
+  }).select('summary.finalAdvance').lean();
+
+  if (outstandingAdvance) {
+    throw new AppError(
+      400,
+      `Cannot remove member with an advance balance of BDT ${outstandingAdvance.summary.finalAdvance}. Please settle the advance before removal.`
+    );
   }
 
   member.status = 'removed';

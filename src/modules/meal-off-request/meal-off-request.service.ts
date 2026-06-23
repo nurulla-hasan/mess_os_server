@@ -294,6 +294,11 @@ const approveRequest = async (messId: string, requestId: string, managerUserId: 
         ? Object.fromEntries(existingMeal.meals.entries())
         : { ...(existingMeal?.meals as Record<string, number> | undefined) };
 
+      // Save backup of original meals before zeroing (for cancel restore)
+      const dateKey = d.toISOString();
+      if (!req.mealBackups) req.mealBackups = {};
+      req.mealBackups[dateKey] = { ...meals };
+
       for (const category of mealCategories) {
         meals[category] = 0;
       }
@@ -330,13 +335,54 @@ const rejectRequest = async (messId: string, requestId: string, managerUserId: s
 };
 
 const cancelRequest = async (messId: string, requestId: string, managerUserId: string) => {
-  const req = await MealOffRequest.findOneAndUpdate(
-    { _id: requestId, messId, status: 'approved' },
-    { status: 'canceled', reviewedBy: new mongoose.Types.ObjectId(managerUserId), reviewedAt: new Date() },
-    { new: true, runValidators: true }
-  );
-  if (!req) throw new AppError(404, 'Approved request not found');
-  return req;
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const req = await MealOffRequest.findOne({ _id: requestId, messId, status: 'approved' }).session(session);
+    if (!req) throw new AppError(404, 'Approved request not found');
+
+    // Restore meals from backup if available
+    if (req.mealBackups && Object.keys(req.mealBackups).length > 0) {
+      const restorePromises = Object.entries(req.mealBackups).map(async ([dateKey, backupMeals]) => {
+        const d = new Date(dateKey);
+        const existingMeal = await Meal.findOne({ messId, messMemberId: req.messMemberId, date: d }).session(session);
+
+        const currentMeals = existingMeal?.meals instanceof Map
+          ? Object.fromEntries(existingMeal.meals.entries())
+          : { ...(existingMeal?.meals as Record<string, number> | undefined) };
+
+        // Restore backed-up values — only overwrite categories that were zeroed
+        for (const [category, count] of Object.entries(backupMeals)) {
+          currentMeals[category] = count;
+        }
+
+        const mealCount = recalculateMealCount(currentMeals);
+
+        return Meal.findOneAndUpdate(
+          { messId, messMemberId: req.messMemberId, date: d },
+          { mealCount, meals: currentMeals, createdBy: new mongoose.Types.ObjectId(managerUserId) },
+          { new: true, upsert: true, runValidators: true, session }
+        );
+      });
+
+      await Promise.all(restorePromises);
+    }
+
+    // Clear backups and set status
+    req.mealBackups = {};
+    req.status = 'canceled';
+    req.reviewedBy = new mongoose.Types.ObjectId(managerUserId);
+    req.reviewedAt = new Date();
+    await req.save({ session });
+    await session.commitTransaction();
+    return req;
+  } catch(err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
+  }
 };
 
 export const cancelOwnPendingRequest = async (

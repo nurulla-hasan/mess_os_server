@@ -13,7 +13,7 @@ import { ledgerHelper } from '../../shared/helpers/ledgerHelper';
 import { billingMathHelper } from '../../shared/helpers/billingMathHelper';
 import { getMonthBoundariesDhaka, DHAKA_OFFSET_MS } from '../../shared/utils/dateUtils';
 import { AppError } from '../../shared/utils/apiError';
-import { REFERENCE_TYPES, LEDGER_TRANSACTION_TYPES } from '../../constants/ledgerEntryTypes';
+import { REFERENCE_TYPES, LEDGER_TRANSACTION_TYPES, FUND_SOURCES } from '../../constants/ledgerEntryTypes';
 import { assertBillingPeriodReadyToFinalize } from './billing-lock.service';
 
 export const getBillingCycles = async (messId: string) => {
@@ -282,6 +282,22 @@ export const finalizeBillingCycle = async (messId: string, billingMonth: number,
     await ledgerHelper.bulkCreateMemberCharges(linkedMemberCharges, session);
 
     await session.commitTransaction();
+
+    // Auto-update reimbursementStatus for personal_cash expenses included in this billing
+    Expense.updateMany(
+      {
+        messId,
+        status: 'approved',
+        fundSource: FUND_SOURCES.PERSONAL_CASH,
+        reimbursementStatus: 'pending',
+        date: { $gte: periodStart, $lte: periodEnd },
+      },
+      { reimbursementStatus: 'reimbursed' }
+    ).catch((_err) => {
+      // Non-critical: billing already finalized, reimbursement status is cosmetic
+      console.error('Failed to auto-reimburse personal_cash expenses:', _err);
+    });
+
     return await BillingCycle.findById(cycleId);
   } catch (err) {
     await session.abortTransaction();
