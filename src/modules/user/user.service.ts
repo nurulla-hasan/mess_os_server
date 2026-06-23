@@ -5,17 +5,8 @@ import { MessMember } from '../mess-member/mess-member.model';
 import { UpdateMePayload, SwitchMessPayload } from './user.validation';
 import { Mess } from '../mess/mess.model';
 
-const sanitizeUser = (user: any) => {
-  if (!user) return user;
-  const { passwordHash, avatarUrl, avatarPublicId, verificationOtp, resetPasswordOtp, verificationOtpExpiresAt, resetPasswordOtpExpiresAt, lastVerificationOtpSentAt, lastResetOtpSentAt, refreshTokenHash, ...safeUser } = user;
-  return {
-    ...safeUser,
-    avatar: avatarUrl || '',
-  };
-};
-
 export const getUser = async (userId: string) => {
-  const user = await User.findById(userId).lean();
+  const user = await User.findById(userId);
   if (!user) throw new AppError(404, 'User not found');
   
   const memberships = await MessMember.find({ userId })
@@ -23,7 +14,7 @@ export const getUser = async (userId: string) => {
     .lean();
   
   return {
-    ...sanitizeUser(user),
+    ...user.toJSON(),
     memberships: memberships.map((membership) => ({
       ...membership,
       participation: {
@@ -40,7 +31,7 @@ export const getUserPrivateFields = async (userId: string) => {
   return user;
 };
 
-export const updateUser = async (userId: string, payload: UpdateMePayload & { avatarUrl?: string, avatarPublicId?: string } | { avatarUrl?: string, avatarPublicId?: string }) => {
+export const updateUser = async (userId: string, payload: UpdateMePayload & { avatarUrl?: string; avatarPublicId?: string }) => {
   const user = await User.findByIdAndUpdate(userId, payload, { new: true, runValidators: true });
   if (!user) throw new AppError(404, 'User not found');
   return user;

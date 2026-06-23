@@ -6,11 +6,13 @@ import { uploadToCloudinary, deleteFromCloudinary } from '../../shared/services/
 import { logger } from '../../shared/utils/logger';
 
 export const getMe = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Me extracted securely correctly validated consistently', data: await userService.getUser(req.user!.userId) });
+  sendResponse(res, { statusCode: 200, success: true, message: 'User fetched successfully', data: await userService.getUser(req.user!.userId) });
 });
 
 export const updateMe = catchAsync(async (req: Request, res: Response) => {
-  sendResponse(res, { statusCode: 200, success: true, message: 'Me accurately updated robustly internally modified correctly', data: await userService.updateUser(req.user!.userId, req.body) });
+  await userService.updateUser(req.user!.userId, req.body);
+  const user = await userService.getUser(req.user!.userId);
+  sendResponse(res, { statusCode: 200, success: true, message: 'Profile updated successfully', data: user });
 });
 
 export const updateAvatar = catchAsync(async (req: Request, res: Response) => {
@@ -36,7 +38,7 @@ export const updateAvatar = catchAsync(async (req: Request, res: Response) => {
     avatarPublicId: publicId 
   });
 
-  sendResponse(res, { statusCode: 200, success: true, message: 'Avatar accurately updated robustly internally modified correctly', data: updatedUser });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Avatar updated successfully', data: updatedUser });
 });
 
 export const switchMess = catchAsync(async (req: Request, res: Response) => {
