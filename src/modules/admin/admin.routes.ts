@@ -35,7 +35,6 @@ router.patch('/users/:userId/role', validateRequest(val.updateRoleSchema), ctl.u
 router.patch('/users/:userId/status', validateRequest(val.blockUserSchema), ctl.blockUser);
 router.patch('/messes/:messId/suspend', validateRequest(val.suspendMessSchema), ctl.suspendMess);
 router.delete('/messes/:messId', validateRequest(val.deleteMessSchema), ctl.deleteMess);
-router.delete('/users/:userId', validateRequest(val.deleteUserSchema), ctl.deleteUser);
 router.patch('/manager-requests/:requestId/status', validateRequest(managerRequestVal.reviewManagerRequestSchema), managerRequestCtl.reviewManagerRequest);
 router.patch('/subscription-plans/:planId', validateRequest(subscriptionVal.updatePlanSchema), subscriptionCtl.updatePlan);
 router.delete('/subscription-plans/:planId', validateRequest(subscriptionVal.deletePlanSchema), subscriptionCtl.deletePlan);
