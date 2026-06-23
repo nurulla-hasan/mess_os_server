@@ -40,3 +40,6 @@ export const updateListStatusSchema = z.object({
 
 export type GenerateListPayload = z.infer<typeof generateListSchema>['body'];
 export type ConvertListPayload = z.infer<typeof convertListSchema>['body'];
+export type UpdateListStatusPayload = z.infer<typeof updateListStatusSchema>['body'];
+export type UpdateListStatusParams = z.infer<typeof updateListStatusSchema>['params'];
+export type ListAiShoppingQuery = z.infer<typeof listAiShoppingSchema>['query'];

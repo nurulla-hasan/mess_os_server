@@ -6,7 +6,7 @@ import { MessMember } from '../mess-member/mess-member.model';
 import { aiService } from '../../shared/services/aiService';
 import { isBeforeTodayDhaka, normalizeMealDate } from '../../shared/utils/dateUtils';
 import { AppError } from '../../shared/utils/apiError';
-import { GenerateListPayload, ConvertListPayload } from './ai-shopping.validation';
+import { GenerateListPayload, ConvertListPayload, ListAiShoppingQuery } from './ai-shopping.validation';
 
 const assertActiveAssignedMembers = async (messId: string, assignedTo: string[]) => {
   const uniqueMemberIds = Array.from(new Set(assignedTo.map(String)));
@@ -40,7 +40,7 @@ export const generateShoppingList = async (messId: string, payload: GenerateList
   });
 };
 
-export const getShoppingLists = async (messId: string, options: any = {}) => {
+export const getShoppingLists = async (messId: string, options: ListAiShoppingQuery = {}) => {
   const page = Number(options.page) || 1;
   const limit = Number(options.limit) || 20;
   const query: Record<string, unknown> = { messId };
