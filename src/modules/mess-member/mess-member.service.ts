@@ -1,6 +1,7 @@
 import { Mess } from '../mess/mess.model';
 import { User } from '../user/user.model';
 import { MessMember } from './mess-member.model';
+import { ResidentToggleRequest } from './resident-toggle-request.model';
 import { AppError } from '../../shared/utils/apiError';
 import { UpdateMemberParticipationPayload } from './mess-member.validation';
 import { Subscription } from '../subscription/subscription.model';
@@ -119,6 +120,7 @@ export const getMembers = async (messId: string, options: GetMembersOptions = {}
       messId: m.messId,
       messRole: m.messRole,
       status: m.status,
+      isResidentManager: (m as Record<string, unknown>).isResidentManager !== false,
       participation: {
         meals: m.participation?.meals ?? true,
         sharedExpenses: m.participation?.sharedExpenses ?? true,
@@ -153,6 +155,7 @@ export const getActiveMemberOptions = async (messId: string) => {
       phone: user?.phone,
       avatar: user?.avatarUrl ?? '',
       messRole: member.messRole,
+      isResidentManager: (member as Record<string, unknown>).isResidentManager !== false,
       participation: {
         meals: member.participation?.meals ?? true,
         sharedExpenses: member.participation?.sharedExpenses ?? true,
@@ -181,6 +184,140 @@ export const updatePendingMemberStatus = async (
   await member.save();
 
   return member;
+};
+
+/**
+ * Manager requests to toggle their resident status.
+ * - If going from External → Resident (opting IN to billing): instant, no approval needed.
+ * - If going from Resident → External (opting OUT of billing): a request is created,
+ *   and at least 3 active members must accept before it takes effect.
+ */
+export const requestResidentToggle = async (messId: string, managerId: string, requestedBy: string) => {
+  const manager = await findMemberOrThrow(
+    {
+      ...memberIdOrUserIdQuery(messId, managerId),
+      messRole: 'manager',
+      status: 'active',
+    },
+    'Active manager not found'
+  );
+
+  // Going back to Resident (opting in) — instant, no approval needed
+  if (manager.isResidentManager === false) {
+    manager.isResidentManager = true;
+    await manager.save();
+
+    // Cancel any pending requests for this manager
+    await ResidentToggleRequest.updateMany(
+      { messId, managerId: manager._id, status: 'pending' },
+      { status: 'rejected' }
+    );
+
+    return { instant: true, manager };
+  }
+
+  // Going External (opting out) — require member approvals
+  // Check for already pending request
+  const existingPending = await ResidentToggleRequest.findOne({
+    messId,
+    managerId: manager._id,
+    status: 'pending',
+  });
+
+  if (existingPending) {
+    throw new AppError(400, 'A pending request already exists for this manager. Please wait for members to approve it.');
+  }
+
+  // Check minimum active members (at least 3 needed to approve)
+  const activeMemberCount = await MessMember.countDocuments({
+    messId,
+    status: 'active',
+    messRole: 'member',
+  });
+
+  if (activeMemberCount < 3) {
+    throw new AppError(
+      400,
+      'Cannot request to go External. At least 3 active members are required in the mess to approve this request.'
+    );
+  }
+
+  const request = await ResidentToggleRequest.create({
+    messId,
+    managerId: manager._id,
+    requestedBy,
+    status: 'pending',
+    acceptedBy: [],
+  });
+
+  return { request, manager };
+};
+
+/**
+ * A member accepts a resident toggle request.
+ * When 3 members have accepted, the request is auto-approved and the manager's status is toggled.
+ */
+export const acceptResidentToggleRequest = async (messId: string, requestId: string, memberId: string) => {
+  // Verify the accepting member
+  const member = await findMemberOrThrow(
+    {
+      ...memberIdOrUserIdQuery(messId, memberId),
+      status: 'active',
+      messRole: 'member',
+    },
+    'Active member not found. Only regular members can accept toggle requests.'
+  );
+
+  // Find the pending request
+  const request = await ResidentToggleRequest.findOne({
+    _id: requestId,
+    messId,
+    status: 'pending',
+  });
+
+  if (!request) {
+    throw new AppError(404, 'Pending toggle request not found');
+  }
+
+  // Check if already accepted
+  if (request.acceptedBy.some((id) => id.toString() === member._id.toString())) {
+    throw new AppError(400, 'You have already accepted this request');
+  }
+
+  // Add acceptance
+  request.acceptedBy.push(member._id);
+  const acceptCount = request.acceptedBy.length;
+
+  // Auto-approve when 3 members accept
+  if (acceptCount >= 3) {
+    request.status = 'approved';
+
+    // Toggle the manager's resident status
+    const manager = await MessMember.findById(request.managerId);
+    if (manager) {
+      manager.isResidentManager = false;
+      await manager.save();
+    }
+  }
+
+  await request.save();
+  return { request, acceptCount, approved: acceptCount >= 3 };
+};
+
+export const getPendingToggleRequests = async (messId: string) => {
+  const requests = await ResidentToggleRequest.find({ messId, status: 'pending' })
+    .populate({
+      path: 'managerId',
+      populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
+    })
+    .populate({
+      path: 'acceptedBy',
+      populate: { path: 'userId', select: 'fullName' },
+    })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return requests;
 };
 
 export const updateMemberParticipation = async (

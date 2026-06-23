@@ -9,6 +9,7 @@ export interface IMessMember extends Document {
     meals: boolean;
     sharedExpenses: boolean;
   };
+  isResidentManager?: boolean;
   joinedAt?: Date;
   leftAt?: Date;
 }
@@ -22,6 +23,7 @@ const reqSchema = new Schema<IMessMember>({
     meals: { type: Boolean, default: true },
     sharedExpenses: { type: Boolean, default: true },
   },
+  isResidentManager: { type: Boolean, default: true },
   joinedAt: { type: Date },
   leftAt: { type: Date }
 }, {

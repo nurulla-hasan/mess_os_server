@@ -64,3 +64,58 @@ export const removeMember = catchAsync(async (req: Request, res: Response) => {
   const member = await memberService.removeMember(req.messId!, req.params.memberId as string);
   sendResponse(res, { statusCode: 200, success: true, message: 'Member removed successfully', data: member });
 });
+
+export const requestResidentToggle = catchAsync(async (req: Request, res: Response) => {
+  const currentMemberId = String(req.messMember?._id ?? '');
+  const result = await memberService.requestResidentToggle(
+    req.messId!,
+    req.params.memberId as string,
+    currentMemberId
+  );
+
+  if (result.instant) {
+    return sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Manager is now set as Resident and will be included in billing.',
+      data: result.manager,
+    });
+  }
+
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: 'Toggle request sent to members. Waiting for at least 3 approvals.',
+    data: result.request,
+  });
+});
+
+export const acceptResidentToggle = catchAsync(async (req: Request, res: Response) => {
+  const currentMemberId = String(req.messMember?._id ?? '');
+  const result = await memberService.acceptResidentToggleRequest(
+    req.messId!,
+    req.body.requestId,
+    currentMemberId
+  );
+
+  const message = result.approved
+    ? 'Request approved! Manager has been set as External and excluded from billing.'
+    : `You accepted the request (${result.acceptCount}/3 approvals).`;
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message,
+    data: result,
+  });
+});
+
+export const getPendingToggleRequests = catchAsync(async (req: Request, res: Response) => {
+  const requests = await memberService.getPendingToggleRequests(req.messId!);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Pending toggle requests fetched successfully',
+    data: requests,
+  });
+});

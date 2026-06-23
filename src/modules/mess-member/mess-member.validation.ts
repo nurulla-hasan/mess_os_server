@@ -36,3 +36,9 @@ export const updateMemberParticipationSchema = z.object({
 });
 
 export type UpdateMemberParticipationPayload = z.infer<typeof updateMemberParticipationSchema>['body'];
+
+export const acceptResidentToggleSchema = z.object({
+  body: z.object({
+    requestId: z.string().min(1, 'Request ID is required'),
+  }).strict(),
+});

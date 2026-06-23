@@ -106,7 +106,10 @@ const generateBillingPayload = async (messId: string, billingMonth: number, bill
     const membersQuery = MessMember.find({ messId, joinedAt: { $lte: end } });
     const members = session ? await membersQuery.session(session) : await membersQuery;
 
-    const validMembersForBilling = members.filter(m => m.status === 'active' || (m.leftAt! && m.leftAt! >= start));
+    const validMembersForBilling = members.filter(m =>
+      (m.status === 'active' || (m.leftAt! && m.leftAt! >= start)) &&
+      !(m.messRole === 'manager' && m.isResidentManager === false)
+    );
     const mealParticipantIds = validMembersForBilling
       .filter(m => m.participation?.meals !== false)
       .map(m => m._id);
