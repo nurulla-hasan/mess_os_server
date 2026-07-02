@@ -36,7 +36,8 @@ export const createMarketScheduleSchema = z.object({
     assignedTo: z.array(oId).min(1),
     targetDate: dateStringSchema,
     shoppingItems: z.array(z.object({ name: z.string(), quantity: z.string() })),
-    estimatedBudget: z.number().positive()
+    estimatedBudget: z.number().positive(),
+    aiShoppingListId: oId.optional()
   }).strict()
 });
 

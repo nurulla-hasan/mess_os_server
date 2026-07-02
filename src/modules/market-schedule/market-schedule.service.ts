@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { MarketSchedule } from './market-schedule.model';
 import { MenuPlan } from '../menu-plan/menu-plan.model';
 import { Expense } from '../expense/expense.model';
+import { AiShoppingList } from '../ai-shopping/ai-shopping.model';
 import { AppError } from '../../shared/utils/apiError';
 import { getTodayDhakaNormalized, isBeforeTodayDhaka, normalizeMealDate } from '../../shared/utils/dateUtils';
 import { MessMember } from '../mess-member/mess-member.model';
@@ -18,7 +19,13 @@ const populateScheduleMembers = {
 const normalizeMember = (member: Record<string, unknown>): Record<string, unknown> => {
   if (!member?.userId) return member;
   const { userId, ...rest } = member;
-  return { ...rest, user: userId };
+  // Rename avatarUrl → avatar to match IMember.user.avatar on the client
+  const user = userId as Record<string, unknown>;
+  if (user && typeof user === 'object' && 'avatarUrl' in user) {
+    user.avatar = user.avatarUrl;
+    delete user.avatarUrl;
+  }
+  return { ...rest, user };
 };
 
 const normalizeAssignedMembers = (schedule: Record<string, unknown>): Record<string, unknown> => {
@@ -67,17 +74,53 @@ export const generateItemsFromMenu = async (messId: string, payload: { date: str
 };
 
 export const createSchedule = async (messId: string, payload: CreateMarketSchedulePayload, userId: string) => {
-  await assertActiveAssignedMembers(messId, payload.assignedTo);
-  const targetDate = normalizeMealDate(payload.targetDate);
+  const { aiShoppingListId, ...schedulePayload } = payload;
+
+  await assertActiveAssignedMembers(messId, schedulePayload.assignedTo);
+  const targetDate = normalizeMealDate(schedulePayload.targetDate);
   if (isBeforeTodayDhaka(targetDate)) throw new AppError(400, 'Market schedule date cannot be in the past');
 
-  const schedule = await MarketSchedule.create({
+  // Prevent duplicate schedules for the same date
+  const existingSchedule = await MarketSchedule.findOne({ messId, targetDate });
+  if (existingSchedule) throw new AppError(409, 'A market schedule already exists for this date');
+
+  const commonScheduleData = {
     messId,
-    ...payload,
+    assignedTo: schedulePayload.assignedTo.map((id: string) => new mongoose.Types.ObjectId(id)),
     targetDate,
-    status: 'pending',
-    createdBy: new mongoose.Types.ObjectId(userId)
-  });
+    shoppingItems: schedulePayload.shoppingItems,
+    estimatedBudget: schedulePayload.estimatedBudget,
+    status: 'pending' as const,
+    createdBy: new mongoose.Types.ObjectId(userId),
+  };
+
+  // If an AI shopping list was selected, mark it as converted in a transaction
+  if (aiShoppingListId) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      const [schedule] = await MarketSchedule.create([commonScheduleData], { session });
+
+      const aiList = await AiShoppingList.findOne({ _id: aiShoppingListId, messId }).session(session);
+      if (aiList && aiList.status !== 'converted') {
+        aiList.status = 'converted';
+        aiList.marketScheduleId = schedule._id;
+        await aiList.save({ session });
+      }
+
+      await session.commitTransaction();
+      const populated = await MarketSchedule.findById(schedule._id).populate(populateScheduleMembers).lean();
+      return normalizeAssignedMembers(populated as unknown as Record<string, unknown>);
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
+    }
+  }
+
+  // No AI list — simple create
+  const schedule = await MarketSchedule.create(commonScheduleData);
   const populated = await MarketSchedule.findById(schedule._id).populate(populateScheduleMembers).lean();
   return normalizeAssignedMembers(populated as unknown as Record<string, unknown>);
 };

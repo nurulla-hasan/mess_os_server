@@ -8,6 +8,32 @@ import { isBeforeTodayDhaka, normalizeMealDate } from '../../shared/utils/dateUt
 import { AppError } from '../../shared/utils/apiError';
 import { GenerateListPayload, ConvertListPayload, ListAiShoppingQuery } from './ai-shopping.validation';
 
+const populateScheduleMembers = {
+  path: 'assignedTo',
+  select: 'userId messRole status',
+  populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
+};
+
+const normalizeMember = (member: Record<string, unknown>): Record<string, unknown> => {
+  if (!member?.userId) return member;
+  const { userId, ...rest } = member;
+  const user = userId as Record<string, unknown>;
+  if (user && typeof user === 'object' && 'avatarUrl' in user) {
+    user.avatar = user.avatarUrl;
+    delete user.avatarUrl;
+  }
+  return { ...rest, user };
+};
+
+const normalizeAssignedMembers = (schedule: Record<string, unknown>): Record<string, unknown> => {
+  if (Array.isArray(schedule)) {
+    return schedule.map((item) => normalizeAssignedMembers(item as Record<string, unknown>)) as unknown as Record<string, unknown>;
+  }
+  const assignedTo = schedule.assignedTo;
+  if (!Array.isArray(assignedTo)) return schedule;
+  return { ...schedule, assignedTo: assignedTo.map(normalizeMember) };
+};
+
 const assertActiveAssignedMembers = async (messId: string, assignedTo: string[]) => {
   const uniqueMemberIds = Array.from(new Set(assignedTo.map(String)));
   if (uniqueMemberIds.length !== assignedTo.length) throw new AppError(400, 'Duplicate assigned member found');
@@ -96,6 +122,10 @@ export const convertToMarketSchedule = async (messId: string, listId: string, us
      if (!list) throw new AppError(404, 'List must be approved to be converted');
      if (isBeforeTodayDhaka(list.targetDate)) throw new AppError(400, 'Cannot convert a shopping list with a past target date');
      
+     // Prevent duplicate schedule for the same date
+     const existingSchedule = await MarketSchedule.findOne({ messId, targetDate: list.targetDate }).session(session);
+     if (existingSchedule) throw new AppError(409, 'A market schedule already exists for this date');
+
      list.status = 'converted';
      
      const schedule = await MarketSchedule.create([{
@@ -111,7 +141,11 @@ export const convertToMarketSchedule = async (messId: string, listId: string, us
      list.marketScheduleId = schedule[0]._id;
      await list.save({ session });
      await session.commitTransaction();
-     return schedule[0];
+
+     const populated = await MarketSchedule.findById(schedule[0]._id)
+       .populate(populateScheduleMembers)
+       .lean();
+     return normalizeAssignedMembers(populated as unknown as Record<string, unknown>);
   } catch(err) {
     await session.abortTransaction();
     throw err;
