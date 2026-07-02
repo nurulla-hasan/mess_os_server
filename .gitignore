@@ -5,4 +5,4 @@ logs
 package-lock.json
 pnpm-lock.yaml
 pnpm-workspace.yaml
-config.bat
+.env*
