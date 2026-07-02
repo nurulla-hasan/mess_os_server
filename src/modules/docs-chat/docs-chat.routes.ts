@@ -6,5 +6,7 @@ import * as val from './docs-chat.validation';
 const router = Router();
 
 router.post('/', validateRequest(val.chatSchema), ctl.chat);
+router.get('/', validateRequest(val.sessionQuerySchema), ctl.getHistory);
+router.delete('/', validateRequest(val.sessionQuerySchema), ctl.deleteHistory);
 
 export const docsChatRoutes = router;
