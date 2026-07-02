@@ -9,6 +9,8 @@ const router = Router({ mergeParams: true });
 
 router.get('/', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), validateRequest(val.listMarketScheduleSchema), ctl.getSchedules);
 
+router.post('/generate-items', authorize(MESS_ROLES.MANAGER), validateRequest(val.generateItemsFromMenuSchema), ctl.generateItemsFromMenu);
+
 router.post('/', authorize(MESS_ROLES.MANAGER), validateRequest(val.createMarketScheduleSchema), ctl.createSchedule);
 
 router.patch('/:scheduleId', authorize(MESS_ROLES.MANAGER), validateRequest(val.updateMarketScheduleSchema), ctl.updateSchedule);

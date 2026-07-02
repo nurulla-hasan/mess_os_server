@@ -32,6 +32,8 @@ export const createMenuPlanSchema = z.object({
     isAiGenerated: z.boolean().default(false),
     aiPreference: z.string().trim().max(200).optional(),
     aiBudget: z.number().positive().optional(),
+    aiPersonCount: z.number().int().positive().optional(),
+    aiShoppingDays: z.number().int().positive().max(30).optional(),
     avoidRecentDays: z.number().int().min(0).max(30).optional()
   }).strict()
 });

@@ -27,9 +27,10 @@ export const config = {
     transactionPrefix: process.env.SSLCOMMERZ_TRANSACTION_PREFIX || 'MOS'
   },
   ai: {
-    provider: process.env.AI_PROVIDER || 'openai',
+    provider: process.env.AI_PROVIDER || 'bynara',
     apiKey: process.env.AI_API_KEY || '',
-    model: process.env.AI_MODEL || 'gpt-5.4-mini',
-    maxTokens: Number(process.env.AI_MAX_TOKENS || 1200)
+    baseUrl: process.env.AI_BASE_URL || 'https://router.bynara.id/v1',
+    model: process.env.AI_MODEL || 'mistral-large',
+    maxTokens: Number(process.env.AI_MAX_TOKENS || 2000)
   }
 };

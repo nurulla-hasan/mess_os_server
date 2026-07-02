@@ -23,6 +23,14 @@ export const listMarketScheduleSchema = z.object({
   }).strict()
 });
 
+export const generateItemsFromMenuSchema = z.object({
+  body: z.object({
+    date: dateStringSchema,
+    personCount: z.number().int().positive().optional(),
+    shoppingDays: z.number().int().positive().max(30).optional(),
+  }).strict()
+});
+
 export const createMarketScheduleSchema = z.object({
   body: z.object({
     assignedTo: z.array(oId).min(1),

@@ -4,6 +4,11 @@ import { sendResponse } from '../../shared/utils/apiResponse';
 import * as msService from './market-schedule.service';
 import { AppError } from '../../shared/utils/apiError';
 
+export const generateItemsFromMenu = catchAsync(async (req: Request, res: Response) => {
+  const items = await msService.generateItemsFromMenu(req.messId!, { date: req.body.date });
+  sendResponse(res, { statusCode: 200, success: true, message: 'Shopping items generated from menu', data: items });
+});
+
 export const createSchedule = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, { statusCode: 201, success: true, message: 'Schedule assigned', data: await msService.createSchedule(req.messId!, req.body, req.user!.userId) });
 });

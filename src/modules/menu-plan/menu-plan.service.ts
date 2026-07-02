@@ -82,21 +82,29 @@ export const createMenuPlan = async (messId: string, payload: CreateMenuPlanPayl
       mealCategories,
       preference: payload.aiPreference,
       budget: payload.aiBudget,
+      personCount: payload.aiPersonCount,
+      shoppingDays: payload.aiShoppingDays,
       recentMeals,
     });
   }
 
   meals = await normalizeMenuMeals(messId, meals);
   
-  const plan = await MenuPlan.create({
-    messId,
-    date: targetDate,
-    meals,
-    status: 'draft',
-    isAiGenerated: payload.isAiGenerated,
-    createdBy: new mongoose.Types.ObjectId(userId)
-  });
-  return mapMealsToObject(plan.toObject() as unknown as Record<string, unknown>);
+  const plan = await MenuPlan.findOneAndUpdate(
+    { messId: new mongoose.Types.ObjectId(messId), date: targetDate },
+    {
+      $set: {
+        messId: new mongoose.Types.ObjectId(messId),
+        date: targetDate,
+        meals,
+        status: 'draft',
+        isAiGenerated: payload.isAiGenerated,
+        createdBy: new mongoose.Types.ObjectId(userId),
+      },
+    },
+    { upsert: true, new: true, runValidators: true }
+  ).lean();
+  return mapMealsToObject(plan);
 };
 
 export const getMenuPlans = async (messId: string, options: ListMenuPlanOptions = {}) => {

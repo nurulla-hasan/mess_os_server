@@ -29,9 +29,10 @@ To run the Mess Manager OS backend locally or deploy it cleanly explicitly to pr
   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`: Map completely natively with cloud panel extraction keys safely.
 
 - **AI Layer Boundaries**
-  - `AI_PROVIDER`: Use `openai` for real generation, or `mock` only when intentionally testing local hardcoded suggestions.
-  - `AI_API_KEY`: Required when `AI_PROVIDER=openai`. Store the OpenAI API key only in server-side environment variables.
-  - `AI_MODEL`: Defaults to `gpt-5.4-mini` for low-latency menu/shopping generation.
+  - `AI_PROVIDER`: Use `bynara` (NaraRouter, free OpenAI-compatible gateway), `openai` (direct OpenAI), or `mock` (hardcoded test suggestions).
+  - `AI_API_KEY`: Required when `AI_PROVIDER=bynara` or `AI_PROVIDER=openai`. Get a free key from https://router.bynara.id/keys.
+  - `AI_BASE_URL`: Defaults to `https://router.bynara.id/v1` for NaraRouter. Only needed if using a custom OpenAI-compatible endpoint.
+  - `AI_MODEL`: Defaults to `mistral-large` (recommended for Bangladeshi food, Free plan). Other free options: `claude-sonnet-4.5`, `claude-haiku-4.5`, `mistral-medium-3-5`.
   - `AI_MAX_TOKENS`: Maximum output token budget for AI JSON responses.
 
 - **External Integrations**

@@ -21,6 +21,6 @@ const menuPlanSchema = new Schema<IMenuPlan>({
   versionKey: false
 });
 
-menuPlanSchema.index({ messId: 1, date: 1 });
+menuPlanSchema.index({ messId: 1, date: 1 }, { unique: true });
 
 export const MenuPlan = model<IMenuPlan>('MenuPlan', menuPlanSchema);

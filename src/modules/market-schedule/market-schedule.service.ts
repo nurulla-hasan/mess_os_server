@@ -1,10 +1,12 @@
 import mongoose from 'mongoose';
 import { MarketSchedule } from './market-schedule.model';
+import { MenuPlan } from '../menu-plan/menu-plan.model';
 import { Expense } from '../expense/expense.model';
 import { AppError } from '../../shared/utils/apiError';
 import { getTodayDhakaNormalized, isBeforeTodayDhaka, normalizeMealDate } from '../../shared/utils/dateUtils';
 import { MessMember } from '../mess-member/mess-member.model';
 import { assertBillingCycleOpenForDate } from '../billing/billing-lock.service';
+import { aiService } from '../../shared/services/aiService';
 import type { CreateMarketSchedulePayload, UpdateMarketSchedulePayload, UpdateMarketScheduleStatusPayload } from './market-schedule.validation';
 
 const populateScheduleMembers = {
@@ -41,6 +43,27 @@ const assertActiveAssignedMembers = async (messId: string, assignedTo: string[])
   if (activeCount !== uniqueMemberIds.length) {
     throw new AppError(400, 'Market schedule can only be assigned to active members of this mess');
   }
+};
+
+export const generateItemsFromMenu = async (messId: string, payload: { date: string; personCount?: number; shoppingDays?: number }) => {
+  const targetDate = normalizeMealDate(payload.date);
+  
+  const menuPlan = await MenuPlan.findOne({ messId, date: targetDate }).select('meals').lean();
+  if (!menuPlan || !menuPlan.meals) {
+    throw new AppError(404, 'No menu plan found for this date. Generate a menu plan first.');
+  }
+  
+  const meals = menuPlan.meals instanceof Map
+    ? Object.fromEntries(menuPlan.meals as Map<string, string>)
+    : menuPlan.meals as Record<string, string>;
+
+  if (!Object.keys(meals).length) {
+    throw new AppError(404, 'Menu plan exists but has no meals defined.');
+  }
+
+  const aiItems = await aiService.generateShoppingListItems(meals);
+  
+  return aiItems.map((item) => ({ name: item.name, quantity: item.quantity }));
 };
 
 export const createSchedule = async (messId: string, payload: CreateMarketSchedulePayload, userId: string) => {
