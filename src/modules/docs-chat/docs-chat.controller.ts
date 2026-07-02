@@ -6,7 +6,8 @@ import { chatWithAssistant, getChatHistory, deleteChatHistory } from './docs-cha
 export const chat = catchAsync(async (req: Request, res: Response) => {
   const { question, context, sessionId } = req.body;
   const userAgent = req.headers['user-agent'];
-  const result = await chatWithAssistant(question, context, sessionId, userAgent);
+  const userId = req.user?.userId;
+  const result = await chatWithAssistant(question, context, sessionId, userAgent, userId);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -17,7 +18,8 @@ export const chat = catchAsync(async (req: Request, res: Response) => {
 
 export const getHistory = catchAsync(async (req: Request, res: Response) => {
   const { sessionId } = req.query as { sessionId: string };
-  const history = await getChatHistory(sessionId);
+  const userId = req.user?.userId;
+  const history = await getChatHistory(sessionId, userId);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -28,7 +30,8 @@ export const getHistory = catchAsync(async (req: Request, res: Response) => {
 
 export const deleteHistory = catchAsync(async (req: Request, res: Response) => {
   const { sessionId } = req.query as { sessionId: string };
-  await deleteChatHistory(sessionId);
+  const userId = req.user?.userId;
+  await deleteChatHistory(sessionId, userId);
   sendResponse(res, {
     statusCode: 200,
     success: true,

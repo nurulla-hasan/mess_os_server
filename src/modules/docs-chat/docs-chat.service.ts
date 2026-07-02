@@ -108,7 +108,8 @@ export const chatWithAssistant = async (
   question: string,
   context?: string,
   sessionId?: string,
-  userAgent?: string
+  userAgent?: string,
+  userId?: string
 ): Promise<ChatResult> => {
   const activeSessionId = sessionId || crypto.randomUUID();
 
@@ -116,6 +117,7 @@ export const chatWithAssistant = async (
     logger.warn('AI API key not configured — returning mock fallback for docs chat');
     // Save in background
     ChatMessage.create({
+      userId,
       sessionId: activeSessionId,
       question,
       answer: MOCK_FALLBACK_RESPONSE,
@@ -207,6 +209,7 @@ export const chatWithAssistant = async (
 
   // Save to DB in background — don't block user response
   ChatMessage.create({
+    userId,
     sessionId: activeSessionId,
     question,
     answer: content,
@@ -223,8 +226,9 @@ type HistoryMessage = {
   createdAt: Date;
 };
 
-export const getChatHistory = async (sessionId: string): Promise<HistoryMessage[]> => {
-  const messages = await ChatMessage.find({ sessionId })
+export const getChatHistory = async (sessionId: string, userId?: string): Promise<HistoryMessage[]> => {
+  const filter = userId ? { userId } : { sessionId };
+  const messages = await ChatMessage.find(filter)
     .sort({ createdAt: 1 })
     .lean();
 
@@ -237,6 +241,7 @@ export const getChatHistory = async (sessionId: string): Promise<HistoryMessage[
   return history;
 };
 
-export const deleteChatHistory = async (sessionId: string): Promise<void> => {
-  await ChatMessage.deleteMany({ sessionId });
+export const deleteChatHistory = async (sessionId: string, userId?: string): Promise<void> => {
+  const filter = userId ? { userId } : { sessionId };
+  await ChatMessage.deleteMany(filter);
 };

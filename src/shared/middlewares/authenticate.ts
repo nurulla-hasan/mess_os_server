@@ -48,3 +48,24 @@ export const authenticateAllowBlocked = async (req: Request, res: Response, next
   }
 };
 
+/**
+ * Optional auth — sets req.user if a valid Authorization header is present,
+ * but does NOT block the request if the token is missing or invalid.
+ * Useful for routes that work for both authenticated and anonymous users.
+ */
+export const optionalAuth = async (req: Request, _res: Response, next: NextFunction) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, config.jwt.accessSecret) as any;
+    const user = await User.findById(decoded.userId).select('status globalRole');
+    if (user) {
+      req.user = { userId: decoded.userId, globalRole: user.globalRole };
+    }
+  } catch {
+    // Token invalid/expired — continue without user
+  }
+  next();
+};
+

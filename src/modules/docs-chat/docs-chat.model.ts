@@ -1,6 +1,7 @@
 import { Schema, model, Document } from 'mongoose';
 
 export interface IChatMessage extends Document {
+  userId?: string;
   sessionId: string;
   question: string;
   answer: string;
@@ -12,6 +13,7 @@ export interface IChatMessage extends Document {
 
 const chatMessageSchema = new Schema<IChatMessage>(
   {
+    userId: { type: String, required: false, index: true },
     sessionId: { type: String, required: true, index: true },
     question: { type: String, required: true },
     answer: { type: String, required: true },
