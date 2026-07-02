@@ -480,10 +480,168 @@ export class BynaraProvider implements AiProvider {
   }
 }
 
+export class OpenCodeProvider implements AiProvider {
+  private readonly apiKey = config.ai.apiKey;
+  private readonly model = config.ai.model;
+  private readonly maxTokens = config.ai.maxTokens;
+  private readonly baseUrl = config.ai.baseUrl;
+
+  private async createJsonResponse(input: string, schema: Record<string, unknown>, schemaName: string) {
+    if (isPlaceholderApiKey(this.apiKey)) {
+      throw new AppError(503, 'OpenCode AI API key is not configured. Set AI_API_KEY or use AI_PROVIDER=mock for local mock generation.');
+    }
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: [
+          {
+            role: 'system',
+            content: [
+              'You are a JSON generator. Respond with valid JSON only.',
+              `Schema for "${schemaName}":\n${JSON.stringify(schema, null, 2)}`,
+              'Output ONLY the JSON object. No markdown, no explanation.',
+              'Use Bangla/Bengali language for all food names, dish names, and item names.',
+            ].join('\n'),
+          },
+          {
+            role: 'user',
+            content: input,
+          },
+        ],
+        max_tokens: this.maxTokens,
+        temperature: 0.7,
+        response_format: { type: 'json_object' },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      logger.error('OpenCode AI request failed', new Error(errorText), { status: response.status });
+      throw new AppError(502, 'AI generation failed');
+    }
+
+    const data = await response.json() as ChatCompletionResponse;
+    return parseJsonObject(data.choices?.[0]?.message?.content);
+  }
+
+  async generateMenuPlanContent(options: GenerateMenuPlanOptions) {
+    const recentContext = (options.recentMeals ?? [])
+      .map((plan) => `${plan.date.toISOString().slice(0, 10)}: ${JSON.stringify(plan.meals)}`)
+      .join('\n') || 'No recent menu context.';
+
+    const marketContext = buildMarketPriceContext(options.marketPrices);
+
+    const peopleText = options.personCount ? `${options.personCount} জন লোক খাবে। পরিমাণ সেই অনুযায়ী প্ল্যান করো।` : '';
+    const daysText = options.shoppingDays ? `${options.shoppingDays} দিনের বাজার করতে হবে।` : '';
+
+    const result = await this.createJsonResponse(
+      [
+        'Generate a practical Bangladeshi mess meal plan in Bangla language.',
+        'Return concise dish names in Bangla only, no explanation.',
+        `Target date: ${options.date.toISOString().slice(0, 10)}`,
+        `Meal categories: ${options.mealCategories.join(', ')}`,
+        `Preference: ${options.preference || 'balanced Bangladeshi mess food'}`,
+        `STRICT BUDGET: ${options.budget ?? 'not specified'} BDT per person per meal. This is the MAXIMUM cost for ONE person for ONE meal.`,
+        peopleText,
+        daysText,
+        '',
+        '=== CURRENT MARKET PRICES ===',
+        marketContext,
+        '',
+        '=== BUDGET GUIDELINES ===',
+        '50-80 BDT → Only cheap items (aloo, shak, begun, dal, dim). NO chicken, fish or beef at all.',
+        '100-150 BDT → Dim curry, dal, simple vegetables. Still NO chicken/fish - too expensive.',
+        '200+ BDT → Maybe chicken or pangas fish, but only once a day. Keep other meals vegetarian.',
+        'If marketPrices shows chicken/beef/fish price has increased, substitute with cheaper protein (eggs, dal, soya).',
+        'If marketPrices shows vegetables are cheap, use more vegetables.',
+        'Always respect the actual market prices to stay within budget.',
+        '',
+        'Avoid repeating recent meals when possible.',
+        `Recent meals:\n${recentContext}`,
+      ].join('\n'),
+      {
+        type: 'object',
+        properties: {
+          meals: {
+            type: 'object',
+            properties: Object.fromEntries(
+              options.mealCategories.map((category) => [category, { type: 'string' }])
+            ),
+            required: options.mealCategories,
+          },
+        },
+        required: ['meals'],
+      },
+      'menu_plan'
+    ) as { meals?: Record<string, unknown> };
+
+    const meals = result.meals ?? {};
+    const toString = (val: unknown): string =>
+      typeof val === 'string' ? val : Array.isArray(val) ? val.join(', ') : typeof val === 'object' && val !== null ? Object.values(val as Record<string, unknown>).join(', ') : String(val ?? '');
+
+    const missingCategories = options.mealCategories.filter((category) => !toString(meals[category]).trim());
+    if (missingCategories.length) {
+      throw new AppError(502, `AI menu response missed meal categories: ${missingCategories.join(', ')}`);
+    }
+
+    return Object.fromEntries(
+      options.mealCategories.map((category) => [category, toString(meals[category]).trim()])
+    );
+  }
+
+  async generateShoppingListItems(menuMeals: Record<string, string> | Map<string, string>) {
+    const meals = menuMeals instanceof Map ? Object.fromEntries(menuMeals) : menuMeals;
+    const result = await this.createJsonResponse(
+      [
+        'Create a grocery shopping list for a Bangladeshi mess based on this menu.',
+        'Use Bangla names for all items. Use practical quantities for a small shared mess.',
+        `Menu: ${JSON.stringify(meals)}`,
+      ].join('\n'),
+      {
+        type: 'object',
+        properties: {
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                quantity: { type: 'string' },
+                category: { type: 'string' },
+              },
+              required: ['name', 'quantity', 'category'],
+            },
+          },
+        },
+        required: ['items'],
+      },
+      'shopping_list'
+    ) as { items?: { name: string; quantity: string; category: string }[] };
+
+    const items = (result.items ?? [])
+      .map((item) => ({
+        name: item.name?.trim(),
+        quantity: item.quantity?.trim(),
+        category: item.category?.trim() || 'bazar',
+      }))
+      .filter((item) => item.name && item.quantity && item.category);
+
+    if (!items.length) throw new AppError(502, 'AI shopping response did not include any valid items');
+    return items;
+  }
+}
+
 const createAiProvider = (): AiProvider => {
   if (config.ai.provider === 'mock') return new MockAiProvider();
   if (config.ai.provider === 'openai') return new OpenAiProvider();
   if (config.ai.provider === 'bynara') return new BynaraProvider();
+  if (config.ai.provider === 'opencode') return new OpenCodeProvider();
   throw new AppError(500, `Unsupported AI_PROVIDER: ${config.ai.provider}`);
 };
 

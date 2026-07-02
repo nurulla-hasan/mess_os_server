@@ -9,10 +9,20 @@ const isPlaceholderApiKey = (apiKey: string) => !apiKey || placeholderApiKeys.ha
 
 type ChatCompletionResponse = {
   choices?: Array<{
+    finish_reason?: 'stop' | 'length' | 'content_filter' | 'tool_calls';
     message?: {
       content?: string;
+      reasoning_content?: string;
     };
   }>;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+    completion_tokens_details?: {
+      reasoning_tokens?: number;
+    };
+  };
 };
 
 /**
@@ -82,7 +92,9 @@ const MESS_OS_SYSTEM_PROMPT = [
   'Friendly, warm, fun! 😊 Use light Bangla humor ("কি বলেন বাপু!", "বস, আপনার জন্য যা তা!"). Celebrate wins ("দারুণ! 🎉"). Gentle teasing on easy questions. One emoji per response max. Seasonal greetings (Eid, Pohela Boishakh, New Year). If frustrated user → be empathetic ("চিন্তা নেই! 🤝"). Joke only if user asks for fun. Serious topics → professional first.',
   '',
   '=== CREATOR ===',
-  'Built by Nurulla Hasan 🎉 — solo dev, full platform. Contact: [**GitHub**](https://github.com/nurulla-hasan) | [**Portfolio**](https://nurulla-hasan-portfolio-pink.vercel.app/) | **Phone**: +880 17509 74716. If asked personal info about him, politely decline.'
+  'WHEN ASKED "who created you?": Always output the FULL markdown links below. NEVER say "links are on the page". Output them:',
+  '[GitHub](https://github.com/nurulla-hasan) | [Portfolio](https://nurulla-hasan-portfolio-pink.vercel.app/) | 📞 +880 17509 74716',
+  'Say with pride: "একাই পুরা Mess OS বানাইছে — ফ্রন্টএন্ড, ব্যাকএন্ড, ডিজাইন সব!" Decline personal info about him politely.'
 ].join('\n');
 
 const MOCK_FALLBACK_RESPONSE = 'দুঃখিত, আমি এখনই উত্তর দিতে পারছি না। AI service বর্তমানে কনফিগার করা নেই। দয়া করে System Admin-এর সাথে যোগাযোগ করুন।';
@@ -102,8 +114,8 @@ export const chatWithAssistant = async (
 
   if (isPlaceholderApiKey(config.ai.apiKey)) {
     logger.warn('AI API key not configured — returning mock fallback for docs chat');
-    // Still save the mock interaction for future reference
-    await ChatMessage.create({
+    // Save in background
+    ChatMessage.create({
       sessionId: activeSessionId,
       question,
       answer: MOCK_FALLBACK_RESPONSE,
@@ -127,7 +139,10 @@ export const chatWithAssistant = async (
 
   messages.push({ role: 'user', content: question });
 
-  try {
+  const callAiWithTokens = async (maxTokens: number): Promise<string> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
     const response = await fetch(`${config.ai.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -137,10 +152,14 @@ export const chatWithAssistant = async (
       body: JSON.stringify({
         model: config.ai.model,
         messages,
-        max_tokens: 1024,
-        temperature: 0.5,
+        max_tokens: maxTokens,
+        temperature: 0.3,
+        stream: false,
       }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -149,27 +168,53 @@ export const chatWithAssistant = async (
     }
 
     const data = (await response.json()) as ChatCompletionResponse;
-    const content = data.choices?.[0]?.message?.content;
+    const choice = data.choices?.[0];
+    const content = choice?.message?.content?.trim();
+    const finishReason = choice?.finish_reason;
+    const reasoningTokens = data.usage?.completion_tokens_details?.reasoning_tokens ?? 0;
+    const totalCompletionTokens = data.usage?.completion_tokens ?? 0;
 
-    if (!content) {
-      throw new AppError(502, 'AI returned an empty response.');
+    if (content) return content;
+
+    // Log detailed info for debugging
+    logger.warn('AI returned empty content', {
+      finishReason,
+      maxTokensRequested: maxTokens,
+      totalCompletionTokens,
+      reasoningTokens,
+      hasReasoningContent: !!choice?.message?.reasoning_content,
+    });
+
+    // If finish_reason is 'length', reasoning ate all tokens — retry with more
+    if (finishReason === 'length' && maxTokens < 16000) {
+      logger.info(`Retrying with more tokens (${maxTokens} → ${maxTokens * 2})`);
+      return callAiWithTokens(maxTokens * 2);
     }
 
-    // Save the Q&A pair to database
-    await ChatMessage.create({
-      sessionId: activeSessionId,
-      question,
-      answer: content,
-      context,
-      userAgent,
-    }).catch((err) => logger.error('Failed to save chat message', err));
+    // Last resort: use reasoning_content if available (better than nothing)
+    if (choice?.message?.reasoning_content) {
+      const rc = choice.message.reasoning_content.trim();
+      if (rc) {
+        logger.warn('Falling back to reasoning_content as answer');
+        return `🤔 *আমার উত্তরটা একটু কাঁচা অবস্থায় আছে, পুরোটা বলতে পারিনি:*\n\n${rc}`;
+      }
+    }
 
-    return { answer: content, sessionId: activeSessionId };
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    logger.error('Unexpected error in docs chat service', error as Error);
-    throw new AppError(500, 'An unexpected error occurred. Please try again.');
-  }
+    throw new AppError(502, 'AI returned an empty response.');
+  };
+
+  const content = await callAiWithTokens(8000); // Model supports up to 16000 output tokens
+
+  // Save to DB in background — don't block user response
+  ChatMessage.create({
+    sessionId: activeSessionId,
+    question,
+    answer: content,
+    context,
+    userAgent,
+  }).catch((err) => logger.error('Failed to save chat message', err));
+
+  return { answer: content, sessionId: activeSessionId };
 };
 
 type HistoryMessage = {

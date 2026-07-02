@@ -27,10 +27,10 @@ export const config = {
     transactionPrefix: process.env.SSLCOMMERZ_TRANSACTION_PREFIX || 'MOS'
   },
   ai: {
-    provider: process.env.AI_PROVIDER || 'bynara',
+    provider: process.env.AI_PROVIDER || 'opencode',
     apiKey: process.env.AI_API_KEY || '',
-    baseUrl: process.env.AI_BASE_URL || 'https://router.bynara.id/v1',
-    model: process.env.AI_MODEL || 'mistral-large',
+    baseUrl: process.env.AI_BASE_URL || 'https://opencode.ai/zen/v1',
+    model: process.env.AI_MODEL || 'deepseek-v4-flash-free',
     maxTokens: Number(process.env.AI_MAX_TOKENS || 2000)
   }
 };
