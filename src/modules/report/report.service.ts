@@ -8,8 +8,9 @@ import { MessMember } from '../mess-member/mess-member.model';
 import { AppError } from '../../shared/utils/apiError';
 import { parseAsync } from 'json2csv';
 import mongoose from 'mongoose';
-import { getDhakaDayBounds, getMonthBoundariesDhaka } from '../../shared/utils/dateUtils';
+import { getDhakaDayBounds, getMonthBoundariesDhaka, DHAKA_OFFSET_MS, normalizeMealDate } from '../../shared/utils/dateUtils';
 import { CASH_TRANSACTION_TYPES } from '../../constants/ledgerEntryTypes';
+import { Meal } from '../meal/meal.model';
 
 type ReportOptions = {
    start?: string;
@@ -115,18 +116,50 @@ export const getMemberStatement = async (messId: string, memberId: string) => {
       .lean();
    if (!member) throw new AppError(404, 'Member not found in this mess');
 
-   const bills = await MemberBill.find({ messId, messMemberId: new mongoose.Types.ObjectId(memberId), isArchived: false }).sort({ createdAt: -1 });
-   const ledgers = await MemberLedger.find({ messId, messMemberId: new mongoose.Types.ObjectId(memberId), isVoided: false }).sort({ date: 1, createdAt: 1 });
-   
+   const messObjectId = new mongoose.Types.ObjectId(messId);
+   const memberObjectId = new mongoose.Types.ObjectId(memberId);
+
+   // --- Compute estimated meal charge for current unbilled month ---
+   const today = normalizeMealDate(new Date());
+   const dhakaToday = new Date(today.getTime() + DHAKA_OFFSET_MS);
+   const { start: monthStart, end: monthEnd } = getMonthBoundariesDhaka(dhakaToday.getUTCMonth() + 1, dhakaToday.getUTCFullYear());
+
+   const [mealExpenseResult, totalMealsResult, memberMealsResult] = await Promise.all([
+      Expense.aggregate([
+         { $match: { messId: messObjectId, status: 'approved', date: { $gte: monthStart, $lte: monthEnd } } },
+         { $group: { _id: null, total: { $sum: '$amount' } } },
+      ]),
+      Meal.aggregate([
+         { $match: { messId: messObjectId, date: { $gte: monthStart, $lte: monthEnd } } },
+         { $group: { _id: null, total: { $sum: '$mealCount' } } },
+      ]),
+      Meal.aggregate([
+         { $match: { messId: messObjectId, messMemberId: memberObjectId, date: { $gte: monthStart, $lte: monthEnd } } },
+         { $group: { _id: null, totalMeals: { $sum: '$mealCount' } } },
+      ]),
+   ]);
+
+   const mealExpense = mealExpenseResult[0]?.total ?? 0;
+   const totalMealsAll = totalMealsResult[0]?.total ?? 0;
+   const estimatedRate = totalMealsAll > 0 ? Math.round((mealExpense / totalMealsAll) * 100) / 100 : 0;
+   const memberMeals = memberMealsResult[0]?.totalMeals ?? 0;
+   const estimatedMealCharge = memberMeals > 0 && estimatedRate > 0 ? +(memberMeals * estimatedRate).toFixed(2) : 0;
+
+   // --- Fetch ledger entries ---
+   const [bills, ledgers] = await Promise.all([
+      MemberBill.find({ messId, messMemberId: memberObjectId, isArchived: false }).sort({ createdAt: -1 }),
+      MemberLedger.find({ messId, messMemberId: memberObjectId, isVoided: false }).sort({ date: 1, createdAt: 1 }),
+   ]);
+
    let totalCredits = 0;
    let totalCharges = 0;
    ledgers.forEach(l => {
      if (l.type === 'credit') totalCredits += l.amount;
      if (l.type === 'charge') totalCharges += l.amount;
    });
-   const runningBalance = totalCredits - totalCharges;
+   const runningBalance = totalCredits - totalCharges - estimatedMealCharge;
 
-   return { member: normalizeMemberRef(member), historicalFinalizations: bills, ledgers, liveCurrentBalance: runningBalance };
+   return { member: normalizeMemberRef(member), historicalFinalizations: bills, ledgers, liveCurrentBalance: runningBalance, estimatedMealCharge };
 };
 
 export const getExpenseReport = async (messId: string, options: ReportOptions = {}) => {
