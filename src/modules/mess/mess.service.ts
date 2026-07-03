@@ -123,7 +123,7 @@ export const getEstimatedMealRate = async (messId: string): Promise<{ rate: numb
   return { rate, mealExpense, totalMeals };
 };
 
-export const getDashboard = async (messId: string) => {
+export const getDashboard = async (messId: string, messMemberId?: string) => {
   const messObjectId = new mongoose.Types.ObjectId(messId);
   const mess = await Mess.findById(messId).lean();
   if (!mess) throw new AppError(404, 'Mess not found');
@@ -208,9 +208,47 @@ export const getDashboard = async (messId: string) => {
   const cashIn = cashSummary.find((item: any) => item._id === CASH_TRANSACTION_TYPES.IN)?.total ?? 0;
   const cashOut = cashSummary.find((item: any) => item._id === CASH_TRANSACTION_TYPES.OUT)?.total ?? 0;
 
+  // ─── Manager's own personal balance ──────────────────────────────
+  let selfBalance = null;
+
+  if (messMemberId) {
+    const memberObjectId = new mongoose.Types.ObjectId(messMemberId);
+    const myMealsCount = await Meal.aggregate([
+      { $match: { messId: messObjectId, messMemberId: memberObjectId, date: { $gte: monthStart, $lte: monthEnd } } },
+      { $group: { _id: null, total: { $sum: '$mealCount' } } },
+    ]);
+
+    const myTotalMeals = myMealsCount[0]?.total ?? 0;
+    const mealRate = estimatedMealRate.rate;
+    const estimatedMealCharge = myTotalMeals > 0 && mealRate > 0 ? +(myTotalMeals * mealRate).toFixed(2) : 0;
+
+    const ledgerResult = await MemberLedger.aggregate([
+      { $match: { messId: messObjectId, messMemberId: memberObjectId, isVoided: { $ne: true } } },
+      {
+        $group: {
+          _id: null,
+          totalCredits: { $sum: { $cond: [{ $eq: ['$type', LEDGER_TRANSACTION_TYPES.CREDIT] }, '$amount', 0] } },
+          totalCharges: { $sum: { $cond: [{ $eq: ['$type', LEDGER_TRANSACTION_TYPES.CHARGE] }, '$amount', 0] } },
+        },
+      },
+    ]);
+
+    const credits = ledgerResult[0]?.totalCredits ?? 0;
+    const charges = ledgerResult[0]?.totalCharges ?? 0;
+    const effectiveCharges = charges + estimatedMealCharge;
+    const effectiveBalance = credits - effectiveCharges;
+    const finalDue = Math.max(0, -effectiveBalance);
+    const finalAdvance = Math.max(0, effectiveBalance);
+    const type = finalAdvance > 0 ? 'advance' : finalDue > 0 ? 'due' : 'settled';
+    const amount = type === 'advance' ? finalAdvance : finalDue;
+
+    selfBalance = { type, amount, finalDue, finalAdvance, isEstimated: estimatedMealCharge > 0, estimatedMealCharge, myMeals: myTotalMeals };
+  }
+
   return {
     mess,
     subscription: { ...resolvedSubscription, plan },
+    selfBalance,
     summary: {
       activeMembers,
       pendingJoinRequests,

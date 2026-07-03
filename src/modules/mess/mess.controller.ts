@@ -14,7 +14,7 @@ export const getMess = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getDashboard = catchAsync(async (req: Request, res: Response) => {
-  const result = await messService.getDashboard(req.messId!);
+  const result = await messService.getDashboard(req.messId!, req.messMember!._id.toString());
   sendResponse(res, { statusCode: 200, success: true, message: 'Manager dashboard loaded', data: result });
 });
 
