@@ -1,7 +1,7 @@
 export const DHAKA_OFFSET_MS = 6 * 60 * 60 * 1000;
 
 export const getDhakaNow = (): Date => {
-  return new Date(Date.now() + DHAKA_OFFSET_MS);
+  return new Date();
 };
 
 export const getMonthBoundariesDhaka = (month: number, year: number) => {
