@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Mess } from '../mess/mess.model';
 import { User } from '../user/user.model';
 import { MessMember } from './mess-member.model';
@@ -8,6 +9,10 @@ import { Subscription } from '../subscription/subscription.model';
 import { SubscriptionPlan } from '../subscription/subscription-plan.model';
 import { assignDefaultSubscription } from '../subscription/subscription.service';
 import { MemberBill } from '../billing/member-bill.model';
+import { MemberLedger } from '../ledger/member-ledger.model';
+import { Expense } from '../expense/expense.model';
+import { Meal } from '../meal/meal.model';
+import { DHAKA_OFFSET_MS, getMonthBoundariesDhaka, normalizeMealDate } from '../../shared/utils/dateUtils';
 
 // Reusable helper to find a member by query or throw an AppError
 const findMemberOrThrow = async (query: object, errorMsg: string, statusCode = 404) => {
@@ -114,22 +119,109 @@ export const getMembers = async (messId: string, options: GetMembersOptions = {}
     MessMember.countDocuments(query),
   ]);
 
-  return {
-    items: members.map((m) => ({
-      _id: m._id,
-      messId: m.messId,
-      messRole: m.messRole,
-      status: m.status,
-      isResidentManager: (m as Record<string, unknown>).isResidentManager !== false,
-      participation: {
-        meals: m.participation?.meals ?? true,
-        sharedExpenses: m.participation?.sharedExpenses ?? true,
+  // --- Calculate estimated meal rate for current month ---
+  const messObjectId = new mongoose.Types.ObjectId(messId);
+  const today = normalizeMealDate(new Date());
+  const dhakaToday = new Date(today.getTime() + DHAKA_OFFSET_MS);
+  const { start: monthStart, end: monthEnd } = getMonthBoundariesDhaka(dhakaToday.getUTCMonth() + 1, dhakaToday.getUTCFullYear());
+
+  const [mealExpenseResult, totalMealsResult] = await Promise.all([
+    Expense.aggregate([
+      { $match: { messId: messObjectId, status: 'approved', date: { $gte: monthStart, $lte: monthEnd } } },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]),
+    Meal.aggregate([
+      { $match: { messId: messObjectId, date: { $gte: monthStart, $lte: monthEnd } } },
+      { $group: { _id: null, total: { $sum: '$mealCount' } } },
+    ]),
+  ]);
+
+  const mealExpense = mealExpenseResult[0]?.total ?? 0;
+  const totalMealsAll = totalMealsResult[0]?.total ?? 0;
+  const estimatedRate = totalMealsAll > 0 ? Math.round((mealExpense / totalMealsAll) * 100) / 100 : 0;
+
+  // --- Fetch ledger balances and current month meal counts per member ---
+  const memberIds = members.map((m) => m._id);
+  const [ledgerBalances, memberMealCounts] = await Promise.all([
+    MemberLedger.aggregate([
+      { $match: { messMemberId: { $in: memberIds }, messId: messObjectId, isVoided: { $ne: true } } },
+      {
+        $group: {
+          _id: '$messMemberId',
+          totalCredits: { $sum: { $cond: [{ $eq: ['$type', 'credit'] }, '$amount', 0] } },
+          totalCharges: { $sum: { $cond: [{ $eq: ['$type', 'charge'] }, '$amount', 0] } },
+        },
       },
-      joinedAt: m.joinedAt,
-      leftAt: m.leftAt,
-      createdAt: (m as Record<string, unknown>).createdAt as string | undefined,
-      user: m.userId, // populated user info
-    })),
+    ]),
+    Meal.aggregate([
+      { $match: { messMemberId: { $in: memberIds }, messId: messObjectId, date: { $gte: monthStart, $lte: monthEnd } } },
+      {
+        $group: {
+          _id: '$messMemberId',
+          totalMeals: { $sum: '$mealCount' },
+        },
+      },
+    ]),
+  ]);
+
+  // Build meal count map
+  const mealCountMap = new Map<string, number>();
+  for (const mc of memberMealCounts) {
+    mealCountMap.set(String(mc._id), mc.totalMeals ?? 0);
+  }
+
+  // Compute balance including estimated meal charge
+  const balanceMap = new Map<string, { due: number; advance: number; type: 'due' | 'advance' | 'settled'; amount: number; estimatedMealCharge: number }>();
+  for (const b of ledgerBalances) {
+    const memberId = String(b._id);
+    const memberMeals = mealCountMap.get(memberId) ?? 0;
+    const estimatedMealCharge = memberMeals > 0 && estimatedRate > 0 ? +(memberMeals * estimatedRate).toFixed(2) : 0;
+
+    const effective = (b.totalCredits ?? 0) - (b.totalCharges ?? 0) - estimatedMealCharge;
+    const due = Math.max(0, -effective);
+    const advance = Math.max(0, effective);
+    const type = advance > 0 ? 'advance' : due > 0 ? 'due' : 'settled';
+    const amount = type === 'advance' ? advance : due;
+    balanceMap.set(memberId, { due, advance, type, amount, estimatedMealCharge });
+  }
+
+  // Also set balance for members with no ledger entries but with meals
+  for (const m of members) {
+    const memberId = String(m._id);
+    if (!balanceMap.has(memberId)) {
+      const memberMeals = mealCountMap.get(memberId) ?? 0;
+      const estimatedMealCharge = memberMeals > 0 && estimatedRate > 0 ? +(memberMeals * estimatedRate).toFixed(2) : 0;
+
+      if (estimatedMealCharge > 0) {
+        const effective = -estimatedMealCharge;
+        const due = Math.max(0, -effective);
+        balanceMap.set(memberId, { due, advance: 0, type: 'due', amount: due, estimatedMealCharge });
+      } else {
+        balanceMap.set(memberId, { due: 0, advance: 0, type: 'settled', amount: 0, estimatedMealCharge: 0 });
+      }
+    }
+  }
+
+  return {
+    items: members.map((m) => {
+      const balance = balanceMap.get(String(m._id)) || { due: 0, advance: 0, type: 'settled' as const, amount: 0, estimatedMealCharge: 0 };
+      return {
+        _id: m._id,
+        messId: m.messId,
+        messRole: m.messRole,
+        status: m.status,
+        isResidentManager: (m as Record<string, unknown>).isResidentManager !== false,
+        participation: {
+          meals: m.participation?.meals ?? true,
+          sharedExpenses: m.participation?.sharedExpenses ?? true,
+        },
+        joinedAt: m.joinedAt,
+        leftAt: m.leftAt,
+        createdAt: (m as Record<string, unknown>).createdAt as string | undefined,
+        user: m.userId, // populated user info
+        balance,
+      };
+    }),
     pagination: {
       page,
       limit,

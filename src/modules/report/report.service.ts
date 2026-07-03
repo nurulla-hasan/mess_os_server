@@ -118,10 +118,13 @@ export const getMemberStatement = async (messId: string, memberId: string) => {
    const bills = await MemberBill.find({ messId, messMemberId: new mongoose.Types.ObjectId(memberId), isArchived: false }).sort({ createdAt: -1 });
    const ledgers = await MemberLedger.find({ messId, messMemberId: new mongoose.Types.ObjectId(memberId), isVoided: false }).sort({ date: 1, createdAt: 1 });
    
-   let runningBalance = 0;
+   let totalCredits = 0;
+   let totalCharges = 0;
    ledgers.forEach(l => {
-     runningBalance += l.type === 'CHARGE' ? l.amount : -l.amount;
+     if (l.type === 'credit') totalCredits += l.amount;
+     if (l.type === 'charge') totalCharges += l.amount;
    });
+   const runningBalance = totalCredits - totalCharges;
 
    return { member: normalizeMemberRef(member), historicalFinalizations: bills, ledgers, liveCurrentBalance: runningBalance };
 };
