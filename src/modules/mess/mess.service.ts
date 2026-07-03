@@ -88,6 +88,41 @@ const sumField = async (model: any, match: Record<string, unknown>, field: strin
   };
 };
 
+/**
+ * Calculate estimated meal rate for the current month:
+ * Total approved expenses ÷ Total meals eaten
+ */
+export const getEstimatedMealRate = async (messId: string): Promise<{ rate: number; mealExpense: number; totalMeals: number }> => {
+  const messObjectId = new mongoose.Types.ObjectId(messId);
+
+  const today = new Date();
+  const dhakaToday = new Date(today.getTime() + DHAKA_OFFSET_MS);
+  const { start: monthStart, end: monthEnd } = getMonthBoundariesDhaka(dhakaToday.getUTCMonth() + 1, dhakaToday.getUTCFullYear());
+
+  const [mealExpenseResult, totalMealsResult] = await Promise.all([
+    Expense.aggregate([
+      {
+        $match: {
+          messId: messObjectId,
+          status: 'approved',
+          date: { $gte: monthStart, $lte: monthEnd },
+        },
+      },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]),
+    Meal.aggregate([
+      { $match: { messId: messObjectId, date: { $gte: monthStart, $lte: monthEnd } } },
+      { $group: { _id: null, total: { $sum: '$mealCount' } } },
+    ]),
+  ]);
+
+  const mealExpense = mealExpenseResult[0]?.total ?? 0;
+  const totalMeals = totalMealsResult[0]?.total ?? 0;
+  const rate = totalMeals > 0 ? Math.round((mealExpense / totalMeals) * 100) / 100 : 0;
+
+  return { rate, mealExpense, totalMeals };
+};
+
 export const getDashboard = async (messId: string) => {
   const messObjectId = new mongoose.Types.ObjectId(messId);
   const mess = await Mess.findById(messId).lean();
@@ -111,7 +146,8 @@ export const getDashboard = async (messId: string) => {
     pendingMarketDuties,
     cashSummary,
     recentNotices,
-  ] = await Promise.all([
+    estimatedMealRate,
+  ] = await (Promise.all([
     Subscription.findOne({ messId: messObjectId }).lean(),
     MessMember.countDocuments({ messId, status: 'active' }),
     MessMember.countDocuments({ messId, status: 'pending' }),
@@ -155,9 +191,11 @@ export const getDashboard = async (messId: string) => {
       .sort({ isPinned: -1, createdAt: -1 })
       .limit(3)
       .lean(),
-  ]);
+    getEstimatedMealRate(messId),
+  ]) as any);
 
-  const plan = subscription ? await SubscriptionPlan.findOne({ code: subscription.planId }).select('name code price currency billingCycle maxMembers').lean() : null;
+  const resolvedSubscription = subscription || (await assignDefaultSubscription(messId)).toObject();
+  const plan = await SubscriptionPlan.findOne({ code: resolvedSubscription.planId }).select('name code price currency billingCycle maxMembers').lean();
 
   const mealBreakdown: Record<string, number> = {};
   for (const breakdown of todayMeals[0]?.breakdowns ?? []) {
@@ -172,7 +210,7 @@ export const getDashboard = async (messId: string) => {
 
   return {
     mess,
-    subscription: subscription ? { ...subscription, plan } : null,
+    subscription: { ...resolvedSubscription, plan },
     summary: {
       activeMembers,
       pendingJoinRequests,
@@ -192,6 +230,9 @@ export const getDashboard = async (messId: string) => {
       totalMessFund: cashIn - cashOut,
       totalDeposits: cashIn,
       totalCashOut: cashOut,
+      estimatedMealRate: estimatedMealRate.rate,
+      estimatedMealExpense: estimatedMealRate.mealExpense,
+      estimatedTotalMeals: estimatedMealRate.totalMeals,
     },
     today: {
       date: today,
@@ -230,6 +271,7 @@ export const getMemberDashboard = async (messId: string, messMemberId: string, m
     recentPayments,
     recentNotices,
     nextMarketDuty,
+    estimatedMealRate,
   ] = await Promise.all([
     Subscription.findOne({ messId: messObjectId }).lean(),
     BillingCycle.findOne({
@@ -283,6 +325,7 @@ export const getMemberDashboard = async (messId: string, messMemberId: string, m
         populate: { path: 'userId', select: 'fullName email phone avatarUrl' },
       })
       .lean(),
+    getEstimatedMealRate(messId),
   ]);
 
   const resolvedSubscription = subscription || (await assignDefaultSubscription(messId)).toObject();
@@ -387,6 +430,9 @@ export const getMemberDashboard = async (messId: string, messMemberId: string, m
       total: monthlyMeals[0]?.totalMeals ?? 0,
       records: monthlyMeals[0]?.records ?? 0,
       breakdown: mealBreakdown,
+      estimatedMealRate: estimatedMealRate.rate,
+      estimatedMealExpense: estimatedMealRate.mealExpense,
+      estimatedTotalMeals: estimatedMealRate.totalMeals,
     },
     marketDuty: {
       next: nextMarketDuty,

@@ -9,6 +9,14 @@ if (!MONGODB_URI) {
   process.exit(1);
 }
 
+// Collections to KEEP (transactional data will be deleted)
+const KEEP_COLLECTIONS = new Set([
+  'users',
+  'messes',
+  'messmembers',
+  'subscriptionplans',
+]);
+
 async function cleanDatabase() {
   console.log('🔌 Connecting to MongoDB...');
   await mongoose.connect(MONGODB_URI!);
@@ -24,18 +32,30 @@ async function cleanDatabase() {
   }
 
   console.log(`\n📋 Found ${collections.length} collection(s):`);
+  const toDrop: string[] = [];
   for (const col of collections) {
     const count = await db.collection(col.name).countDocuments();
-    console.log(`   - ${col.name}: ${count} document(s)`);
+    const status = KEEP_COLLECTIONS.has(col.name) ? '🔒 KEEP' : '🗑️  DROP';
+    console.log(`   ${status} - ${col.name}: ${count} document(s)`);
+    if (!KEEP_COLLECTIONS.has(col.name)) {
+      toDrop.push(col.name);
+    }
   }
 
-  console.log('\n🗑️  Dropping all collections...');
-  for (const col of collections) {
-    await db.collection(col.name).drop();
-    console.log(`   ✅ ${col.name} dropped`);
+  if (toDrop.length === 0) {
+    console.log('\n✨ Nothing to drop. All collections are in the keep list.');
+    await mongoose.disconnect();
+    return;
   }
 
-  console.log('\n✨ Database cleaned successfully!');
+  console.log(`\n🗑️  Dropping ${toDrop.length} collection(s)...`);
+  for (const name of toDrop) {
+    await db.collection(name).drop();
+    console.log(`   ✅ ${name} dropped`);
+  }
+
+  console.log('\n✨ Transactional data cleaned successfully!');
+  console.log('🔒 Kept collections: users, messes, messmembers, subscriptionplans');
   await mongoose.disconnect();
   console.log('🔌 Disconnected.');
 }

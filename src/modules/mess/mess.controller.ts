@@ -37,3 +37,8 @@ export const transferOwnership = catchAsync(async (req: Request, res: Response) 
   const result = await messService.transferOwnership(req.messId!, req.user!.userId, req.body.newManagerUserId);
   sendResponse(res, { statusCode: 200, success: true, message: 'Ownership transferred successfully', data: result });
 });
+
+export const getEstimatedRate = catchAsync(async (req: Request, res: Response) => {
+  const result = await messService.getEstimatedMealRate(req.messId!);
+  sendResponse(res, { statusCode: 200, success: true, message: 'Estimated meal rate fetched', data: result });
+});

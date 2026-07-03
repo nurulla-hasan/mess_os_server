@@ -39,6 +39,7 @@ router.get('/:messId/member-dashboard', authorize(MESS_ROLES.MANAGER, MESS_ROLES
 router.patch('/:messId', authorize(MESS_ROLES.MANAGER), validateRequest(messVal.updateMessSchema), messCtl.updateMess);
 router.post('/:messId/regenerate-invite-code', authorize(MESS_ROLES.MANAGER), messCtl.regenerateInviteCode);
 router.post('/:messId/transfer-ownership', authorize(MESS_ROLES.MANAGER), validateRequest(messVal.transferOwnershipSchema), messCtl.transferOwnership);
+router.get('/:messId/estimated-rate', authorize(MESS_ROLES.MANAGER, MESS_ROLES.MEMBER), messCtl.getEstimatedRate);
 
 router.use('/:messId/members', messMemberRoutes);
 router.use('/:messId/payments', requireSubscriptionFeature('expenses'), paymentRoutes);
