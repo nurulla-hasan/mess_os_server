@@ -340,12 +340,18 @@ export const getMemberDashboard = async (messId: string, messMemberId: string, m
   }
 
   // If current billing cycle is NOT finalized (draft or missing), use running ledger balance
-  // instead of showing last month's stale bill
+  // instead of showing last month's stale bill.
+  // ALSO include estimated meal charges for current unbilled meals so members see a realistic balance.
   let balanceSource: 'latest_bill' | 'running_ledger' = 'latest_bill';
   let runningCredits = 0;
   let runningCharges = 0;
+  let estimatedMealCharge = 0;
 
   if (!activeCycle || activeCycle.status === 'draft') {
+    const myMealsCount = monthlyMeals[0]?.totalMeals ?? 0;
+    const mealRate = estimatedMealRate.rate;
+    estimatedMealCharge = myMealsCount > 0 && mealRate > 0 ? +(myMealsCount * mealRate).toFixed(2) : 0;
+
     const ledgerResult = await MemberLedger.aggregate([
       {
         $match: {
@@ -374,11 +380,13 @@ export const getMemberDashboard = async (messId: string, messMemberId: string, m
     balanceSource = 'running_ledger';
   }
 
+  const effectiveCharges = runningCharges + estimatedMealCharge;
+  const effectiveBalance = runningCredits - effectiveCharges;
   const finalDue = balanceSource === 'running_ledger'
-    ? Math.max(0, runningCharges - runningCredits)
+    ? Math.max(0, -effectiveBalance)
     : (latestBill?.summary?.finalDue ?? 0);
   const finalAdvance = balanceSource === 'running_ledger'
-    ? Math.max(0, runningCredits - runningCharges)
+    ? Math.max(0, effectiveBalance)
     : (latestBill?.summary?.finalAdvance ?? 0);
   const balanceType = finalAdvance > 0 ? 'advance' : finalDue > 0 ? 'due' : 'settled';
 
@@ -420,6 +428,8 @@ export const getMemberDashboard = async (messId: string, messMemberId: string, m
         finalDue,
         finalAdvance,
         source: balanceSource,
+        isEstimated: balanceSource === 'running_ledger' && estimatedMealCharge > 0,
+        estimatedMealCharge,
         status: latestBill?.status ?? null,
         updatedAt: (latestBill as any)?.updatedAt ?? null,
       },
