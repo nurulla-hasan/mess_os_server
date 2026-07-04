@@ -55,7 +55,7 @@ export const generateShoppingList = async (messId: string, payload: GenerateList
   const targetDate = normalizeMealDate(payload.targetDate);
   if (isBeforeTodayDhaka(targetDate)) throw new AppError(400, 'Shopping list target date cannot be in the past');
 
-  const generatedItems = await aiService.generateShoppingListItems(menu.meals);
+  const generatedItems = await aiService.generateShoppingListItems(messId, menu.meals);
   return await AiShoppingList.create({
     messId,
     menuPlanId: menu._id,

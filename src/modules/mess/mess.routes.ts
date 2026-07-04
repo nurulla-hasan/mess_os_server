@@ -18,6 +18,7 @@ import { utilityBillRoutes } from '../utility-bill/utility-bill.routes';
 import { marketScheduleRoutes } from '../market-schedule/market-schedule.routes';
 import { menuPlanRoutes } from '../menu-plan/menu-plan.routes';
 import { aiShoppingRoutes } from '../ai-shopping/ai-shopping.routes';
+import { marketPriceRoutes } from '../market-price/market-price.routes';
 import { noticeRoutes } from '../notice/notice.routes';
 import { complaintRoutes } from '../complaint/complaint.routes';
 import { reportRoutes } from '../report/report.routes';
@@ -51,6 +52,7 @@ router.use('/:messId/utility-bills', requireSubscriptionFeature('billing'), util
 router.use('/:messId/market-schedules', requireSubscriptionFeature('marketSchedule'), marketScheduleRoutes);
 router.use('/:messId/menu-plans', requireSubscriptionFeature('meals'), menuPlanRoutes);
 router.use('/:messId/ai-shopping', requireSubscriptionFeature('aiShopping'), aiShoppingRoutes);
+router.use('/:messId/market-prices', marketPriceRoutes);
 router.use('/:messId/notices', requireSubscriptionFeature('notices'), noticeRoutes);
 router.use('/:messId/complaints', requireSubscriptionFeature('complaints'), complaintRoutes);
 router.use('/:messId/reports', requireSubscriptionFeature('reports'), reportRoutes);

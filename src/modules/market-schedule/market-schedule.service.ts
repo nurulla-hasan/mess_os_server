@@ -68,7 +68,7 @@ export const generateItemsFromMenu = async (messId: string, payload: { date: str
     throw new AppError(404, 'Menu plan exists but has no meals defined.');
   }
 
-  const aiItems = await aiService.generateShoppingListItems(meals);
+  const aiItems = await aiService.generateShoppingListItems(messId, meals);
   
   return aiItems.map((item) => ({ name: item.name, quantity: item.quantity }));
 };

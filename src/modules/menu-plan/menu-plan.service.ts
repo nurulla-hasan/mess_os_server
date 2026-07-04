@@ -77,7 +77,7 @@ export const createMenuPlan = async (messId: string, payload: CreateMenuPlanPayl
   
   if (payload.isAiGenerated) {
     const recentMeals = await getRecentMenuContext(messId, targetDate, payload.avoidRecentDays ?? 7);
-    meals = await aiService.generateMenuPlanContent({
+    meals = await aiService.generateMenuPlanContent(messId, {
       date: targetDate,
       mealCategories,
       preference: payload.aiPreference,

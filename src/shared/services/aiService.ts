@@ -1,10 +1,11 @@
 import { config } from '../../config';
 import { AppError } from '../utils/apiError';
 import { logger } from '../utils/logger';
+import { MarketPrice } from '../../modules/market-price/market-price.model';
 
 export interface AiProvider {
-  generateMenuPlanContent(options: GenerateMenuPlanOptions): Promise<Record<string, string>>;
-  generateShoppingListItems(menuMeals: Record<string, string> | Map<string, string>, options?: GenerateShoppingListOptions): Promise<{ name: string, quantity: string, category: string }[]>;
+  generateMenuPlanContent(messId: string, options: GenerateMenuPlanOptions): Promise<Record<string, string>>;
+  generateShoppingListItems(messId: string, menuMeals: Record<string, string> | Map<string, string>, options?: GenerateShoppingListOptions): Promise<{ name: string, quantity: string, category: string }[]>;
 }
 
 export type GenerateShoppingListOptions = {
@@ -37,7 +38,7 @@ const isPlaceholderApiKey = (apiKey: string) => !apiKey || placeholderApiKeys.ha
 
 /** Default Bangladeshi market prices (BDT per KG/unit) — adjust as market fluctuates */
 const DEFAULT_MARKET_PRICES: Record<string, number> = {
-  'ব্রয়লার মুরগি (Chicken)': 180,
+  'ব্রয়লার মুরগি (Chicken)': 200,
   'দেশি মুরগি (Local Chicken)': 400,
   'গরুর মাংস (Beef)': 750,
   'খাসির মাংস (Mutton)': 1100,
@@ -64,8 +65,30 @@ const DEFAULT_MARKET_PRICES: Record<string, number> = {
   'লেবু (Lemon) - প্রতি হালি': 20,
 };
 
-const buildMarketPriceContext = (customPrices?: Record<string, number>): string => {
-  const prices = { ...DEFAULT_MARKET_PRICES, ...customPrices };
+/** Fetch market prices from DB for a specific mess, falling back to hardcoded defaults */
+const getMarketPricesForMess = async (messId: string): Promise<Record<string, number>> => {
+  try {
+    const prices = await MarketPrice.find({ messId })
+      .select('itemName price unit')
+      .lean()
+      .then((items) =>
+        items.reduce<Record<string, number>>((acc, item) => {
+          acc[`${item.itemName}${item.unit !== 'KG' ? ` (per ${item.unit})` : ''}`] = item.price;
+          return acc;
+        }, {})
+      );
+    if (Object.keys(prices).length > 0) {
+      logger.info(`Loaded ${Object.keys(prices).length} market prices from DB for mess ${messId}`);
+      return prices;
+    }
+  } catch (err) {
+    logger.warn('Failed to fetch market prices from DB, using defaults', err instanceof Error ? err : new Error(String(err)));
+  }
+  // Fallback to hardcoded defaults
+  return { ...DEFAULT_MARKET_PRICES };
+};
+
+const buildMarketPriceContext = (prices: Record<string, number>): string => {
   const sortedItems = Object.entries(prices).sort(([, a], [, b]) => a - b);
   const cheap = sortedItems.filter(([, p]) => p < 80).map(([n]) => n).slice(0, 8);
   const medium = sortedItems.filter(([, p]) => p >= 80 && p < 300).map(([n]) => n).slice(0, 10);
@@ -237,12 +260,13 @@ export class OpenCodeProvider implements AiProvider {
     return parseJsonObject(content);
   }
 
-  async generateMenuPlanContent(options: GenerateMenuPlanOptions) {
+  async generateMenuPlanContent(messId: string, options: GenerateMenuPlanOptions) {
     const recentContext = (options.recentMeals ?? [])
       .map((plan) => `${plan.date.toISOString().slice(0, 10)}: ${JSON.stringify(plan.meals)}`)
       .join('\n') || 'No recent menu context.';
 
-    const marketContext = buildMarketPriceContext(options.marketPrices);
+    const marketPrices = options.marketPrices ?? (await getMarketPricesForMess(messId));
+    const marketContext = buildMarketPriceContext(marketPrices);
 
     const peopleText = options.personCount ? `${options.personCount} জন লোক খাবে। পরিমাণ সেই অনুযায়ী প্ল্যান করো।` : '';
     const daysText = options.shoppingDays ? `${options.shoppingDays} দিনের বাজার করতে হবে।` : '';
@@ -302,7 +326,7 @@ export class OpenCodeProvider implements AiProvider {
     );
   }
 
-  async generateShoppingListItems(menuMeals: Record<string, string> | Map<string, string>, options?: GenerateShoppingListOptions) {
+  async generateShoppingListItems(messId: string, menuMeals: Record<string, string> | Map<string, string>, options?: GenerateShoppingListOptions) {
     const meals = menuMeals instanceof Map ? Object.fromEntries(menuMeals) : menuMeals;
     const mealDescriptions = Object.entries(meals)
       .map(([cat, dish]) => `  ${cat}: ${dish}`)
