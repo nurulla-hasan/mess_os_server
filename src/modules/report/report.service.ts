@@ -5,6 +5,7 @@ import { MemberBill } from '../billing/member-bill.model';
 import { Expense } from '../expense/expense.model';
 import { Payment } from '../payment/payment.model';
 import { MessMember } from '../mess-member/mess-member.model';
+import { Mess } from '../mess/mess.model';
 import { AppError } from '../../shared/utils/apiError';
 import { parseAsync } from 'json2csv';
 import mongoose from 'mongoose';
@@ -124,9 +125,20 @@ export const getMemberStatement = async (messId: string, memberId: string) => {
    const dhakaToday = new Date(today.getTime() + DHAKA_OFFSET_MS);
    const { start: monthStart, end: monthEnd } = getMonthBoundariesDhaka(dhakaToday.getUTCMonth() + 1, dhakaToday.getUTCFullYear());
 
+   // Fetch mess settings to get mealCategories (only meal-category expenses count toward meal rate)
+   const messDoc = await Mess.findById(messObjectId).select('settings').lean();
+   const mealCategories: string[] = messDoc?.settings?.mealCategories ?? [];
+
    const [mealExpenseResult, totalMealsResult, memberMealsResult] = await Promise.all([
       Expense.aggregate([
-         { $match: { messId: messObjectId, status: 'approved', date: { $gte: monthStart, $lte: monthEnd } } },
+         {
+            $match: {
+               messId: messObjectId,
+               status: 'approved',
+               date: { $gte: monthStart, $lte: monthEnd },
+               ...(mealCategories.length > 0 ? { category: { $in: mealCategories } } : {}),
+            },
+         },
          { $group: { _id: null, total: { $sum: '$amount' } } },
       ]),
       Meal.aggregate([
