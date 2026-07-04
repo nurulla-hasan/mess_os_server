@@ -31,6 +31,6 @@ export const config = {
     apiKey: process.env.AI_API_KEY || '',
     baseUrl: process.env.AI_BASE_URL || 'https://opencode.ai/zen/v1',
     model: process.env.AI_MODEL || 'deepseek-v4-flash-free',
-    maxTokens: Number(process.env.AI_MAX_TOKENS || 2000)
+    maxTokens: Number(process.env.AI_MAX_TOKENS || 12000)
   }
 };

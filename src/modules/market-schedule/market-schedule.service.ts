@@ -186,7 +186,8 @@ const completeSchedule = async (messId: string, scheduleId: string, payload: Upd
   try {
     const schedule = await MarketSchedule.findOne({ _id: scheduleId, messId, status: 'pending' }).session(session);
     if (!schedule) throw new AppError(404, 'Schedule not currently actionable');
-    if (schedule.targetDate > getTodayDhakaNormalized()) {
+    const targetMinusOne = new Date(schedule.targetDate.getTime() - 24 * 60 * 60 * 1000);
+    if (targetMinusOne > getTodayDhakaNormalized()) {
       throw new AppError(400, 'Cannot complete a market schedule before its target date');
     }
     await assertBillingCycleOpenForDate(messId, new Date(), 'Cannot complete a market schedule while the current billing month is finalized');
