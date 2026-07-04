@@ -238,7 +238,7 @@ export const reimburseExpense = async (messId: string, expenseId: string, manage
       amount: exp.amount, 
       referenceType: REFERENCE_TYPES.EXPENSE, 
       referenceId: exp._id, 
-      description: `Reimbursement charge clearing credit for: ${exp.category}`, 
+      description: `Reimbursement charge for: ${exp.category}`, 
       date: new Date() 
     }, session);
 

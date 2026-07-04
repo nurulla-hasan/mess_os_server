@@ -99,6 +99,10 @@ export const getEstimatedMealRate = async (messId: string): Promise<{ rate: numb
   const dhakaToday = new Date(today.getTime() + DHAKA_OFFSET_MS);
   const { start: monthStart, end: monthEnd } = getMonthBoundariesDhaka(dhakaToday.getUTCMonth() + 1, dhakaToday.getUTCFullYear());
 
+  // Fetch mess settings to get mealCategories (only meal-category expenses count toward meal rate)
+  const mess = await Mess.findById(messObjectId).select('settings').lean();
+  const mealCategories: string[] = mess?.settings?.mealCategories ?? [];
+
   const [mealExpenseResult, totalMealsResult] = await Promise.all([
     Expense.aggregate([
       {
@@ -106,6 +110,7 @@ export const getEstimatedMealRate = async (messId: string): Promise<{ rate: numb
           messId: messObjectId,
           status: 'approved',
           date: { $gte: monthStart, $lte: monthEnd },
+          ...(mealCategories.length > 0 ? { category: { $in: mealCategories } } : {}),
         },
       },
       { $group: { _id: null, total: { $sum: '$amount' } } },

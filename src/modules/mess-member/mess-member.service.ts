@@ -125,9 +125,20 @@ export const getMembers = async (messId: string, options: GetMembersOptions = {}
   const dhakaToday = new Date(today.getTime() + DHAKA_OFFSET_MS);
   const { start: monthStart, end: monthEnd } = getMonthBoundariesDhaka(dhakaToday.getUTCMonth() + 1, dhakaToday.getUTCFullYear());
 
+  // Fetch mess settings to get mealCategories (only meal-category expenses count toward meal rate)
+  const messSettings = await Mess.findById(messObjectId).select('settings').lean();
+  const mealCategories: string[] = messSettings?.settings?.mealCategories ?? [];
+
   const [mealExpenseResult, totalMealsResult] = await Promise.all([
     Expense.aggregate([
-      { $match: { messId: messObjectId, status: 'approved', date: { $gte: monthStart, $lte: monthEnd } } },
+      {
+        $match: {
+          messId: messObjectId,
+          status: 'approved',
+          date: { $gte: monthStart, $lte: monthEnd },
+          ...(mealCategories.length > 0 ? { category: { $in: mealCategories } } : {}),
+        },
+      },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]),
     Meal.aggregate([
