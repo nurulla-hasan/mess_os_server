@@ -4,9 +4,9 @@
   "description": "Production Mess Manager OS backend",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
+    "dev": "node init && ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "node init && tsc",
+    "start": "node init && node dist/server.js",
     "clean-db": "npx ts-node src/scripts/clean-db.ts",
     "test": "echo \"No tests configured yet\"",
     "test:watch": "echo \"No tests configured yet\""
